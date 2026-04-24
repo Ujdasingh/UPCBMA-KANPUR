@@ -1,375 +1,235 @@
 import Image from "next/image";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
-import { PublicShell } from "@/components/public/shell";
-import { Avatar } from "@/components/public/avatar";
+import { createServiceClient } from "@/lib/supabase/server";
+import { listActiveChapters } from "@/lib/chapter-loader";
+import { StateShell } from "@/components/public/state-shell";
 import { CorrugatedWave } from "@/components/public/wave";
 import {
-  FlaskConical,
-  Users,
-  Landmark,
   ArrowRight,
+  MapPin,
   Newspaper,
   CalendarDays,
+  Landmark,
+  FlaskConical,
+  Users,
 } from "lucide-react";
 
 export const revalidate = 60;
 
-type Stat = { label: string; value: string };
-
-export default async function Home() {
-  const supabase = await createClient();
+export default async function StateHome() {
+  const svc = createServiceClient();
   const today = new Date().toISOString().slice(0, 10);
 
-  const [
-    { count: memberCount },
-    { count: testCount },
-    { count: committeeCount },
-    { data: latestNews },
-    { data: upcomingEvents },
-    { data: featuredCommittee },
-  ] = await Promise.all([
-    supabase
-      .from("members")
-      .select("*", { head: true, count: "exact" })
-      .eq("active", true)
-      .neq("role", "super_admin"),
-    supabase
-      .from("lab_tests_catalog")
-      .select("*", { head: true, count: "exact" })
-      .eq("active", true),
-    supabase
-      .from("committee_appointments")
-      .select("*", { head: true, count: "exact" })
-      .eq("status", "active"),
-    supabase
-      .from("news")
-      .select("id, tag, title, body, published_date")
-      .order("published_date", { ascending: false })
-      .limit(3),
-    supabase
-      .from("events")
-      .select("id, title, event_date, location, recurring, description")
-      .gte("event_date", today)
-      .order("event_date", { ascending: true })
-      .limit(3),
-    supabase
-      .from("committee_appointments")
-      .select(
-        "id, area_name, member:members(name, company, role), role:committee_roles(name, category)",
-      )
-      .eq("status", "active")
-      .order("display_order", { ascending: true })
-      .limit(8),
-  ]);
-
-  // Never show super_admin appointments on the public home page.
-  const featuredCommitteeSafe = (featuredCommittee ?? [])
-    .filter((c) => {
-      const m = Array.isArray(c.member) ? c.member[0] : c.member;
-      return m?.role !== "super_admin";
-    })
-    .slice(0, 4);
-
-  const stats: Stat[] = [
-    { label: "Active members", value: memberCount != null ? String(memberCount) : "—" },
-    { label: "Lab tests offered", value: testCount != null ? String(testCount) : "—" },
-    { label: "Committee members", value: committeeCount != null ? String(committeeCount) : "—" },
-    { label: "Est.", value: "1985" },
-  ];
+  const [chapters, stateNews, stateEvents, { count: totalChapters }, { count: totalMembers }] =
+    await Promise.all([
+      listActiveChapters(),
+      svc
+        .from("news")
+        .select("id, tag, title, body, published_date, chapter:chapters(slug,name)")
+        .is("chapter_id", null)
+        .order("published_date", { ascending: false })
+        .limit(3)
+        .then((r) => r.data ?? []),
+      svc
+        .from("events")
+        .select("id, title, event_date, location, description")
+        .is("chapter_id", null)
+        .gte("event_date", today)
+        .order("event_date", { ascending: true })
+        .limit(3)
+        .then((r) => r.data ?? []),
+      svc.from("chapters").select("*", { head: true, count: "exact" }).eq("active", true),
+      svc.from("members").select("*", { head: true, count: "exact" }).eq("active", true).neq("role", "super_admin"),
+    ]);
 
   return (
-    <PublicShell>
-      {/* Hero */}
+    <StateShell>
       <section className="border-b border-border bg-surface">
-        <div className="mx-auto max-w-6xl px-6 py-16 md:py-24">
+        <div className="mx-auto max-w-6xl px-6 py-20 md:py-28">
           <div className="grid items-center gap-12 md:grid-cols-[1.2fr_1fr]">
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
-                Uttar Pradesh &middot; Kanpur Chapter
+                Uttar Pradesh &middot; Corrugated Box Industry
               </div>
               <h1 className="mt-4 text-4xl leading-[1.1] !tracking-tight md:text-5xl">
-                Representing the corrugated box industry of Kanpur.
+                The state body for corrugated box manufacturers of Uttar Pradesh.
               </h1>
               <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted">
-                UPCBMA Kanpur is the regional chapter of the Uttar Pradesh
-                Corrugated Box Manufacturers&rsquo; Association. We advocate for
-                manufacturers, run an in-house testing lab for members, and
-                maintain a forum for industry knowledge-sharing.
+                UPCBMA is a network of regional chapters across UP.
+                Each chapter runs its own lab, committee, and member programs
+                while the state body coordinates advocacy, policy, and
+                statewide fixtures.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link
-                  href="/lab/book"
+                  href="/chapters"
                   className="inline-flex h-11 items-center rounded-sm bg-heading px-5 text-sm font-medium text-white no-underline hover:bg-hover"
                 >
-                  Book a lab test
+                  Find your chapter
                   <ArrowRight className="ml-2 h-4 w-4" strokeWidth={2} />
                 </Link>
                 <Link
                   href="/about"
                   className="inline-flex h-11 items-center rounded-sm border border-rule bg-bg px-5 text-sm font-medium text-heading no-underline hover:border-heading hover:bg-surface"
                 >
-                  About the chapter
+                  About UPCBMA
                 </Link>
               </div>
             </div>
 
-            {/* Hero image — cardboard/packaging line */}
             <div className="relative aspect-[4/5] w-full overflow-hidden rounded-sm border border-border bg-stone-200">
               <Image
                 src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=900&q=70"
-                alt="Stacked corrugated board ready for conversion"
+                alt="Corrugated board stack"
                 fill
                 sizes="(min-width: 768px) 42vw, 100vw"
                 className="object-cover"
                 priority
               />
-              {/* subtle dark-to-transparent gradient for text legibility context */}
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/30 to-transparent" />
-              <div className="absolute bottom-3 left-4 right-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/85">
-                Member firms across Kanpur
-              </div>
             </div>
           </div>
 
           <dl className="mt-16 grid grid-cols-2 gap-x-8 gap-y-6 border-t border-border pt-8 md:grid-cols-4">
-            {stats.map((s) => (
-              <div key={s.label}>
-                <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
-                  {s.label}
-                </dt>
-                <dd className="mt-1 text-3xl font-bold tracking-tight text-heading tabular-nums">
-                  {s.value}
-                </dd>
-              </div>
-            ))}
+            <Stat label="Chapters" value={totalChapters ?? 0} />
+            <Stat label="Member firms" value={totalMembers ?? 0} />
+            <Stat label="Founded" value="1985" />
+            <Stat label="State" value="UP" />
           </dl>
         </div>
-
-        {/* Corrugated wave divider between hero and content */}
         <div className="text-border">
           <CorrugatedWave className="h-6 w-full" />
         </div>
       </section>
 
-      {/* What we do */}
+      {/* Chapter grid */}
       <section className="mx-auto max-w-6xl px-6 py-20">
-        <SectionHeader kicker="What we do" title="Three pillars of the chapter." />
-        <div className="mt-12 grid gap-8 md:grid-cols-3">
-          <Pillar
-            Icon={Landmark}
-            title="Industry advocacy"
-            body="We represent Kanpur's corrugated box manufacturers before state bodies, raw material suppliers, and regulators — negotiating on behalf of the whole regional industry."
-          />
-          <Pillar
-            Icon={FlaskConical}
-            title="In-house testing lab"
-            body="An accredited testing lab offering burst strength, bending, compression, cobb value, and paper GSM tests at member rates — with booking and tracking handled online."
-            cta={{ href: "/lab", label: "See lab services" }}
-          />
-          <Pillar
-            Icon={Users}
-            title="Member network"
-            body="Regular meets, training sessions, and digital forums that keep members connected on pricing trends, compliance updates, and shared challenges."
-            cta={{ href: "/committee", label: "Meet the committee" }}
-          />
-        </div>
-      </section>
-
-      {/* News + events */}
-      <section className="border-t border-border bg-surface">
-        <div className="mx-auto grid max-w-6xl gap-12 px-6 py-20 md:grid-cols-2">
+        <div className="flex items-baseline justify-between">
           <div>
-            <div className="flex items-baseline justify-between">
-              <SectionHeader kicker="Latest" title="News & notices" compact />
-              <Link
-                href="/news"
-                className="text-sm font-medium text-heading no-underline hover:text-hover"
-              >
-                All news &rarr;
-              </Link>
-            </div>
-            <ul className="mt-8 space-y-6">
-              {latestNews && latestNews.length > 0 ? (
-                latestNews.map((n) => (
-                  <li key={n.id} className="border-b border-border pb-6 last:border-b-0">
-                    <Link href={`/news/${n.id}`} className="group block no-underline">
-                      <div className="flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
-                        <span>{n.tag}</span>
-                        <span>&middot;</span>
-                        <time>{formatDate(n.published_date)}</time>
-                      </div>
-                      <h3 className="mt-2 text-base font-semibold text-heading group-hover:text-hover">
-                        {n.title}
-                      </h3>
-                      {n.body && (
-                        <p className="mt-1.5 line-clamp-2 text-sm text-muted">{n.body}</p>
-                      )}
-                    </Link>
-                  </li>
-                ))
-              ) : (
-                <EmptyBlock
-                  Icon={Newspaper}
-                  title="No news yet."
-                  note="Announcements will appear here once the committee posts them."
-                />
-              )}
-            </ul>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">Chapters</div>
+            <h2 className="mt-2 !text-3xl !tracking-tight md:!text-4xl">
+              Find your chapter.
+            </h2>
           </div>
-
-          <div>
-            <div className="flex items-baseline justify-between">
-              <SectionHeader kicker="Upcoming" title="Events" compact />
-              <Link
-                href="/events"
-                className="text-sm font-medium text-heading no-underline hover:text-hover"
-              >
-                All events &rarr;
-              </Link>
-            </div>
-            <ul className="mt-8 space-y-6">
-              {upcomingEvents && upcomingEvents.length > 0 ? (
-                upcomingEvents.map((e) => (
-                  <li
-                    key={e.id}
-                    className="flex gap-5 border-b border-border pb-6 last:border-b-0"
-                  >
-                    <DateTile date={e.event_date} />
-                    <div className="flex-1">
-                      <h3 className="text-base font-semibold text-heading">{e.title}</h3>
-                      {e.location && (
-                        <div className="mt-1 text-sm text-muted">
-                          {e.location}
-                          {e.recurring && (
-                            <span className="ml-2 rounded-sm border border-border bg-bg px-1.5 py-0.5 text-[10px] font-medium text-muted">
-                              recurring
-                            </span>
-                          )}
-                        </div>
-                      )}
-                      {e.description && (
-                        <p className="mt-1.5 line-clamp-2 text-sm text-muted">
-                          {e.description}
-                        </p>
-                      )}
-                    </div>
-                  </li>
-                ))
-              ) : (
-                <EmptyBlock
-                  Icon={CalendarDays}
-                  title="No upcoming events."
-                  note="The next AGM and member meets will be listed here."
-                />
-              )}
-            </ul>
-          </div>
+          <Link href="/chapters" className="text-sm font-medium text-heading no-underline hover:text-hover">
+            All chapters &rarr;
+          </Link>
         </div>
-      </section>
 
-      {/* Featured committee */}
-      {featuredCommitteeSafe.length > 0 && (
-        <section className="mx-auto max-w-6xl px-6 py-20">
-          <div className="flex items-baseline justify-between">
-            <SectionHeader kicker="Leadership" title="Executive committee" compact />
-            <Link
-              href="/committee"
-              className="text-sm font-medium text-heading no-underline hover:text-hover"
-            >
-              Full committee &rarr;
-            </Link>
-          </div>
-
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {featuredCommitteeSafe.map((c) => {
-              const member = Array.isArray(c.member) ? c.member[0] : c.member;
-              const role = Array.isArray(c.role) ? c.role[0] : c.role;
-              return (
-                <article
-                  key={c.id}
-                  className="rounded-sm border border-border bg-bg p-5"
-                >
-                  <div className="flex items-start gap-3">
-                    <Avatar name={member?.name ?? "?"} size="md" />
-                    <div className="min-w-0">
-                      <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
-                        {role?.name ?? "Committee member"}
-                      </div>
-                      <div className="mt-0.5 truncate text-base font-semibold text-heading">
-                        {member?.name ?? "To be announced"}
-                      </div>
-                      {member?.company && (
-                        <div className="truncate text-sm text-muted">
-                          {member.company}
-                        </div>
-                      )}
-                    </div>
+        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {chapters.map((c) => (
+            <Link key={c.id} href={`/${c.slug}`} className="group rounded-sm border border-border bg-bg p-6 no-underline hover:border-heading">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+                    {c.state}
                   </div>
-                  {c.area_name && (
-                    <div className="mt-4 border-t border-border pt-3 text-xs text-muted">
-                      Area: {c.area_name}
-                    </div>
-                  )}
-                </article>
-              );
-            })}
+                  <div className="mt-1 text-lg font-semibold text-heading group-hover:text-hover">
+                    {c.name}
+                  </div>
+                  <div className="mt-1 flex items-center gap-1 text-xs text-muted">
+                    <MapPin className="h-3 w-3" strokeWidth={2} />
+                    {c.city}
+                  </div>
+                </div>
+                <ArrowRight className="h-4 w-4 text-muted group-hover:text-heading transition-transform group-hover:translate-x-0.5" strokeWidth={2} />
+              </div>
+              {c.established_on && (
+                <div className="mt-4 border-t border-border pt-3 text-xs text-muted">
+                  Since {new Date(c.established_on).getFullYear()}
+                </div>
+              )}
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* What the state body does */}
+      <section className="border-t border-border bg-surface">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">At state level</div>
+            <h2 className="mt-2 !text-3xl !tracking-tight md:!text-4xl">
+              What UPCBMA does.
+            </h2>
+          </div>
+          <div className="mt-12 grid gap-8 md:grid-cols-3">
+            <Pillar Icon={Landmark} title="Policy advocacy" body="Represents the corrugated box industry before state government bodies, coordinates on GST, environment regulations, and raw-material pricing." />
+            <Pillar Icon={FlaskConical} title="Lab network" body="Every chapter runs its own testing lab. Cross-chapter member bookings are supported — a Kanpur member can test at Lucknow's lab." />
+            <Pillar Icon={Users} title="Member community" body="State AGM, statewide training sessions, digital member forums. Chapters run local meets; state coordinates the calendar." />
+          </div>
+        </div>
+      </section>
+
+      {/* State news + events */}
+      {(stateNews.length > 0 || stateEvents.length > 0) && (
+        <section className="mx-auto max-w-6xl px-6 py-20">
+          <div className="grid gap-12 md:grid-cols-2">
+            {stateNews.length > 0 && (
+              <div>
+                <div className="flex items-baseline justify-between">
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">State-wide</div>
+                    <h3 className="mt-1.5 !text-xl !tracking-tight">News</h3>
+                  </div>
+                  <Link href="/news" className="text-sm font-medium text-heading no-underline hover:text-hover">
+                    All &rarr;
+                  </Link>
+                </div>
+                <ul className="mt-6 space-y-5">
+                  {stateNews.map((n) => (
+                    <li key={n.id} className="border-b border-border pb-5">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+                        {n.tag} &middot; {new Date(n.published_date + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                      </div>
+                      <h4 className="mt-1 text-base font-semibold text-heading">{n.title}</h4>
+                      {n.body && <p className="mt-1.5 line-clamp-2 text-sm text-muted">{n.body}</p>}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {stateEvents.length > 0 && (
+              <div>
+                <div className="flex items-baseline justify-between">
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">State-wide</div>
+                    <h3 className="mt-1.5 !text-xl !tracking-tight">Events</h3>
+                  </div>
+                  <Link href="/events" className="text-sm font-medium text-heading no-underline hover:text-hover">
+                    All &rarr;
+                  </Link>
+                </div>
+                <ul className="mt-6 space-y-5">
+                  {stateEvents.map((e) => (
+                    <li key={e.id} className="border-b border-border pb-5">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+                        {new Date(e.event_date + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                      </div>
+                      <h4 className="mt-1 text-base font-semibold text-heading">{e.title}</h4>
+                      {e.location && <div className="mt-1 text-sm text-muted">{e.location}</div>}
+                      {e.description && <p className="mt-1.5 line-clamp-2 text-sm text-muted">{e.description}</p>}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         </section>
       )}
-
-      {/* Lab CTA */}
-      <section className="border-t border-border">
-        <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 px-6 py-16 md:flex-row md:items-center">
-          <div className="max-w-2xl">
-            <SectionHeader
-              kicker="Lab services"
-              title="Test your paper and board — fast turnaround, member rates."
-              compact
-            />
-            <p className="mt-3 text-sm text-muted">
-              Book a test online and drop samples at the lab desk. Results are
-              delivered within the stated TAT for each test. Members pay member
-              rates; non-member testing is available on request.
-            </p>
-          </div>
-          <Link
-            href="/lab/book"
-            className="inline-flex h-11 shrink-0 items-center rounded-sm bg-heading px-5 text-sm font-medium text-white no-underline hover:bg-hover"
-          >
-            Book a test
-            <ArrowRight className="ml-2 h-4 w-4" strokeWidth={2} />
-          </Link>
-        </div>
-      </section>
-    </PublicShell>
+    </StateShell>
   );
 }
 
-function SectionHeader({
-  kicker,
-  title,
-  compact,
-}: {
-  kicker: string;
-  title: string;
-  compact?: boolean;
-}) {
+function Stat({ label, value }: { label: string; value: string | number }) {
   return (
     <div>
-      <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
-        {kicker}
-      </div>
-      <h2
-        className={
-          compact
-            ? "mt-1.5 !text-xl !tracking-tight"
-            : "mt-2 !text-3xl !tracking-tight md:!text-4xl"
-        }
-      >
-        {title}
-      </h2>
+      <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+        {label}
+      </dt>
+      <dd className="mt-1 text-3xl font-bold tracking-tight text-heading tabular-nums">
+        {value}
+      </dd>
     </div>
   );
 }
@@ -378,66 +238,16 @@ function Pillar({
   Icon,
   title,
   body,
-  cta,
 }: {
   Icon: typeof Landmark;
   title: string;
   body: string;
-  cta?: { href: string; label: string };
 }) {
   return (
     <div>
       <Icon className="h-6 w-6 text-heading" strokeWidth={1.5} />
       <h3 className="mt-4 text-lg font-semibold text-heading">{title}</h3>
       <p className="mt-2 text-sm leading-relaxed text-muted">{body}</p>
-      {cta && (
-        <Link
-          href={cta.href}
-          className="mt-3 inline-block text-sm font-medium text-heading no-underline hover:text-hover"
-        >
-          {cta.label} &rarr;
-        </Link>
-      )}
     </div>
   );
-}
-
-function DateTile({ date }: { date: string }) {
-  const d = new Date(date + "T00:00:00");
-  const month = d.toLocaleString("en-IN", { month: "short" }).toUpperCase();
-  const day = String(d.getDate()).padStart(2, "0");
-  return (
-    <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-sm border border-border bg-bg leading-none">
-      <div className="text-[10px] font-semibold tracking-[0.15em] text-muted">{month}</div>
-      <div className="mt-0.5 text-xl font-bold text-heading tabular-nums">{day}</div>
-    </div>
-  );
-}
-
-function EmptyBlock({
-  Icon,
-  title,
-  note,
-}: {
-  Icon: typeof Newspaper;
-  title: string;
-  note: string;
-}) {
-  return (
-    <li className="flex gap-4 border-b border-border pb-6 last:border-b-0">
-      <Icon className="mt-0.5 h-5 w-5 shrink-0 text-muted" strokeWidth={1.5} />
-      <div>
-        <div className="text-sm font-semibold text-heading">{title}</div>
-        <div className="mt-1 text-sm text-muted">{note}</div>
-      </div>
-    </li>
-  );
-}
-
-function formatDate(iso: string) {
-  return new Date(iso + "T00:00:00").toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
 }

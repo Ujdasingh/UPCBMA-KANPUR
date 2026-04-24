@@ -1,39 +1,51 @@
-import Link from "next/link";
-import { StateShell } from "@/components/public/state-shell";
+import { notFound } from "next/navigation";
+import { createServiceClient } from "@/lib/supabase/server";
+import { getChapterBySlug, RESERVED_SLUGS } from "@/lib/chapter-loader";
+import { ChapterShell } from "@/components/public/chapter-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { submitContact } from "./actions";
-import { CheckCircle2, AlertTriangle, Building2 } from "lucide-react";
-
-export const metadata = {
-  title: "Contact — UPCBMA",
-  description: "Contact the UPCBMA secretariat.",
-};
+import { submitChapterContact } from "./actions";
+import { CheckCircle2, AlertTriangle, MapPin, Phone, Mail, Clock } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-export default async function StateContactPage({
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  if (RESERVED_SLUGS.has(slug)) return {};
+  const chapter = await getChapterBySlug(slug);
+  return chapter ? { title: `Contact — ${chapter.name}` } : {};
+}
+
+export default async function ChapterContact({
+  params,
   searchParams,
 }: {
+  params: Promise<{ slug: string }>;
   searchParams: Promise<{ ok?: string; error?: string }>;
 }) {
+  const { slug } = await params;
   const { ok, error } = await searchParams;
+  if (RESERVED_SLUGS.has(slug)) notFound();
+  const chapter = await getChapterBySlug(slug);
+  if (!chapter) notFound();
+
+  const svc = createServiceClient();
+  const { data: office } = await svc
+    .from("office_info")
+    .select("*")
+    .eq("chapter_id", chapter.id)
+    .maybeSingle();
 
   return (
-    <StateShell>
+    <ChapterShell chapter={chapter}>
       <section className="border-b border-border bg-surface">
         <div className="mx-auto max-w-3xl px-6 py-16">
           <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Contact</div>
-          <h1 className="mt-3 !tracking-tight">Contact UPCBMA secretariat.</h1>
+          <h1 className="mt-3 !tracking-tight">Contact {chapter.name}.</h1>
           <p className="mt-4 text-[15px] leading-relaxed text-muted">
-            For state-level enquiries — policy, membership at state body
-            level, press, and statewide events. For{" "}
-            <strong>chapter-specific</strong> questions (lab bookings,
-            chapter membership, local committee), please{" "}
-            <Link href="/chapters" className="underline">find your chapter</Link>{" "}
-            and use its contact page.
+            Membership enquiries, lab bookings, press, and general questions.
           </p>
         </div>
       </section>
@@ -41,19 +53,18 @@ export default async function StateContactPage({
       <section className="mx-auto grid max-w-6xl gap-14 px-6 py-14 md:grid-cols-[1fr_1.6fr]">
         <div className="space-y-8">
           <div>
-            <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">Looking for a chapter?</div>
-            <h2 className="mt-2 !text-xl !tracking-tight">Pick from the directory</h2>
-            <p className="mt-2 text-sm text-muted">
-              Chapters have their own secretariats, labs, and contact forms.
-            </p>
-            <Link
-              href="/chapters"
-              className="mt-4 inline-flex h-10 items-center rounded-sm border border-rule bg-bg px-4 text-sm font-medium text-heading no-underline hover:border-heading hover:bg-surface"
-            >
-              <Building2 className="mr-1.5 h-4 w-4" strokeWidth={2} />
-              Chapter directory
-            </Link>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">Chapter office</div>
+            <h2 className="mt-2 !text-xl !tracking-tight">Where to find us</h2>
           </div>
+          <ul className="space-y-5 text-sm">
+            {office?.address && <Item Icon={MapPin} label="Address" content={<span className="whitespace-pre-line">{office.address}</span>} />}
+            {office?.phone && <Item Icon={Phone} label="Phone" content={<a href={`tel:${office.phone}`} className="text-text no-underline hover:text-heading">{office.phone}</a>} />}
+            {office?.email && <Item Icon={Mail} label="Email" content={<a href={`mailto:${office.email}`} className="text-text no-underline hover:text-heading">{office.email}</a>} />}
+            {office?.hours && <Item Icon={Clock} label="Office hours" content={office.hours} />}
+          </ul>
+          {!office && (
+            <p className="text-sm italic text-muted">Office details to be published.</p>
+          )}
         </div>
 
         <div>
@@ -62,9 +73,7 @@ export default async function StateContactPage({
               <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" strokeWidth={1.75} />
               <div>
                 <div className="text-sm font-semibold text-emerald-900">Message sent.</div>
-                <div className="mt-1 text-sm text-emerald-900/80">
-                  The secretariat will get back to you.
-                </div>
+                <div className="mt-1 text-sm text-emerald-900/80">We&rsquo;ll get back to you shortly.</div>
               </div>
             </div>
           )}
@@ -74,9 +83,9 @@ export default async function StateContactPage({
               <div className="text-sm text-red-900">{error}</div>
             </div>
           )}
-
           <Card>
-            <form action={submitContact} className="space-y-5">
+            <form action={submitChapterContact} className="space-y-5">
+              <input type="hidden" name="chapter_slug" value={chapter.slug} />
               <div className="grid gap-5 md:grid-cols-2">
                 <Field label="Your name" htmlFor="name" required>
                   <Input id="name" name="name" required autoComplete="name" placeholder="Full name" />
@@ -105,6 +114,26 @@ export default async function StateContactPage({
           </Card>
         </div>
       </section>
-    </StateShell>
+    </ChapterShell>
+  );
+}
+
+function Item({
+  Icon,
+  label,
+  content,
+}: {
+  Icon: typeof MapPin;
+  label: string;
+  content: React.ReactNode;
+}) {
+  return (
+    <li className="flex gap-3">
+      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted" strokeWidth={1.75} />
+      <div>
+        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">{label}</div>
+        <div className="mt-0.5 text-text">{content}</div>
+      </div>
+    </li>
   );
 }
