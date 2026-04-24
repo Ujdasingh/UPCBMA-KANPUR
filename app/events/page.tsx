@@ -1,0 +1,178 @@
+import { createClient } from "@/lib/supabase/server";
+import { PublicShell } from "@/components/public/shell";
+import { CalendarDays, MapPin } from "lucide-react";
+
+export const metadata = {
+  title: "Events — UPCBMA Kanpur Chapter",
+  description:
+    "Upcoming and past events from UPCBMA Kanpur — member meets, training sessions, AGM, and more.",
+};
+
+export const revalidate = 60;
+
+export default async function EventsPage() {
+  const supabase = await createClient();
+  const today = new Date().toISOString().slice(0, 10);
+
+  const [{ data: upcoming }, { data: past }] = await Promise.all([
+    supabase
+      .from("events")
+      .select("id, title, event_date, location, recurring, description")
+      .gte("event_date", today)
+      .order("event_date", { ascending: true }),
+    supabase
+      .from("events")
+      .select("id, title, event_date, location, recurring, description")
+      .lt("event_date", today)
+      .order("event_date", { ascending: false })
+      .limit(12),
+  ]);
+
+  return (
+    <PublicShell>
+      <section className="border-b border-border bg-surface">
+        <div className="mx-auto max-w-3xl px-6 py-16">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
+            Events
+          </div>
+          <h1 className="mt-3 !tracking-tight">Meets, AGM, and training.</h1>
+          <p className="mt-4 text-[15px] leading-relaxed text-muted">
+            The chapter runs quarterly meets, an annual general meeting, and
+            periodic training for operators and supervisors. All members are
+            invited unless otherwise noted.
+          </p>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-4xl px-6 py-12 space-y-14">
+        <EventSection
+          kicker="Upcoming"
+          title="Scheduled events"
+          events={upcoming ?? []}
+          emptyText="No events on the calendar right now. Check back soon."
+        />
+
+        {past && past.length > 0 && (
+          <EventSection
+            kicker="Recent"
+            title="Past events"
+            events={past}
+            muted
+            emptyText=""
+          />
+        )}
+      </section>
+    </PublicShell>
+  );
+}
+
+type Ev = {
+  id: string;
+  title: string;
+  event_date: string;
+  location: string | null;
+  recurring: boolean | null;
+  description: string | null;
+};
+
+function EventSection({
+  kicker,
+  title,
+  events,
+  emptyText,
+  muted,
+}: {
+  kicker: string;
+  title: string;
+  events: Ev[];
+  emptyText: string;
+  muted?: boolean;
+}) {
+  return (
+    <section>
+      <div className="flex items-baseline justify-between border-b border-border pb-3">
+        <div>
+          <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
+            {kicker}
+          </div>
+          <h2 className="mt-1 !text-xl !tracking-tight">{title}</h2>
+        </div>
+        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+          {events.length} {events.length === 1 ? "event" : "events"}
+        </div>
+      </div>
+
+      {events.length === 0 ? (
+        emptyText ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <CalendarDays className="h-7 w-7 text-muted" strokeWidth={1.5} />
+            <p className="mt-3 max-w-md text-sm text-muted">{emptyText}</p>
+          </div>
+        ) : null
+      ) : (
+        <ul className="mt-6 divide-y divide-border">
+          {events.map((e) => (
+            <li
+              key={e.id}
+              className={
+                "flex gap-6 py-6 " + (muted ? "opacity-75" : "")
+              }
+            >
+              <DateTile date={e.event_date} dim={muted} />
+              <div className="flex-1">
+                <div className="flex flex-wrap items-baseline gap-2">
+                  <h3 className="text-base font-semibold text-heading">
+                    {e.title}
+                  </h3>
+                  {e.recurring && (
+                    <span className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-[10px] font-medium text-muted">
+                      recurring
+                    </span>
+                  )}
+                </div>
+                {e.location && (
+                  <div className="mt-1.5 flex items-center gap-1.5 text-sm text-muted">
+                    <MapPin className="h-3.5 w-3.5" strokeWidth={1.75} />
+                    {e.location}
+                  </div>
+                )}
+                {e.description && (
+                  <p className="mt-2 text-sm leading-relaxed text-muted">
+                    {e.description}
+                  </p>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function DateTile({ date, dim }: { date: string; dim?: boolean }) {
+  const d = new Date(date + "T00:00:00");
+  const month = d.toLocaleString("en-IN", { month: "short" }).toUpperCase();
+  const day = String(d.getDate()).padStart(2, "0");
+  const year = d.getFullYear();
+  return (
+    <div
+      className={
+        "flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-sm border leading-none " +
+        (dim
+          ? "border-border bg-surface text-muted"
+          : "border-border bg-bg")
+      }
+    >
+      <div className="text-[10px] font-semibold tracking-[0.15em] text-muted">
+        {month}
+      </div>
+      <div className="mt-0.5 text-xl font-bold text-heading tabular-nums">
+        {day}
+      </div>
+      <div className="mt-0.5 text-[9px] font-medium tracking-[0.1em] text-muted">
+        {year}
+      </div>
+    </div>
+  );
+}
