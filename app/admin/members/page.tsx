@@ -57,16 +57,24 @@ export default async function MembersPage({
     login_email: m.auth_user_id ? authEmailById.get(m.auth_user_id) ?? null : null,
   }));
 
-  // -------- Load categories for the active chapter (for the create form) --------
-  let categories: { id: string; name: string; slug: string }[] = [];
-  if (ctx.activeChapterId) {
-    const { data } = await svc
-      .from("member_categories")
-      .select("id, name, slug")
-      .eq("chapter_id", ctx.activeChapterId)
-      .order("sort_order", { ascending: true });
-    categories = data ?? [];
-  }
+  // -------- Load categories for EVERY chapter the admin can manage -----------
+  // The create form can target any of those chapters, so we preload all of
+  // them grouped by chapter_id and let the client switch without a refetch.
+  const chapterIds = ctx.availableChapters.map((c) => c.id);
+  const { data: allCats } = await svc
+    .from("member_categories")
+    .select("id, name, slug, chapter_id, sort_order")
+    .in("chapter_id", chapterIds.length ? chapterIds : ["00000000-0000-0000-0000-000000000000"])
+    .order("sort_order", { ascending: true });
+
+  const categoriesByChapter: Record<
+    string,
+    { id: string; name: string; slug: string }[]
+  > = {};
+  (allCats ?? []).forEach((c) => {
+    if (!categoriesByChapter[c.chapter_id]) categoriesByChapter[c.chapter_id] = [];
+    categoriesByChapter[c.chapter_id]!.push({ id: c.id, name: c.name, slug: c.slug });
+  });
 
   return (
     <>
@@ -105,7 +113,7 @@ export default async function MembersPage({
         </div>
       )}
 
-      {/* Hint when viewing All chapters */}
+      {/* Info banner when viewing All chapters */}
       {!ctx.activeChapter && (
         <div className="mb-5 flex gap-3 rounded-sm border border-border bg-surface p-4">
           <Building2
@@ -113,8 +121,8 @@ export default async function MembersPage({
             strokeWidth={1.75}
           />
           <div className="text-sm text-text">
-            You&rsquo;re viewing all members across every chapter. To add a
-            new member, first pick a chapter from the sidebar switcher.
+            You&rsquo;re viewing all members across every chapter. You can
+            still add a new member — pick their chapter from the form.
           </div>
         </div>
       )}
@@ -124,7 +132,8 @@ export default async function MembersPage({
         canManageSuperAdmin={ctx.isSuper}
         currentAuthUserId={ctx.me.auth_user_id}
         activeChapter={ctx.activeChapter}
-        categories={categories}
+        availableChapters={ctx.availableChapters}
+        categoriesByChapter={categoriesByChapter}
       />
     </>
   );
