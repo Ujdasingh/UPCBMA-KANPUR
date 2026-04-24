@@ -7,6 +7,7 @@ import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
 import { EmptyState, Table, Tbody, Td, Th, Thead, Tr } from "@/components/ui/table";
 import type { Member } from "@/lib/db-types";
+import type { Chapter } from "@/lib/chapters";
 import { formatDate } from "@/lib/utils";
 import {
   KeyRound,
@@ -35,14 +36,20 @@ type Mode =
   | { kind: "edit"; member: MemberRow }
   | { kind: "reset"; member: MemberRow };
 
+type MemberCategoryOption = { id: string; name: string; slug: string };
+
 export function MembersTable({
   rows,
   canManageSuperAdmin,
   currentAuthUserId,
+  activeChapter,
+  categories,
 }: {
   rows: MemberRow[];
   canManageSuperAdmin: boolean;
   currentAuthUserId: string;
+  activeChapter: Chapter | null;
+  categories: MemberCategoryOption[];
 }) {
   const [mode, setMode] = useState<Mode>({ kind: "closed" });
   const [query, setQuery] = useState("");
@@ -68,7 +75,15 @@ export function MembersTable({
           onChange={(e) => setQuery(e.target.value)}
           className="max-w-sm"
         />
-        <Button onClick={() => setMode({ kind: "create" })}>
+        <Button
+          onClick={() => setMode({ kind: "create" })}
+          disabled={!activeChapter}
+          title={
+            activeChapter
+              ? undefined
+              : "Pick a chapter from the sidebar to add a member"
+          }
+        >
           <Plus className="h-4 w-4" /> New member
         </Button>
       </div>
@@ -241,6 +256,8 @@ export function MembersTable({
               mode.kind === "edit" &&
               mode.member.auth_user_id === currentAuthUserId
             }
+            activeChapter={activeChapter}
+            categories={categories}
             onDone={() => setMode({ kind: "closed" })}
           />
         )}
@@ -285,11 +302,15 @@ function MemberForm({
   member,
   canAssignSuperAdmin,
   isSelf,
+  activeChapter,
+  categories,
   onDone,
 }: {
   member: MemberRow | null;
   canAssignSuperAdmin: boolean;
   isSelf: boolean;
+  activeChapter: Chapter | null;
+  categories: MemberCategoryOption[];
   onDone: () => void;
 }) {
   const isEdit = !!member;
@@ -299,6 +320,12 @@ function MemberForm({
   const [loginEmail, setLoginEmail] = useState("");
   const [password, setPassword] = useState("");
   const wantsLogin = !isEdit && loginEmail.trim().length > 0;
+
+  // Auto-suggest chapter-scoped login email for new admins.
+  const loginSuggestion =
+    !isEdit && activeChapter
+      ? `admin.${activeChapter.slug}@upcbma.com`
+      : "admin@upcbma.com";
 
   async function action(formData: FormData) {
     if (isEdit && member) {
@@ -315,14 +342,50 @@ function MemberForm({
   return (
     <form action={action} className="space-y-5">
       {!isEdit && (
-        <Field
-          label="Member ID"
-          htmlFor="id"
-          required
-          hint="Short human-readable ID, e.g. UPCBMA-001"
-        >
-          <Input id="id" name="id" required placeholder="UPCBMA-001" />
-        </Field>
+        <>
+          {/* Chapter context strip — makes it obvious where this member is being added */}
+          {activeChapter && (
+            <div className="flex items-center gap-2 rounded-sm border border-border bg-surface px-3 py-2 text-sm">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted">
+                Adding to
+              </span>
+              <span className="font-medium text-heading">
+                {activeChapter.name}
+              </span>
+            </div>
+          )}
+          {/* Persist the active chapter in the form so the server action can attach a membership */}
+          {activeChapter && (
+            <input type="hidden" name="chapter_id" value={activeChapter.id} />
+          )}
+
+          <Field
+            label="Member ID"
+            htmlFor="id"
+            required
+            hint="Short human-readable ID, e.g. UPCBMA-001"
+          >
+            <Input id="id" name="id" required placeholder="UPCBMA-001" />
+          </Field>
+
+          {/* Per-chapter category dropdown (only when the chapter has any categories configured) */}
+          {activeChapter && categories.length > 0 && (
+            <Field
+              label="Chapter category"
+              htmlFor="category_id"
+              hint={`Category within ${activeChapter.name}. Edit the list under Chapter settings.`}
+            >
+              <Select id="category_id" name="category_id" defaultValue="">
+                <option value="">— None —</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          )}
+        </>
       )}
 
       {/* Read-only login info when editing an existing member with a login */}
@@ -379,7 +442,7 @@ function MemberForm({
               type="email"
               value={loginEmail}
               onChange={(e) => setLoginEmail(e.target.value)}
-              placeholder="admin@upcbmakanpur.com"
+              placeholder={loginSuggestion}
             />
           </Field>
         )}

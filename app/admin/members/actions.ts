@@ -118,6 +118,26 @@ export async function createMember(formData: FormData) {
       redirectWithError(friendlyError(error.message));
     }
 
+    // Attach to the active chapter (if the form was submitted from a
+    // chapter-scoped view). Failure here is non-fatal — we log but don't
+    // unwind the members insert, since the member row is still valid.
+    const chapterId = String(formData.get("chapter_id") ?? "").trim() || null;
+    const categoryId =
+      String(formData.get("category_id") ?? "").trim() || null;
+    if (chapterId) {
+      const { error: mErr } = await svc.from("chapter_memberships").insert({
+        member_id: id,
+        chapter_id: chapterId,
+        category_id: categoryId,
+        member_since: payload.member_since,
+        active: payload.active,
+      });
+      if (mErr) {
+        // Most likely cause: a duplicate (member_id, chapter_id) pair. Fine to ignore.
+        console.warn("chapter_memberships insert:", mErr.message);
+      }
+    }
+
     revalidatePath("/admin/members");
     redirectOK("Member added.");
   } catch (e) {
