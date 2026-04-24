@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { signIn } from "./actions";
 
 export const metadata = {
-  title: "Sign in — UPCBMA Kanpur Admin",
+  title: "Sign in — UPCBMA",
 };
 
 export default async function LoginPage({
@@ -20,11 +20,11 @@ export default async function LoginPage({
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-            UPCBMA Kanpur Chapter
+            UPCBMA · Member portal
           </div>
-          <h1 className="mt-2 !text-2xl">Admin sign in</h1>
+          <h1 className="mt-2 !text-2xl">Sign in</h1>
           <p className="mt-1 text-sm text-muted">
-            Authorised committee members only.
+            Access your UPCBMA dashboard.
           </p>
         </div>
 
@@ -32,14 +32,14 @@ export default async function LoginPage({
           <form action={signIn} className="space-y-5">
             <input type="hidden" name="next" value={next ?? "/admin"} />
 
-            <Field label="Email" htmlFor="email" required>
+            <Field label="Login email" htmlFor="email" required>
               <Input
                 id="email"
                 name="email"
                 type="email"
                 autoComplete="email"
                 required
-                placeholder="you@upcbmakanpur.in"
+                placeholder="your login email"
               />
             </Field>
 
@@ -50,7 +50,7 @@ export default async function LoginPage({
                 type="password"
                 autoComplete="current-password"
                 required
-                placeholder="••••••••"
+                placeholder="your password"
               />
             </Field>
 
@@ -67,7 +67,7 @@ export default async function LoginPage({
         </Card>
 
         <p className="mt-6 text-center text-xs text-muted">
-          Forgot your password? Contact the General Secretary to reset.
+          Forgot your password? Contact your chapter admin to reset.
         </p>
       </div>
     </main>
