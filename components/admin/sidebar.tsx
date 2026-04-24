@@ -14,6 +14,7 @@ import {
   Network,
   Crown,
   Tags,
+  Shield,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -39,6 +40,7 @@ const items: Item[] = [
   { href: "/admin/messages", label: "Messages", Icon: Mail },
   { href: "/admin/office-info", label: "Office info", Icon: Building2 },
   { href: "/admin/chapters", label: "Chapters", Icon: Network, superOnly: true },
+  { href: "/admin/super", label: "Super tools", Icon: Shield, superOnly: true },
 ];
 
 export function Sidebar({ isSuper }: { isSuper: boolean }) {

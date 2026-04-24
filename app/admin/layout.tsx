@@ -2,8 +2,9 @@ import { Sidebar } from "@/components/admin/sidebar";
 import { SignOutButton } from "@/components/admin/signout-button";
 import { ChapterSwitcher } from "@/components/admin/chapter-switcher";
 import { getAdminContext } from "@/lib/auth";
+import { stopImpersonation } from "./super/actions";
 import Link from "next/link";
-import { UserCircle } from "lucide-react";
+import { UserCircle, UserCheck } from "lucide-react";
 
 export default async function AdminLayout({
   children,
@@ -60,6 +61,28 @@ export default async function AdminLayout({
       </aside>
 
       <main className="overflow-x-hidden bg-bg">
+        {ctx.isImpersonating && (
+          <div className="border-b border-amber-300 bg-amber-50">
+            <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-8 py-2 text-xs">
+              <div className="flex items-center gap-2 text-amber-900">
+                <UserCheck className="h-3.5 w-3.5" strokeWidth={2} />
+                <span>
+                  Viewing as <strong>{ctx.me.name}</strong> (
+                  <span className="font-mono">{ctx.me.role}</span>). Real
+                  actor: {ctx.realActor.name}.
+                </span>
+              </div>
+              <form action={stopImpersonation}>
+                <button
+                  type="submit"
+                  className="rounded-sm border border-amber-400 bg-white px-2 py-0.5 text-xs font-medium text-amber-900 hover:bg-amber-100"
+                >
+                  Exit impersonation
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
         <div className="mx-auto max-w-6xl px-8 py-10">{children}</div>
       </main>
     </div>

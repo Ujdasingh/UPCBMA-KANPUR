@@ -7,6 +7,7 @@ import {
   type AdminScope,
   type Chapter,
 } from "@/lib/chapters";
+import { IMPERSONATE_COOKIE } from "@/lib/impersonate";
 
 export type MemberRole = "member" | "admin" | "super_admin";
 
@@ -20,9 +21,26 @@ export type AuthedMember = {
 
 /**
  * Resolve the logged-in auth user to their `members` row.
+ * Honours super_admin impersonation: if the real user is a super_admin and
+ * has the impersonate cookie set, the returned identity is the target member.
+ *
  * Redirects to /login if no session, / if not an admin.
  */
 export async function getAuthedAdmin(): Promise<AuthedMember> {
+  const { effective } = await resolveAuthIdentity();
+  return effective;
+}
+
+/**
+ * Resolve BOTH the real caller and the effective identity (respecting
+ * super_admin impersonation). Use this when the UI needs to show "Viewing as"
+ * banners or when mutations need to audit both identities.
+ */
+export async function resolveAuthIdentity(): Promise<{
+  real: AuthedMember;
+  effective: AuthedMember;
+  isImpersonating: boolean;
+}> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -30,19 +48,39 @@ export async function getAuthedAdmin(): Promise<AuthedMember> {
   if (!user) redirect("/login");
 
   const svc = createServiceClient();
-  const { data: member } = await svc
+  const { data: realRow } = await svc
     .from("members")
     .select("id, name, email, role, auth_user_id")
     .eq("auth_user_id", user.id)
     .maybeSingle();
 
   if (
-    !member ||
-    (member.role !== "admin" && member.role !== "super_admin")
+    !realRow ||
+    (realRow.role !== "admin" && realRow.role !== "super_admin")
   ) {
     redirect("/");
   }
-  return member as AuthedMember;
+  const real = realRow as AuthedMember;
+
+  // Impersonation: only super_admin can do it.
+  const cookieStore = await cookies();
+  const impersonateId = cookieStore.get(IMPERSONATE_COOKIE)?.value;
+  if (impersonateId && real.role === "super_admin") {
+    const { data: target } = await svc
+      .from("members")
+      .select("id, name, email, role, auth_user_id")
+      .eq("id", impersonateId)
+      .maybeSingle();
+    if (target) {
+      return {
+        real,
+        effective: target as AuthedMember,
+        isImpersonating: true,
+      };
+    }
+  }
+
+  return { real, effective: real, isImpersonating: false };
 }
 
 export function isSuperAdmin(
@@ -51,43 +89,36 @@ export function isSuperAdmin(
   return m?.role === "super_admin";
 }
 
-/**
- * Full multi-chapter admin context. Use this inside admin pages/actions that
- * need to know what chapter the admin is currently looking at.
- */
+// -------- Admin context (multi-chapter scope) --------
+
 export type AdminContext = {
   me: AuthedMember;
+  /** The real caller — different from me when impersonating. */
+  realActor: AuthedMember;
+  isImpersonating: boolean;
   isSuper: boolean;
-  /** Scopes from admin_scopes table (plus a synthetic "all" scope for super_admin). */
   scopes: AdminScope[];
-  /** Chapters this admin can see. For super_admin + state-wide admins: all active chapters. */
   availableChapters: Chapter[];
-  /** Can this admin switch to the "All chapters" state-wide view? */
   canSeeAllChapters: boolean;
-  /** The currently-selected chapter id. NULL when the admin is in state-wide view. */
   activeChapterId: string | null;
-  /** The active chapter row if a specific chapter is selected. */
   activeChapter: Chapter | null;
 };
 
 export async function getAdminContext(): Promise<AdminContext> {
-  const me = await getAuthedAdmin();
+  const { real, effective, isImpersonating } = await resolveAuthIdentity();
+  const me = effective;
   const svc = createServiceClient();
   const isSuper = isSuperAdmin(me);
 
-  // Load this admin's scope rows
   const { data: scopeRows } = await svc
     .from("admin_scopes")
     .select("id, member_id, chapter_id, granted_at, granted_by")
     .eq("member_id", me.id);
-
   const scopes: AdminScope[] = scopeRows ?? [];
 
-  // State-wide power: super_admin always, OR any admin with a NULL-chapter scope row.
   const hasStateScope =
     isSuper || scopes.some((s) => s.chapter_id === null);
 
-  // Load chapters this admin can see
   let chaptersQuery = svc
     .from("chapters")
     .select(
@@ -101,22 +132,17 @@ export async function getAdminContext(): Promise<AdminContext> {
       .filter((s) => s.chapter_id !== null)
       .map((s) => s.chapter_id as string);
     if (allowedIds.length === 0) {
-      // Admin with no scopes at all — treat as state-wide view but they'll only
-      // be able to see scoped chapters. For MVP, bounce them home.
       redirect("/");
     }
     chaptersQuery = chaptersQuery.in("id", allowedIds);
   }
-
   const { data: availableChapters } = await chaptersQuery;
 
-  // Read the active-chapter cookie
   const cookieStore = await cookies();
   const cookieVal = cookieStore.get(ACTIVE_CHAPTER_COOKIE)?.value;
 
   let activeChapterId: string | null = null;
   let activeChapter: Chapter | null = null;
-
   if (cookieVal && cookieVal !== ACTIVE_CHAPTER_ALL) {
     const match = (availableChapters ?? []).find((c) => c.slug === cookieVal);
     if (match) {
@@ -124,9 +150,6 @@ export async function getAdminContext(): Promise<AdminContext> {
       activeChapter = match as Chapter;
     }
   }
-
-  // Default when no cookie: if admin has multiple chapters, prefer "all" for
-  // state-wide admins, otherwise pick the first chapter.
   if (!activeChapterId && cookieVal !== ACTIVE_CHAPTER_ALL) {
     if (!hasStateScope && (availableChapters?.length ?? 0) >= 1) {
       const first = availableChapters![0]!;
@@ -137,6 +160,8 @@ export async function getAdminContext(): Promise<AdminContext> {
 
   return {
     me,
+    realActor: real,
+    isImpersonating,
     isSuper,
     scopes,
     availableChapters: (availableChapters ?? []) as Chapter[],
@@ -187,12 +212,8 @@ export async function assertCanMutateMember(opts: {
   }
 }
 
-/**
- * Check whether the caller is allowed to act within a given chapter.
- * Used by server actions that mutate chapter-scoped resources.
- */
 export function canActInChapter(ctx: AdminContext, chapterId: string): boolean {
   if (ctx.isSuper) return true;
-  if (ctx.scopes.some((s) => s.chapter_id === null)) return true; // state-wide
+  if (ctx.scopes.some((s) => s.chapter_id === null)) return true;
   return ctx.scopes.some((s) => s.chapter_id === chapterId);
 }
