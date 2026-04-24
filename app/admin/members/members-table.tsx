@@ -294,14 +294,19 @@ function MemberForm({
 }) {
   const isEdit = !!member;
 
-  // On create: let user opt into giving a login. On edit: login is read-only.
-  const [hasLogin, setHasLogin] = useState(false);
+  // Track the login email value so we can show the password field only when
+  // it's populated. In edit mode, login is fixed and never editable here.
+  const [loginEmail, setLoginEmail] = useState("");
   const [password, setPassword] = useState("");
+  const wantsLogin = !isEdit && loginEmail.trim().length > 0;
 
   async function action(formData: FormData) {
     if (isEdit && member) {
       await updateMember(member.id, formData);
     } else {
+      // The server expects `has_login` as a checkbox signal. Emulate it based
+      // on whether a login email was entered.
+      if (wantsLogin) formData.set("has_login", "on");
       await createMember(formData);
     }
     onDone();
@@ -340,20 +345,18 @@ function MemberForm({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Name" htmlFor="name" required>
-          <Input
-            id="name"
-            name="name"
-            required
-            defaultValue={member?.name ?? ""}
-          />
-        </Field>
+      <Field label="Name" htmlFor="name" required>
+        <Input id="name" name="name" required defaultValue={member?.name ?? ""} />
+      </Field>
+
+      {/* BOTH email fields side-by-side on create. On edit, only contact email
+          is shown here (login email is the read-only block above). */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Field
           label="Contact email"
           htmlFor="email"
           required
-          hint="Real inbox — for newsletters & notifications."
+          hint="Real inbox — for newsletters, notifications, and replies."
         >
           <Input
             id="email"
@@ -361,10 +364,63 @@ function MemberForm({
             type="email"
             required
             defaultValue={member?.email ?? ""}
-            placeholder="name@example.com"
+            placeholder="name@gmail.com"
           />
         </Field>
+        {!isEdit && (
+          <Field
+            label="Login email (optional)"
+            htmlFor="login_email"
+            hint="Leave empty for regular members. Fill in for anyone who will sign in at /login."
+          >
+            <Input
+              id="login_email"
+              name="login_email"
+              type="email"
+              value={loginEmail}
+              onChange={(e) => setLoginEmail(e.target.value)}
+              placeholder="admin@upcbmakanpur.com"
+            />
+          </Field>
+        )}
       </div>
+
+      {/* Password block — only when a login email was entered */}
+      {wantsLogin && (
+        <div className="rounded-sm border border-amber-200 bg-amber-50 p-4">
+          <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-900">
+            <KeyRound className="h-3.5 w-3.5" strokeWidth={2} />
+            Login account setup
+          </div>
+          <p className="mt-1 text-xs text-amber-900/80">
+            Creating a login for <strong>{loginEmail}</strong>. Set an initial
+            password below — share it securely with the account owner.
+          </p>
+          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto]">
+            <Field label="Initial password" htmlFor="initial_password" required>
+              <Input
+                id="initial_password"
+                name="initial_password"
+                type="text"
+                minLength={8}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Minimum 8 characters"
+              />
+            </Field>
+            <div className="flex items-end">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setPassword(generateTempPassword())}
+              >
+                <Wand2 className="h-4 w-4" /> Generate
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <Field label="Phone" htmlFor="phone">
@@ -404,16 +460,16 @@ function MemberForm({
               ? "Your own role is locked — ask another super_admin to change it."
               : isEdit
               ? "Controls admin access."
-              : hasLogin
-              ? "Applies only if giving a login below."
-              : "Without a login, role stays as 'member'."
+              : wantsLogin
+              ? "Applies to the login account you're creating."
+              : "Without a login email above, role stays as 'member'."
           }
         >
           <Select
             id="role"
             name="role"
             defaultValue={member?.role ?? "member"}
-            disabled={isSelf || (!isEdit && !hasLogin)}
+            disabled={isSelf || (!isEdit && !wantsLogin)}
           >
             <option value="member">member</option>
             <option value="admin">admin</option>
@@ -443,83 +499,16 @@ function MemberForm({
         <span>Active on roster</span>
       </label>
 
-      {/* Login-provisioning toggle, create mode only */}
-      {!isEdit && (
-        <div className="rounded-sm border border-border bg-surface p-4">
-          <label className="flex items-start gap-2 text-sm">
-            <input
-              type="checkbox"
-              name="has_login"
-              checked={hasLogin}
-              onChange={(e) => setHasLogin(e.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded-sm border-rule"
-            />
-            <span>
-              <span className="font-medium text-heading">
-                Give this member a login account
-              </span>
-              <br />
-              <span className="text-xs text-muted">
-                Check this for admins and anyone who will sign in at /login.
-                Leave unchecked for regular members who only receive
-                newsletters.
-              </span>
-            </span>
-          </label>
-
-          {hasLogin && (
-            <div className="mt-4 grid grid-cols-1 gap-4 border-t border-border pt-4 md:grid-cols-[1fr_1fr_auto]">
-              <Field
-                label="Login email"
-                htmlFor="login_email"
-                required
-                hint="Fixed identifier used at /login. Doesn't need to be a real inbox."
-              >
-                <Input
-                  id="login_email"
-                  name="login_email"
-                  type="email"
-                  required={hasLogin}
-                  placeholder="admin@upcbmakanpur.com"
-                />
-              </Field>
-              <Field
-                label="Initial password"
-                htmlFor="initial_password"
-                required
-                hint="At least 8 characters. Share securely with the new admin."
-              >
-                <Input
-                  id="initial_password"
-                  name="initial_password"
-                  type="text"
-                  minLength={8}
-                  required={hasLogin}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Minimum 8 characters"
-                />
-              </Field>
-              <div className="flex items-end">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setPassword(generateTempPassword())}
-                >
-                  <Wand2 className="h-4 w-4" /> Generate
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="ghost" onClick={onDone}>
           Cancel
         </Button>
         <Button type="submit">
-          {isEdit ? "Save changes" : hasLogin ? "Add member + create login" : "Add member"}
+          {isEdit
+            ? "Save changes"
+            : wantsLogin
+            ? "Add member + create login"
+            : "Add member"}
         </Button>
       </div>
     </form>
