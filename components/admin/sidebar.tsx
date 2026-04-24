@@ -11,6 +11,7 @@ import {
   CalendarDays,
   Mail,
   Building2,
+  Network,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -19,6 +20,8 @@ type Item = {
   href: string;
   label: string;
   Icon: typeof LayoutDashboard;
+  /** If true, only super_admins see it. */
+  superOnly?: boolean;
 };
 
 const items: Item[] = [
@@ -31,15 +34,16 @@ const items: Item[] = [
   { href: "/admin/events", label: "Events", Icon: CalendarDays },
   { href: "/admin/messages", label: "Messages", Icon: Mail },
   { href: "/admin/office-info", label: "Office info", Icon: Building2 },
+  { href: "/admin/chapters", label: "Chapters", Icon: Network, superOnly: true },
 ];
 
-export function Sidebar() {
+export function Sidebar({ isSuper }: { isSuper: boolean }) {
   const pathname = usePathname();
+  const visible = items.filter((i) => !i.superOnly || isSuper);
 
   return (
     <nav className="flex flex-col gap-0.5">
-      {items.map(({ href, label, Icon }) => {
-        // Exact match for /admin (dashboard); prefix match for child pages.
+      {visible.map(({ href, label, Icon }) => {
         const active =
           href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
         return (

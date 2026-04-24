@@ -1,6 +1,7 @@
 import { Sidebar } from "@/components/admin/sidebar";
 import { SignOutButton } from "@/components/admin/signout-button";
-import { getAuthedAdmin } from "@/lib/auth";
+import { ChapterSwitcher } from "@/components/admin/chapter-switcher";
+import { getAdminContext } from "@/lib/auth";
 import Link from "next/link";
 import { UserCircle } from "lucide-react";
 
@@ -9,23 +10,29 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Single source of truth for the "is this person allowed?" check.
-  // Redirects to /login or / if not authorised.
-  const me = await getAuthedAdmin();
+  const ctx = await getAdminContext();
 
   return (
-    <div className="grid min-h-screen grid-cols-[240px_1fr]">
+    <div className="grid min-h-screen grid-cols-[260px_1fr]">
       <aside className="flex flex-col border-r border-border bg-bg p-4">
         <Link href="/admin" className="mb-6 block no-underline">
           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-            UPCBMA Kanpur
+            UPCBMA
           </div>
           <div className="mt-0.5 text-sm font-semibold text-heading">
             Admin
           </div>
         </Link>
 
-        <Sidebar />
+        {ctx.availableChapters.length > 0 && (
+          <ChapterSwitcher
+            chapters={ctx.availableChapters}
+            activeSlug={ctx.activeChapter?.slug ?? null}
+            canSeeAll={ctx.canSeeAllChapters}
+          />
+        )}
+
+        <Sidebar isSuper={ctx.isSuper} />
 
         <div className="mt-auto space-y-2 border-t border-border pt-4">
           <Link
@@ -41,10 +48,10 @@ export default async function AdminLayout({
                 Signed in
               </div>
               <div className="truncate text-sm font-medium text-heading">
-                {me.name}
+                {ctx.me.name}
               </div>
               <div className="truncate text-[11px] text-muted">
-                {me.role}
+                {ctx.me.role}
               </div>
             </div>
           </Link>
