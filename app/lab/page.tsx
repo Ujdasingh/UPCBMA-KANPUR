@@ -1,6 +1,8 @@
+import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { PublicShell } from "@/components/public/shell";
+import { CorrugatedWave } from "@/components/public/wave";
 import { FlaskConical, ArrowRight, Timer, IndianRupee } from "lucide-react";
 
 export const metadata = {
@@ -40,36 +42,50 @@ export default async function LabPage() {
     <PublicShell>
       {/* Hero */}
       <section className="border-b border-border bg-surface">
-        <div className="mx-auto max-w-3xl px-6 py-20">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
-            Lab services
-          </div>
-          <h1 className="mt-3 !tracking-tight">
-            In-house testing for members and non-members.
-          </h1>
-          <p className="mt-5 text-lg leading-relaxed text-muted">
-            The chapter runs a testing lab offering standard corrugated board
-            and paper tests. Bookings are made online; samples are dropped at
-            the lab desk during office hours. Results are delivered within the
-            turnaround time (TAT) listed for each test.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              href="/lab/book"
-              className="inline-flex h-11 items-center rounded-sm bg-heading px-5 text-sm font-medium text-white no-underline hover:bg-hover"
-            >
-              Book a test
-              <ArrowRight className="ml-2 h-4 w-4" strokeWidth={2} />
-            </Link>
-            {office?.lab_phone && (
-              <a
-                href={`tel:${office.lab_phone}`}
-                className="inline-flex h-11 items-center rounded-sm border border-rule bg-bg px-5 text-sm font-medium text-heading no-underline hover:border-heading hover:bg-surface"
+        <div className="mx-auto grid max-w-6xl gap-10 px-6 py-16 md:grid-cols-[1.2fr_1fr] md:items-center md:py-20">
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
+              Lab services
+            </div>
+            <h1 className="mt-3 !tracking-tight">
+              In-house testing for members and non-members.
+            </h1>
+            <p className="mt-5 text-lg leading-relaxed text-muted">
+              The chapter runs a testing lab offering standard corrugated
+              board and paper tests. Bookings are made online; samples are
+              dropped at the lab desk during office hours. Results are
+              delivered within the turnaround time (TAT) listed for each test.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                href="/lab/book"
+                className="inline-flex h-11 items-center rounded-sm bg-heading px-5 text-sm font-medium text-white no-underline hover:bg-hover"
               >
-                Call lab desk: {office.lab_phone}
-              </a>
-            )}
+                Book a test
+                <ArrowRight className="ml-2 h-4 w-4" strokeWidth={2} />
+              </Link>
+              {office?.lab_phone && (
+                <a
+                  href={`tel:${office.lab_phone}`}
+                  className="inline-flex h-11 items-center rounded-sm border border-rule bg-bg px-5 text-sm font-medium text-heading no-underline hover:border-heading hover:bg-surface"
+                >
+                  Call lab desk: {office.lab_phone}
+                </a>
+              )}
+            </div>
           </div>
+          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-sm border border-border bg-stone-200">
+            <Image
+              src="https://images.unsplash.com/photo-1581093588401-fbb62a02f120?auto=format&fit=crop&w=800&q=70"
+              alt="Laboratory testing equipment on a workbench"
+              fill
+              sizes="(min-width: 768px) 40vw, 100vw"
+              className="object-cover"
+            />
+          </div>
+        </div>
+        <div className="text-border">
+          <CorrugatedWave className="h-5 w-full" />
         </div>
       </section>
 

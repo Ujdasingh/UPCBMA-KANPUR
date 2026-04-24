@@ -1,6 +1,9 @@
+import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { PublicShell } from "@/components/public/shell";
+import { Avatar } from "@/components/public/avatar";
+import { CorrugatedWave } from "@/components/public/wave";
 import {
   FlaskConical,
   Users,
@@ -29,7 +32,8 @@ export default async function Home() {
     supabase
       .from("members")
       .select("*", { head: true, count: "exact" })
-      .eq("active", true),
+      .eq("active", true)
+      .neq("role", "super_admin"),
     supabase
       .from("lab_tests_catalog")
       .select("*", { head: true, count: "exact" })
@@ -52,12 +56,20 @@ export default async function Home() {
     supabase
       .from("committee_appointments")
       .select(
-        "id, area_name, member:members(name, company), role:committee_roles(name, category)",
+        "id, area_name, member:members(name, company, role), role:committee_roles(name, category)",
       )
       .eq("status", "active")
       .order("display_order", { ascending: true })
-      .limit(4),
+      .limit(8),
   ]);
+
+  // Never show super_admin appointments on the public home page.
+  const featuredCommitteeSafe = (featuredCommittee ?? [])
+    .filter((c) => {
+      const m = Array.isArray(c.member) ? c.member[0] : c.member;
+      return m?.role !== "super_admin";
+    })
+    .slice(0, 4);
 
   const stats: Stat[] = [
     { label: "Active members", value: memberCount != null ? String(memberCount) : "—" },
@@ -70,35 +82,54 @@ export default async function Home() {
     <PublicShell>
       {/* Hero */}
       <section className="border-b border-border bg-surface">
-        <div className="mx-auto max-w-6xl px-6 py-20 md:py-28">
-          <div className="max-w-3xl">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
-              Uttar Pradesh &middot; Kanpur Chapter
-            </div>
-            <h1 className="mt-4 text-4xl leading-[1.1] !tracking-tight md:text-5xl">
-              Representing the corrugated box industry of Kanpur.
-            </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted">
-              UPCBMA Kanpur is the regional chapter of the Uttar Pradesh
-              Corrugated Box Manufacturers&rsquo; Association. We advocate for
-              manufacturers, run an in-house testing lab for members, and
-              maintain a forum for industry knowledge-sharing.
-            </p>
+        <div className="mx-auto max-w-6xl px-6 py-16 md:py-24">
+          <div className="grid items-center gap-12 md:grid-cols-[1.2fr_1fr]">
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
+                Uttar Pradesh &middot; Kanpur Chapter
+              </div>
+              <h1 className="mt-4 text-4xl leading-[1.1] !tracking-tight md:text-5xl">
+                Representing the corrugated box industry of Kanpur.
+              </h1>
+              <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted">
+                UPCBMA Kanpur is the regional chapter of the Uttar Pradesh
+                Corrugated Box Manufacturers&rsquo; Association. We advocate for
+                manufacturers, run an in-house testing lab for members, and
+                maintain a forum for industry knowledge-sharing.
+              </p>
 
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href="/lab/book"
-                className="inline-flex h-11 items-center rounded-sm bg-heading px-5 text-sm font-medium text-white no-underline hover:bg-hover"
-              >
-                Book a lab test
-                <ArrowRight className="ml-2 h-4 w-4" strokeWidth={2} />
-              </Link>
-              <Link
-                href="/about"
-                className="inline-flex h-11 items-center rounded-sm border border-rule bg-bg px-5 text-sm font-medium text-heading no-underline hover:border-heading hover:bg-surface"
-              >
-                About the chapter
-              </Link>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Link
+                  href="/lab/book"
+                  className="inline-flex h-11 items-center rounded-sm bg-heading px-5 text-sm font-medium text-white no-underline hover:bg-hover"
+                >
+                  Book a lab test
+                  <ArrowRight className="ml-2 h-4 w-4" strokeWidth={2} />
+                </Link>
+                <Link
+                  href="/about"
+                  className="inline-flex h-11 items-center rounded-sm border border-rule bg-bg px-5 text-sm font-medium text-heading no-underline hover:border-heading hover:bg-surface"
+                >
+                  About the chapter
+                </Link>
+              </div>
+            </div>
+
+            {/* Hero image — cardboard/packaging line */}
+            <div className="relative aspect-[4/5] w-full overflow-hidden rounded-sm border border-border bg-stone-200">
+              <Image
+                src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=900&q=70"
+                alt="Stacked corrugated board ready for conversion"
+                fill
+                sizes="(min-width: 768px) 42vw, 100vw"
+                className="object-cover"
+                priority
+              />
+              {/* subtle dark-to-transparent gradient for text legibility context */}
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/30 to-transparent" />
+              <div className="absolute bottom-3 left-4 right-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/85">
+                Member firms across Kanpur
+              </div>
             </div>
           </div>
 
@@ -114,6 +145,11 @@ export default async function Home() {
               </div>
             ))}
           </dl>
+        </div>
+
+        {/* Corrugated wave divider between hero and content */}
+        <div className="text-border">
+          <CorrugatedWave className="h-6 w-full" />
         </div>
       </section>
 
@@ -234,7 +270,7 @@ export default async function Home() {
       </section>
 
       {/* Featured committee */}
-      {featuredCommittee && featuredCommittee.length > 0 && (
+      {featuredCommitteeSafe.length > 0 && (
         <section className="mx-auto max-w-6xl px-6 py-20">
           <div className="flex items-baseline justify-between">
             <SectionHeader kicker="Leadership" title="Executive committee" compact />
@@ -247,7 +283,7 @@ export default async function Home() {
           </div>
 
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {featuredCommittee.map((c) => {
+            {featuredCommitteeSafe.map((c) => {
               const member = Array.isArray(c.member) ? c.member[0] : c.member;
               const role = Array.isArray(c.role) ? c.role[0] : c.role;
               return (
@@ -255,17 +291,26 @@ export default async function Home() {
                   key={c.id}
                   className="rounded-sm border border-border bg-bg p-5"
                 >
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
-                    {role?.name ?? "Committee member"}
+                  <div className="flex items-start gap-3">
+                    <Avatar name={member?.name ?? "?"} size="md" />
+                    <div className="min-w-0">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+                        {role?.name ?? "Committee member"}
+                      </div>
+                      <div className="mt-0.5 truncate text-base font-semibold text-heading">
+                        {member?.name ?? "To be announced"}
+                      </div>
+                      {member?.company && (
+                        <div className="truncate text-sm text-muted">
+                          {member.company}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="mt-1 text-base font-semibold text-heading">
-                    {member?.name ?? "To be announced"}
-                  </div>
-                  {member?.company && (
-                    <div className="mt-0.5 text-sm text-muted">{member.company}</div>
-                  )}
                   {c.area_name && (
-                    <div className="mt-3 text-xs text-muted">Area: {c.area_name}</div>
+                    <div className="mt-4 border-t border-border pt-3 text-xs text-muted">
+                      Area: {c.area_name}
+                    </div>
                   )}
                 </article>
               );

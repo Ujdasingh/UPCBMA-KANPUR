@@ -1,4 +1,6 @@
+import Image from "next/image";
 import { PublicShell } from "@/components/public/shell";
+import { CorrugatedWave } from "@/components/public/wave";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -21,19 +23,33 @@ export default async function AboutPage() {
     <PublicShell>
       {/* Header */}
       <section className="border-b border-border bg-surface">
-        <div className="mx-auto max-w-3xl px-6 py-20">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
-            About
+        <div className="mx-auto grid max-w-6xl gap-10 px-6 py-20 md:grid-cols-[1.2fr_1fr] md:items-center">
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
+              About
+            </div>
+            <h1 className="mt-3 !tracking-tight">
+              A regional chapter serving Kanpur&rsquo;s packaging industry.
+            </h1>
+            <p className="mt-5 text-lg leading-relaxed text-muted">
+              UPCBMA Kanpur is one of the regional chapters of the Uttar Pradesh
+              Corrugated Box Manufacturers&rsquo; Association. We unite
+              manufacturers in and around Kanpur, give them a collective voice,
+              and provide shared services like testing, training, and advocacy.
+            </p>
           </div>
-          <h1 className="mt-3 !tracking-tight">
-            A regional chapter serving Kanpur&rsquo;s packaging industry.
-          </h1>
-          <p className="mt-5 text-lg leading-relaxed text-muted">
-            UPCBMA Kanpur is one of the regional chapters of the Uttar Pradesh
-            Corrugated Box Manufacturers&rsquo; Association. We unite
-            manufacturers in and around Kanpur, give them a collective voice,
-            and provide shared services like testing, training, and advocacy.
-          </p>
+          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-sm border border-border bg-stone-200">
+            <Image
+              src="https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?auto=format&fit=crop&w=800&q=70"
+              alt="Corrugated cardboard rolls and sheets"
+              fill
+              sizes="(min-width: 768px) 40vw, 100vw"
+              className="object-cover"
+            />
+          </div>
+        </div>
+        <div className="text-border">
+          <CorrugatedWave className="h-5 w-full" />
         </div>
       </section>
 

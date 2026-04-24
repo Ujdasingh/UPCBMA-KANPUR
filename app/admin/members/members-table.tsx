@@ -8,7 +8,7 @@ import { Input, Select } from "@/components/ui/input";
 import { EmptyState, Table, Tbody, Td, Th, Thead, Tr } from "@/components/ui/table";
 import type { Member } from "@/lib/db-types";
 import { formatDate } from "@/lib/utils";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Lock, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { createMember, deleteMember, updateMember } from "./actions";
 
@@ -17,7 +17,15 @@ type Mode =
   | { kind: "create" }
   | { kind: "edit"; member: Member };
 
-export function MembersTable({ rows }: { rows: Member[] }) {
+export function MembersTable({
+  rows,
+  canManageSuperAdmin,
+  currentAuthUserId,
+}: {
+  rows: Member[];
+  canManageSuperAdmin: boolean;
+  currentAuthUserId: string;
+}) {
   const [mode, setMode] = useState<Mode>({ kind: "closed" });
   const [query, setQuery] = useState("");
 
@@ -77,63 +85,94 @@ export function MembersTable({ rows }: { rows: Member[] }) {
             </Tr>
           </Thead>
           <Tbody>
-            {filtered.map((m) => (
-              <Tr key={m.id}>
-                <Td className="font-mono text-xs">{m.id}</Td>
-                <Td>
-                  <div className="font-medium text-heading">{m.name}</div>
-                  <div className="text-xs text-muted">{m.email}</div>
-                </Td>
-                <Td className="text-sm">{m.company ?? "—"}</Td>
-                <Td>
-                  <Badge tone={m.category === "Executive" ? "info" : "neutral"}>
-                    {m.category}
-                  </Badge>
-                </Td>
-                <Td>
-                  <Badge tone={m.role === "member" ? "neutral" : "warn"}>
-                    {m.role}
-                  </Badge>
-                </Td>
-                <Td>
-                  <Badge tone={m.active ? "success" : "neutral"}>
-                    {m.active ? "Active" : "Inactive"}
-                  </Badge>
-                </Td>
-                <Td className="text-xs text-muted tabular-nums">
-                  {formatDate(m.member_since)}
-                </Td>
-                <Td>
-                  <div className="flex justify-end gap-1">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setMode({ kind: "edit", member: m })}
-                      aria-label={`Edit ${m.name}`}
+            {filtered.map((m) => {
+              const isSelf = m.auth_user_id === currentAuthUserId;
+              const isSuper = m.role === "super_admin";
+              return (
+                <Tr key={m.id}>
+                  <Td className="font-mono text-xs">{m.id}</Td>
+                  <Td>
+                    <div className="flex items-center gap-2 font-medium text-heading">
+                      {m.name}
+                      {isSelf && (
+                        <span className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted">
+                          you
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted">{m.email}</div>
+                  </Td>
+                  <Td className="text-sm">{m.company ?? "—"}</Td>
+                  <Td>
+                    <Badge tone={m.category === "Executive" ? "info" : "neutral"}>
+                      {m.category}
+                    </Badge>
+                  </Td>
+                  <Td>
+                    <Badge
+                      tone={
+                        isSuper
+                          ? "danger"
+                          : m.role === "admin"
+                          ? "warn"
+                          : "neutral"
+                      }
                     >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={async () => {
-                        if (
-                          confirm(
-                            `Delete ${m.name}? This removes committee appointments too. This cannot be undone.`,
-                          )
-                        ) {
-                          await deleteMember(m.id);
-                        }
-                      }}
-                      aria-label={`Delete ${m.name}`}
-                      className="text-danger hover:bg-red-50"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </Td>
-              </Tr>
-            ))}
+                      {m.role}
+                    </Badge>
+                  </Td>
+                  <Td>
+                    <Badge tone={m.active ? "success" : "neutral"}>
+                      {m.active ? "Active" : "Inactive"}
+                    </Badge>
+                  </Td>
+                  <Td className="text-xs text-muted tabular-nums">
+                    {formatDate(m.member_since)}
+                  </Td>
+                  <Td>
+                    <div className="flex justify-end gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setMode({ kind: "edit", member: m })}
+                        aria-label={`Edit ${m.name}`}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      {isSelf ? (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled
+                          aria-label="Cannot delete your own account"
+                          title="You cannot delete your own account"
+                        >
+                          <Lock className="h-3.5 w-3.5 text-muted" />
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={async () => {
+                            if (
+                              confirm(
+                                `Delete ${m.name}? This removes committee appointments too. This cannot be undone.`,
+                              )
+                            ) {
+                              await deleteMember(m.id);
+                            }
+                          }}
+                          aria-label={`Delete ${m.name}`}
+                          className="text-danger hover:bg-red-50"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                  </Td>
+                </Tr>
+              );
+            })}
           </Tbody>
         </Table>
       )}
@@ -151,20 +190,28 @@ export function MembersTable({ rows }: { rows: Member[] }) {
         {mode.kind !== "closed" && (
           <MemberForm
             member={mode.kind === "edit" ? mode.member : null}
+            canAssignSuperAdmin={canManageSuperAdmin}
+            isSelf={
+              mode.kind === "edit" &&
+              mode.member.auth_user_id === currentAuthUserId
+            }
             onDone={() => setMode({ kind: "closed" })}
           />
         )}
       </Dialog>
-
     </>
   );
 }
 
 function MemberForm({
   member,
+  canAssignSuperAdmin,
+  isSelf,
   onDone,
 }: {
   member: Member | null;
+  canAssignSuperAdmin: boolean;
+  isSelf: boolean;
   onDone: () => void;
 }) {
   const isEdit = !!member;
@@ -241,11 +288,26 @@ function MemberForm({
             <option value="Executive">Executive</option>
           </Select>
         </Field>
-        <Field label="Role" htmlFor="role" hint="Controls admin access">
-          <Select id="role" name="role" defaultValue={member?.role ?? "member"}>
+        <Field
+          label="Role"
+          htmlFor="role"
+          hint={
+            isSelf
+              ? "Your own role is locked — ask another super_admin to change it."
+              : "Controls admin access"
+          }
+        >
+          <Select
+            id="role"
+            name="role"
+            defaultValue={member?.role ?? "member"}
+            disabled={isSelf}
+          >
             <option value="member">member</option>
             <option value="admin">admin</option>
-            <option value="super_admin">super_admin</option>
+            {canAssignSuperAdmin && (
+              <option value="super_admin">super_admin</option>
+            )}
           </Select>
         </Field>
       </div>
@@ -280,4 +342,3 @@ function MemberForm({
     </form>
   );
 }
-

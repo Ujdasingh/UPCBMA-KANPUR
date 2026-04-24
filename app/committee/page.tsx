@@ -1,5 +1,6 @@
 import { PublicShell } from "@/components/public/shell";
 import { createClient } from "@/lib/supabase/server";
+import { Avatar } from "@/components/public/avatar";
 import { Landmark } from "lucide-react";
 
 export const metadata = {
@@ -30,17 +31,24 @@ const categoryLabel: Record<string, string> = {
 export default async function CommitteePage() {
   const supabase = await createClient();
 
-  const { data: appointments } = await supabase
+  const { data: appointmentsRaw } = await supabase
     .from("committee_appointments")
     .select(
-      "id, area_name, term_start, term_end, display_order, notes, member:members(name, company, email, phone), role:committee_roles(key, name, category)",
+      "id, area_name, term_start, term_end, display_order, notes, member:members(name, company, email, phone, role), role:committee_roles(key, name, category)",
     )
     .eq("status", "active")
     .order("display_order", { ascending: true });
 
+  // Never expose super_admin accounts on the public site, even if one happens
+  // to be assigned to a committee appointment.
+  const appointments = (appointmentsRaw ?? []).filter((a) => {
+    const m = Array.isArray(a.member) ? a.member[0] : a.member;
+    return m?.role !== "super_admin";
+  });
+
   // Group by role.category
   const groups: Record<string, typeof appointments> = {};
-  for (const appt of appointments ?? []) {
+  for (const appt of appointments) {
     const role = Array.isArray(appt.role) ? appt.role[0] : appt.role;
     const cat = role?.category ?? "other";
     if (!groups[cat]) groups[cat] = [];
@@ -104,22 +112,27 @@ export default async function CommitteePage() {
                           key={c.id}
                           className="rounded-sm border border-border bg-bg p-5"
                         >
-                          <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
-                            {role?.name ?? "Committee member"}
-                            {c.area_name && (
-                              <span className="ml-1.5 text-muted/70">
-                                &middot; {c.area_name}
-                              </span>
-                            )}
-                          </div>
-                          <div className="mt-1.5 text-base font-semibold text-heading">
-                            {member?.name ?? "To be announced"}
-                          </div>
-                          {member?.company && (
-                            <div className="mt-0.5 text-sm text-muted">
-                              {member.company}
+                          <div className="flex items-start gap-3">
+                            <Avatar name={member?.name ?? "?"} size="md" />
+                            <div className="min-w-0">
+                              <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+                                {role?.name ?? "Committee member"}
+                                {c.area_name && (
+                                  <span className="ml-1.5 text-muted/70">
+                                    &middot; {c.area_name}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="mt-0.5 text-base font-semibold text-heading">
+                                {member?.name ?? "To be announced"}
+                              </div>
+                              {member?.company && (
+                                <div className="truncate text-sm text-muted">
+                                  {member.company}
+                                </div>
+                              )}
                             </div>
-                          )}
+                          </div>
 
                           {(c.term_start || c.term_end) && (
                             <div className="mt-4 border-t border-border pt-3 text-xs text-muted">

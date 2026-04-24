@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/admin/page-header";
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
+import { getAuthedAdmin, isSuperAdmin } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -10,11 +11,18 @@ type Stat = {
   hint?: string;
 };
 
-async function fetchStats(): Promise<Stat[]> {
-  const supabase = await createClient();
+async function fetchStats(opts: { canSeeSuperAdmin: boolean }): Promise<Stat[]> {
+  const supabase = createServiceClient();
 
-  // Run every count in parallel. `head: true, count: 'exact'` returns the count
-  // without actually pulling any rows — fast even on big tables.
+  // Base member count excludes super_admin rows unless caller is super_admin.
+  let membersQuery = supabase
+    .from("members")
+    .select("*", { head: true, count: "exact" })
+    .eq("active", true);
+  if (!opts.canSeeSuperAdmin) {
+    membersQuery = membersQuery.neq("role", "super_admin");
+  }
+
   const [
     membersActive,
     apptActive,
@@ -24,10 +32,7 @@ async function fetchStats(): Promise<Stat[]> {
     eventsUpcoming,
     labTestsActive,
   ] = await Promise.all([
-    supabase
-      .from("members")
-      .select("*", { head: true, count: "exact" })
-      .eq("active", true),
+    membersQuery,
     supabase
       .from("committee_appointments")
       .select("*", { head: true, count: "exact" })
@@ -91,7 +96,8 @@ async function fetchStats(): Promise<Stat[]> {
 }
 
 export default async function DashboardPage() {
-  const stats = await fetchStats();
+  const me = await getAuthedAdmin();
+  const stats = await fetchStats({ canSeeSuperAdmin: isSuperAdmin(me) });
 
   return (
     <>
