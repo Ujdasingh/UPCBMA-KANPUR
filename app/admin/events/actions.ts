@@ -1,6 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
+import { getAdminContext } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
 function parseForm(formData: FormData) {
@@ -16,15 +17,20 @@ function parseForm(formData: FormData) {
 }
 
 export async function createEvent(formData: FormData) {
-  const supabase = await createClient();
-  const { error } = await supabase.from("events").insert(parseForm(formData));
+  const ctx = await getAdminContext();
+  const svc = createServiceClient();
+  const chapter_id = ctx.activeChapterId;
+  const { error } = await svc
+    .from("events")
+    .insert({ ...parseForm(formData), chapter_id });
   if (error) throw new Error(error.message);
   revalidatePath("/admin/events");
 }
 
 export async function updateEvent(id: string, formData: FormData) {
-  const supabase = await createClient();
-  const { error } = await supabase
+  await getAdminContext();
+  const svc = createServiceClient();
+  const { error } = await svc
     .from("events")
     .update(parseForm(formData))
     .eq("id", id);
@@ -33,8 +39,9 @@ export async function updateEvent(id: string, formData: FormData) {
 }
 
 export async function deleteEvent(id: string) {
-  const supabase = await createClient();
-  const { error } = await supabase.from("events").delete().eq("id", id);
+  await getAdminContext();
+  const svc = createServiceClient();
+  const { error } = await svc.from("events").delete().eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/admin/events");
 }

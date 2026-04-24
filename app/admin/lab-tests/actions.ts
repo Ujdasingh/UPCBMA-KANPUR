@@ -1,6 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
+import { getAdminContext } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
 function parseForm(formData: FormData) {
@@ -26,23 +27,30 @@ function parseForm(formData: FormData) {
 }
 
 export async function createLabTest(formData: FormData) {
-  const supabase = await createClient();
+  const ctx = await getAdminContext();
+  if (!ctx.activeChapterId) {
+    throw new Error(
+      "Pick a chapter from the sidebar before creating a lab test.",
+    );
+  }
+  const svc = createServiceClient();
   const code = String(formData.get("code") ?? "").trim().toUpperCase();
   if (!code) throw new Error("Code is required");
 
   const payload = parseForm(formData);
-  const { error } = await supabase
+  const { error } = await svc
     .from("lab_tests_catalog")
-    .insert({ code, ...payload });
+    .insert({ code, chapter_id: ctx.activeChapterId, ...payload });
   if (error) throw new Error(error.message);
 
   revalidatePath("/admin/lab-tests");
 }
 
 export async function updateLabTest(code: string, formData: FormData) {
-  const supabase = await createClient();
+  await getAdminContext();
+  const svc = createServiceClient();
   const payload = parseForm(formData);
-  const { error } = await supabase
+  const { error } = await svc
     .from("lab_tests_catalog")
     .update(payload)
     .eq("code", code);
@@ -52,8 +60,9 @@ export async function updateLabTest(code: string, formData: FormData) {
 }
 
 export async function toggleLabTestActive(code: string, active: boolean) {
-  const supabase = await createClient();
-  const { error } = await supabase
+  await getAdminContext();
+  const svc = createServiceClient();
+  const { error } = await svc
     .from("lab_tests_catalog")
     .update({ active })
     .eq("code", code);
@@ -63,8 +72,9 @@ export async function toggleLabTestActive(code: string, active: boolean) {
 }
 
 export async function deleteLabTest(code: string) {
-  const supabase = await createClient();
-  const { error } = await supabase
+  await getAdminContext();
+  const svc = createServiceClient();
+  const { error } = await svc
     .from("lab_tests_catalog")
     .delete()
     .eq("code", code);

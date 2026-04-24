@@ -1,6 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
+import { getAdminContext } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
 function parseForm(formData: FormData) {
@@ -20,15 +21,21 @@ function parseForm(formData: FormData) {
 }
 
 export async function createNews(formData: FormData) {
-  const supabase = await createClient();
-  const { error } = await supabase.from("news").insert(parseForm(formData));
+  const ctx = await getAdminContext();
+  const svc = createServiceClient();
+  // If active chapter: post goes to that chapter. If All chapters: state-wide (null).
+  const chapter_id = ctx.activeChapterId;
+  const { error } = await svc
+    .from("news")
+    .insert({ ...parseForm(formData), chapter_id });
   if (error) throw new Error(error.message);
   revalidatePath("/admin/news");
 }
 
 export async function updateNews(id: string, formData: FormData) {
-  const supabase = await createClient();
-  const { error } = await supabase
+  await getAdminContext();
+  const svc = createServiceClient();
+  const { error } = await svc
     .from("news")
     .update(parseForm(formData))
     .eq("id", id);
@@ -37,8 +44,9 @@ export async function updateNews(id: string, formData: FormData) {
 }
 
 export async function deleteNews(id: string) {
-  const supabase = await createClient();
-  const { error } = await supabase.from("news").delete().eq("id", id);
+  await getAdminContext();
+  const svc = createServiceClient();
+  const { error } = await svc.from("news").delete().eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/admin/news");
 }

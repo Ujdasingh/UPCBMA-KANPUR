@@ -1,6 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
+import { getAdminContext } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
 function parseForm(formData: FormData) {
@@ -34,19 +35,24 @@ function parseForm(formData: FormData) {
 }
 
 export async function createAppointment(formData: FormData) {
-  const supabase = await createClient();
+  const ctx = await getAdminContext();
+  if (!ctx.activeChapterId) {
+    throw new Error("Pick a chapter from the sidebar first.");
+  }
+  const svc = createServiceClient();
   const payload = parseForm(formData);
-  const { error } = await supabase
+  const { error } = await svc
     .from("committee_appointments")
-    .insert(payload);
+    .insert({ ...payload, chapter_id: ctx.activeChapterId });
   if (error) throw new Error(error.message);
   revalidatePath("/admin/committee");
 }
 
 export async function updateAppointment(id: string, formData: FormData) {
-  const supabase = await createClient();
+  await getAdminContext();
+  const svc = createServiceClient();
   const payload = parseForm(formData);
-  const { error } = await supabase
+  const { error } = await svc
     .from("committee_appointments")
     .update(payload)
     .eq("id", id);
@@ -55,8 +61,9 @@ export async function updateAppointment(id: string, formData: FormData) {
 }
 
 export async function endAppointment(id: string) {
-  const supabase = await createClient();
-  const { error } = await supabase
+  await getAdminContext();
+  const svc = createServiceClient();
+  const { error } = await svc
     .from("committee_appointments")
     .update({ status: "ended" })
     .eq("id", id);
@@ -65,8 +72,9 @@ export async function endAppointment(id: string) {
 }
 
 export async function deleteAppointment(id: string) {
-  const supabase = await createClient();
-  const { error } = await supabase
+  await getAdminContext();
+  const svc = createServiceClient();
+  const { error } = await svc
     .from("committee_appointments")
     .delete()
     .eq("id", id);

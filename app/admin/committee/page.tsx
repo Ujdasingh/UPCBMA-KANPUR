@@ -1,29 +1,54 @@
 import { PageHeader } from "@/components/admin/page-header";
 import { createServiceClient } from "@/lib/supabase/server";
-import { getAuthedAdmin, isSuperAdmin } from "@/lib/auth";
+import { getAdminContext, isSuperAdmin } from "@/lib/auth";
+import { Building2 } from "lucide-react";
 import { CommitteeTable } from "./committee-table";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Committee — UPCBMA Admin" };
 
 export default async function CommitteePage() {
-  const me = await getAuthedAdmin();
+  const ctx = await getAdminContext();
   const supabase = createServiceClient();
 
-  // Build the member picker: regular admins never see super_admins in the
-  // list of people who can be appointed.
-  let membersQuery = supabase
-    .from("members")
-    .select("*")
-    .eq("active", true)
-    .order("name", { ascending: true });
-  if (!isSuperAdmin(me)) {
-    membersQuery = membersQuery.neq("role", "super_admin");
+  if (!ctx.activeChapterId) {
+    return (
+      <>
+        <PageHeader
+          title="Committee"
+          description="Each chapter keeps its own committee."
+        />
+        <div className="flex gap-3 rounded-sm border border-border bg-surface p-4">
+          <Building2
+            className="mt-0.5 h-5 w-5 shrink-0 text-muted"
+            strokeWidth={1.75}
+          />
+          <div className="text-sm text-text">
+            Pick a chapter from the sidebar to manage that chapter&rsquo;s
+            committee roles and appointments.
+          </div>
+        </div>
+      </>
+    );
   }
 
-  // Fetch appointments with joined role + member info. PostgREST lets us
-  // express this as `select="...,member:members(...),role:committee_roles(...)"`.
-  const [apptRes, membersRes, rolesRes] = await Promise.all([
+  // Member picker: members of THIS chapter (via chapter_memberships join).
+  // Regular admins never see super_admins.
+  const { data: chapterMembers } = await supabase
+    .from("chapter_memberships")
+    .select("member:members(*)")
+    .eq("chapter_id", ctx.activeChapterId);
+  let members = (chapterMembers ?? [])
+    .map((r) => (Array.isArray(r.member) ? r.member[0] : r.member))
+    .filter(Boolean) as Array<{ id: string; name: string; role: string; active?: boolean }>;
+  if (!isSuperAdmin(ctx.me)) {
+    members = members.filter((m) => m.role !== "super_admin");
+  }
+  members = members
+    .filter((m) => m.active !== false)
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const [apptRes, rolesRes] = await Promise.all([
     supabase
       .from("committee_appointments")
       .select(
@@ -31,31 +56,29 @@ export default async function CommitteePage() {
          member:members ( id, name, email, company, role ),
          role:committee_roles ( key, name, category )`,
       )
+      .eq("chapter_id", ctx.activeChapterId)
       .order("display_order", { ascending: true }),
-    membersQuery,
     supabase
       .from("committee_roles")
       .select("*")
+      .eq("chapter_id", ctx.activeChapterId)
       .order("sort_order", { ascending: true }),
   ]);
 
-  // Also hide any appointments whose member is a super_admin from non-super callers.
-  const filteredAppts = isSuperAdmin(me)
+  const filteredAppts = isSuperAdmin(ctx.me)
     ? apptRes.data ?? []
     : (apptRes.data ?? []).filter((a: { member?: { role?: string } | Array<{ role?: string }> }) => {
         const m = Array.isArray(a.member) ? a.member[0] : a.member;
         return m?.role !== "super_admin";
       });
 
-  if (apptRes.error || membersRes.error || rolesRes.error) {
+  if (apptRes.error || rolesRes.error) {
     return (
       <>
         <PageHeader title="Committee" />
         <p className="text-sm text-danger">
           Failed to load committee data:{" "}
-          {apptRes.error?.message ??
-            membersRes.error?.message ??
-            rolesRes.error?.message}
+          {apptRes.error?.message ?? rolesRes.error?.message}
         </p>
       </>
     );
@@ -64,12 +87,12 @@ export default async function CommitteePage() {
   return (
     <>
       <PageHeader
-        title="Committee"
-        description="Assign roles with fixed tenure. Ending an appointment preserves history."
+        title={`Committee · ${ctx.activeChapter!.name}`}
+        description="Assign roles with fixed tenure. Ending an appointment preserves history. Roles are defined per chapter in the 'Committee roles' page."
       />
       <CommitteeTable
         rows={filteredAppts as never}
-        members={membersRes.data ?? []}
+        members={members as never}
         roles={rolesRes.data ?? []}
       />
     </>
