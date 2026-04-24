@@ -247,13 +247,19 @@ function MemberForm({
             defaultValue={member?.name ?? ""}
           />
         </Field>
-        <Field label="Email" htmlFor="email" required>
+        <Field
+          label="Contact email"
+          htmlFor="email"
+          required
+          hint="Real inbox for newsletters & notifications. Different from any admin login email."
+        >
           <Input
             id="email"
             name="email"
             type="email"
             required
             defaultValue={member?.email ?? ""}
+            placeholder="name@example.com"
           />
         </Field>
       </div>
