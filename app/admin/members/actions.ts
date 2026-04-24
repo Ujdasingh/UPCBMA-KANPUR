@@ -133,8 +133,21 @@ export async function createMember(formData: FormData) {
         active: payload.active,
       });
       if (mErr) {
-        // Most likely cause: a duplicate (member_id, chapter_id) pair. Fine to ignore.
         console.warn("chapter_memberships insert:", mErr.message);
+      }
+
+      // Chapter-scoped admin: also grant an admin_scopes row for this chapter
+      // so they only see this chapter in their sidebar switcher.
+      // (super_admin is handled specially and never needs scope rows.)
+      if (hasLogin && payload.role === "admin") {
+        const { error: sErr } = await svc.from("admin_scopes").insert({
+          member_id: id,
+          chapter_id: chapterId,
+          granted_by: me.id,
+        });
+        if (sErr) {
+          console.warn("admin_scopes insert:", sErr.message);
+        }
       }
     }
 
