@@ -2,6 +2,7 @@
 
 import { createServiceClient } from "@/lib/supabase/server";
 import { getAuthedAdmin, isSuperAdmin } from "@/lib/auth";
+import { RESERVED_SLUGS } from "@/lib/chapter-loader";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -62,6 +63,11 @@ export async function createChapter(formData: FormData) {
     const payload = parseChapterForm(formData);
     if (!payload.name) redirectWithError("Chapter name is required.");
     if (!payload.slug) redirectWithError("Slug is required.");
+    if (RESERVED_SLUGS.has(payload.slug)) {
+      redirectWithError(
+        `Slug "${payload.slug}" is reserved. Pick a different slug.`,
+      );
+    }
     if (!payload.city) redirectWithError("City is required.");
 
     const svc = createServiceClient();
@@ -85,6 +91,11 @@ export async function updateChapter(id: string, formData: FormData) {
   try {
     await requireSuperAdmin();
     const payload = parseChapterForm(formData);
+    if (RESERVED_SLUGS.has(payload.slug)) {
+      redirectWithError(
+        `Slug "${payload.slug}" is reserved. Pick a different slug.`,
+      );
+    }
 
     const svc = createServiceClient();
     const { error } = await svc.from("chapters").update(payload).eq("id", id);
