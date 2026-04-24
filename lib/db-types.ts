@@ -36,7 +36,7 @@ export type Database = {
           member_since?: string;
           auth_user_id?: string | null;
         };
-        Update: Partial<Database["public"]["Tables"]["members"]["Insert"]>;
+        Update: Partial<Database["public"]["Tables"]["members"]["Row"]>;
       };
 
       committee_roles: {
@@ -58,9 +58,7 @@ export type Database = {
           Database["public"]["Tables"]["committee_roles"]["Row"],
           "created_at"
         > & { created_at?: string };
-        Update: Partial<
-          Database["public"]["Tables"]["committee_roles"]["Insert"]
-        >;
+        Update: Partial<Database["public"]["Tables"]["committee_roles"]["Row"]>;
       };
 
       committee_appointments: {
@@ -88,9 +86,7 @@ export type Database = {
           display_order?: number;
           notes?: string | null;
         };
-        Update: Partial<
-          Database["public"]["Tables"]["committee_appointments"]["Insert"]
-        >;
+        Update: Partial<Database["public"]["Tables"]["committee_appointments"]["Row"]>;
       };
 
       lab_tests_catalog: {
@@ -116,9 +112,7 @@ export type Database = {
           active?: boolean;
           sort_order?: number;
         };
-        Update: Partial<
-          Database["public"]["Tables"]["lab_tests_catalog"]["Insert"]
-        >;
+        Update: Partial<Database["public"]["Tables"]["lab_tests_catalog"]["Row"]>;
       };
 
       bookings: {
@@ -142,7 +136,7 @@ export type Database = {
         Insert: Partial<Database["public"]["Tables"]["bookings"]["Row"]> & {
           id: string;
         };
-        Update: Partial<Database["public"]["Tables"]["bookings"]["Insert"]>;
+        Update: Partial<Database["public"]["Tables"]["bookings"]["Row"]>;
       };
 
       news: {
@@ -161,7 +155,7 @@ export type Database = {
           body?: string | null;
           published_date?: string;
         };
-        Update: Partial<Database["public"]["Tables"]["news"]["Insert"]>;
+        Update: Partial<Database["public"]["Tables"]["news"]["Row"]>;
       };
 
       events: {
@@ -185,7 +179,7 @@ export type Database = {
           description?: string | null;
           recurring?: boolean;
         };
-        Update: Partial<Database["public"]["Tables"]["events"]["Insert"]>;
+        Update: Partial<Database["public"]["Tables"]["events"]["Row"]>;
       };
 
       contact_messages: {
@@ -212,9 +206,7 @@ export type Database = {
           ip_address?: string | null;
           user_agent?: string | null;
         };
-        Update: Partial<
-          Database["public"]["Tables"]["contact_messages"]["Insert"]
-        >;
+        Update: Partial<Database["public"]["Tables"]["contact_messages"]["Row"]>;
       };
 
       office_info: {
@@ -241,9 +233,7 @@ export type Database = {
           lab_contact_role?: string | null;
           lab_billing_model?: string | null;
         };
-        Update: Partial<
-          Database["public"]["Tables"]["office_info"]["Insert"]
-        >;
+        Update: Partial<Database["public"]["Tables"]["office_info"]["Row"]>;
       };
 
       documents: {
@@ -262,7 +252,7 @@ export type Database = {
           title: string;
           storage_path: string;
         };
-        Update: Partial<Database["public"]["Tables"]["documents"]["Insert"]>;
+        Update: Partial<Database["public"]["Tables"]["documents"]["Row"]>;
       };
 
       gallery: {
@@ -279,7 +269,7 @@ export type Database = {
         Insert: Partial<Database["public"]["Tables"]["gallery"]["Row"]> & {
           storage_path: string;
         };
-        Update: Partial<Database["public"]["Tables"]["gallery"]["Insert"]>;
+        Update: Partial<Database["public"]["Tables"]["gallery"]["Row"]>;
       };
     };
   };
