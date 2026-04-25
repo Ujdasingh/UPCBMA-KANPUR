@@ -17,6 +17,11 @@ export const metadata: Metadata = {
   },
   description:
     "The state body for corrugated box manufacturers across Uttar Pradesh, with regional chapters in Kanpur, Lucknow, Agra, Meerut, Ghaziabad, and Varanasi.",
+  icons: {
+    icon: "/upcbma-logo.svg",
+    shortcut: "/upcbma-logo.svg",
+    apple: "/upcbma-logo.svg",
+  },
 };
 
 export default function RootLayout({

@@ -5,7 +5,8 @@ import type { Chapter } from "@/lib/chapters";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Menu, X, ArrowLeft } from "lucide-react";
+import { Menu, X, ArrowLeft, LogIn } from "lucide-react";
+import { Logo } from "./logo";
 
 export function ChapterNav({ chapter }: { chapter: Chapter }) {
   const base = `/${chapter.slug}`;
@@ -34,30 +35,47 @@ export function ChapterNav({ chapter }: { chapter: Chapter }) {
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 w-full border-b bg-bg/90 backdrop-blur-sm transition-colors",
-        scrolled ? "border-border" : "border-transparent",
+        "sticky top-0 z-40 w-full bg-bg/95 backdrop-blur-sm transition-shadow",
+        scrolled
+          ? "border-b border-border shadow-sm"
+          : "border-b border-transparent",
       )}
     >
-      {/* Upper strip — UPCBMA parent link */}
+      {/* Top utility strip — back link + chapter directory + sign-in */}
       <div className="border-b border-border/60 bg-surface">
-        <div className="mx-auto flex h-8 max-w-6xl items-center justify-between px-6 text-xs text-muted">
+        <div className="mx-auto flex h-9 max-w-6xl items-center justify-between gap-4 px-6 text-xs">
           <Link href="/" className="inline-flex items-center gap-1 text-muted hover:text-heading no-underline">
             <ArrowLeft className="h-3 w-3" strokeWidth={2} />
             UPCBMA &mdash; state site
           </Link>
-          <Link href="/chapters" className="hidden sm:inline text-muted hover:text-heading no-underline">
-            View all chapters
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/chapters" className="hidden sm:inline text-muted hover:text-heading no-underline">
+              All chapters
+            </Link>
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-1 text-muted hover:text-heading no-underline"
+            >
+              <LogIn className="h-3 w-3" strokeWidth={2} />
+              Sign in
+            </Link>
+          </div>
         </div>
       </div>
 
+      {/* Slim accent strip — anchors the chapter to the parent UPCBMA brand */}
+      <div className="h-[3px] w-full bg-gradient-to-r from-[#dca135] via-[#0d6b3e] to-[#dca135]" />
+
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-        <Link href={base} className="group no-underline">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted group-hover:text-heading transition-colors">
-            {chapter.state}
-          </div>
-          <div className="-mt-0.5 text-sm font-semibold text-heading">
-            {chapter.name}
+        <Link href={base} className="group inline-flex items-center gap-2.5 no-underline">
+          <Logo size={32} />
+          <div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted group-hover:text-heading">
+              {chapter.state}
+            </div>
+            <div className="-mt-0.5 text-sm font-semibold text-heading">
+              {chapter.name}
+            </div>
           </div>
         </Link>
 

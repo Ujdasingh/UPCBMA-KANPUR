@@ -1,6 +1,7 @@
 import { Sidebar } from "@/components/admin/sidebar";
 import { SignOutButton } from "@/components/admin/signout-button";
 import { ChapterSwitcher } from "@/components/admin/chapter-switcher";
+import { Logo } from "@/components/public/logo";
 import { getAdminContext } from "@/lib/auth";
 import { stopImpersonation } from "./super/actions";
 import Link from "next/link";
@@ -16,12 +17,15 @@ export default async function AdminLayout({
   return (
     <div className="grid min-h-screen grid-cols-[260px_1fr]">
       <aside className="flex flex-col border-r border-border bg-bg p-4">
-        <Link href="/admin" className="mb-6 block no-underline">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-            UPCBMA
-          </div>
-          <div className="mt-0.5 text-sm font-semibold text-heading">
-            Admin
+        <Link href="/admin" className="mb-6 inline-flex items-center gap-2.5 no-underline">
+          <Logo size={32} />
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+              UPCBMA
+            </div>
+            <div className="mt-0.5 text-sm font-semibold text-heading">
+              Admin
+            </div>
           </div>
         </Link>
 

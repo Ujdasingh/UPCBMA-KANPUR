@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Logo } from "@/components/public/logo";
 import { signIn } from "./actions";
 
 export const metadata = {
@@ -18,8 +19,9 @@ export default async function LoginPage({
   return (
     <main className="grid min-h-screen place-items-center bg-surface px-6">
       <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+        <div className="mb-8 flex flex-col items-center text-center">
+          <Logo size={48} />
+          <div className="mt-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
             UPCBMA · Member portal
           </div>
           <h1 className="mt-2 !text-2xl">Sign in</h1>

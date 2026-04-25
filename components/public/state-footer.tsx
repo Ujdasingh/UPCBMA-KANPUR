@@ -1,16 +1,25 @@
 import Link from "next/link";
+import { Logo } from "./logo";
 
 export function StateFooter() {
   const year = new Date().getFullYear();
   return (
-    <footer className="mt-20 border-t border-border bg-surface">
+    <footer className="mt-20 bg-surface">
+      {/* Top accent stripe — mirrors the header for symmetry */}
+      <div className="h-[3px] w-full bg-gradient-to-r from-[#dca135] via-[#0d6b3e] to-[#dca135]" />
+
       <div className="mx-auto max-w-6xl px-6 py-14">
         <div className="grid gap-10 md:grid-cols-3">
           <div>
-            <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
-              Uttar Pradesh
+            <div className="flex items-center gap-2.5">
+              <Logo size={36} />
+              <div>
+                <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
+                  Uttar Pradesh
+                </div>
+                <div className="mt-0.5 text-base font-semibold text-heading">UPCBMA</div>
+              </div>
             </div>
-            <div className="mt-0.5 text-base font-semibold text-heading">UPCBMA</div>
             <p className="mt-4 max-w-sm text-sm text-muted">
               The Uttar Pradesh Corrugated Box Manufacturers&rsquo; Association
               &mdash; state body representing chapters across UP.

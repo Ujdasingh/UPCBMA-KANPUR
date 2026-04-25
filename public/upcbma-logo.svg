@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 220" role="img" aria-label="UPCBMA logo">
+  <!-- Saffron / mustard background -->
+  <rect x="0" y="0" width="200" height="220" fill="#dca135"/>
+  <!-- Inner white border -->
+  <rect x="5" y="5" width="190" height="210" fill="#dca135" stroke="#ffffff" stroke-width="3"/>
+
+  <!-- White inner panel (top portion is mountains, mid is corrugated, bottom is CBMA) -->
+  <!-- Mountains: three peaks filling top ~60% in white -->
+  <path d="M 12 130 L 50 60 L 70 95 L 95 40 L 130 95 L 165 70 L 188 130 Z" fill="#ffffff"/>
+  <!-- Snow detail / peak highlights — slightly off-white wedges to give depth -->
+  <path d="M 50 60 L 60 78 L 56 78 L 50 88 L 47 78 Z" fill="#ffffff"/>
+  <path d="M 95 40 L 105 60 L 99 60 L 95 70 L 91 60 Z" fill="#ffffff"/>
+
+  <!-- Two pine trees on the left -->
+  <g fill="#0d6b3e">
+    <!-- Big tree -->
+    <polygon points="38,118 60,118 49,100 56,100 49,82 56,82 49,68 42,82 49,82 42,100 49,100 38,118"/>
+    <rect x="46" y="118" width="6" height="8"/>
+    <!-- Smaller tree behind -->
+    <polygon points="62,118 80,118 71,102 76,102 71,86 76,86 71,72 66,86 71,86 66,102 71,102 62,118"/>
+    <rect x="69" y="118" width="4" height="6"/>
+  </g>
+
+  <!-- "UP" wordmark, top-right -->
+  <text x="135" y="105" font-family="Helvetica, Arial, sans-serif" font-weight="900" font-size="44" fill="#111111" text-anchor="middle">UP</text>
+
+  <!-- Corrugated bands (two zigzag stripes) -->
+  <g stroke="#dca135" stroke-width="3" fill="none">
+    <polyline points="10,138 22,128 34,138 46,128 58,138 70,128 82,138 94,128 106,138 118,128 130,138 142,128 154,138 166,128 178,138 190,128"/>
+    <polyline points="10,150 22,140 34,150 46,140 58,150 70,140 82,150 94,140 106,150 118,140 130,150 142,140 154,150 166,140 178,150 190,140"/>
+  </g>
+
+  <!-- "CBMA" wordmark, bottom -->
+  <text x="100" y="200" font-family="Helvetica, Arial, sans-serif" font-weight="900" font-size="44" fill="#111111" text-anchor="middle" letter-spacing="-1">CBMA</text>
+</svg>
