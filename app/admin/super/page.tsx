@@ -9,6 +9,7 @@ import {
   ScrollText,
   Shield,
   Users,
+  Settings,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -16,10 +17,16 @@ export const metadata = { title: "Super admin — UPCBMA" };
 
 const tools = [
   {
+    href: "/admin/super/site-settings",
+    Icon: Settings,
+    title: "Site settings",
+    body: "State logo, tagline, secretariat contact details. Affects every state-level page.",
+  },
+  {
     href: "/admin/chapters",
     Icon: Network,
     title: "Chapters",
-    body: "Create, edit, or retire chapters. Set logos and accent colours.",
+    body: "Create, edit, or retire chapters. Set per-chapter logos and accent colours.",
   },
   {
     href: "/admin/super/admin-scopes",

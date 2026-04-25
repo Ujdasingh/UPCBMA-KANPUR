@@ -16,7 +16,7 @@ const links = [
   { href: "/contact", label: "Contact" },
 ];
 
-export function StateNav() {
+export function StateNav({ logoSrc }: { logoSrc?: string }) {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -44,7 +44,7 @@ export function StateNav() {
 
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
         <Link href="/" className="group inline-flex items-center gap-2.5 no-underline">
-          <Logo size={32} />
+          <Logo size={32} src={logoSrc} />
           <div>
             <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted group-hover:text-heading">
               Uttar Pradesh

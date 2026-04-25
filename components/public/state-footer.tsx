@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Logo } from "./logo";
 
-export function StateFooter() {
+export function StateFooter({ logoSrc }: { logoSrc?: string }) {
   const year = new Date().getFullYear();
   return (
     <footer className="mt-20 bg-surface">
@@ -12,7 +12,7 @@ export function StateFooter() {
         <div className="grid gap-10 md:grid-cols-3">
           <div>
             <div className="flex items-center gap-2.5">
-              <Logo size={36} />
+              <Logo size={36} src={logoSrc} />
               <div>
                 <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
                   Uttar Pradesh

@@ -4,7 +4,13 @@ import Link from "next/link";
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
 import { Logo } from "./logo";
 
-export async function ChapterFooter({ chapter }: { chapter: Chapter }) {
+export async function ChapterFooter({
+  chapter,
+  logoSrc,
+}: {
+  chapter: Chapter;
+  logoSrc?: string;
+}) {
   const svc = createServiceClient();
   const { data: office } = await svc
     .from("office_info")
@@ -22,7 +28,7 @@ export async function ChapterFooter({ chapter }: { chapter: Chapter }) {
         <div className="grid gap-10 md:grid-cols-4">
           <div className="md:col-span-2">
             <div className="flex items-center gap-2.5">
-              <Logo size={36} />
+              <Logo size={36} src={logoSrc} />
               <div>
                 <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
                   UPCBMA

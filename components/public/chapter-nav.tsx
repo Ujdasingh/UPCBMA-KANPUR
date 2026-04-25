@@ -8,7 +8,13 @@ import { useEffect, useState } from "react";
 import { Menu, X, ArrowLeft, LogIn } from "lucide-react";
 import { Logo } from "./logo";
 
-export function ChapterNav({ chapter }: { chapter: Chapter }) {
+export function ChapterNav({
+  chapter,
+  logoSrc,
+}: {
+  chapter: Chapter;
+  logoSrc?: string;
+}) {
   const base = `/${chapter.slug}`;
   const links = [
     { href: base, label: "Home" },
@@ -68,7 +74,7 @@ export function ChapterNav({ chapter }: { chapter: Chapter }) {
 
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
         <Link href={base} className="group inline-flex items-center gap-2.5 no-underline">
-          <Logo size={32} />
+          <Logo size={32} src={logoSrc} />
           <div>
             <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted group-hover:text-heading">
               {chapter.state}
