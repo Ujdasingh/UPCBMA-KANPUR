@@ -1,9 +1,35 @@
 "use server";
 
 import { createServiceClient } from "@/lib/supabase/server";
-import { assertCanMutateMember, getAuthedAdmin } from "@/lib/auth";
+import {
+  assertCanMutateMember,
+  getAuthedAdmin,
+  resolveAuthIdentity,
+} from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+
+/** Write an audit row capturing real actor + (when impersonating) effective. */
+async function audit(opts: {
+  action: string;
+  target_id?: string | null;
+  diff?: Record<string, unknown> | null;
+}) {
+  try {
+    const { real, effective, isImpersonating } = await resolveAuthIdentity();
+    const svc = createServiceClient();
+    await svc.from("admin_audit_log").insert({
+      actor_id: real.id,
+      acting_as_id: isImpersonating ? effective.id : null,
+      action: opts.action,
+      target_table: "members",
+      target_id: opts.target_id ?? null,
+      diff: opts.diff ?? null,
+    });
+  } catch {
+    // Audit failures must not block the action.
+  }
+}
 
 // -------- Error handling helpers --------
 
@@ -151,6 +177,17 @@ export async function createMember(formData: FormData) {
       }
     }
 
+    await audit({
+      action: hasLogin ? "create_member_with_login" : "create_member",
+      target_id: id,
+      diff: {
+        name: payload.name,
+        role: payload.role,
+        chapter_id: chapterId,
+        login_email: hasLogin ? loginEmail : null,
+      },
+    });
+
     revalidatePath("/admin/members");
     redirectOK("Member added.");
   } catch (e) {
@@ -175,6 +212,12 @@ export async function updateMember(id: string, formData: FormData) {
     const svc = createServiceClient();
     const { error } = await svc.from("members").update(payload).eq("id", id);
     if (error) redirectWithError(friendlyError(error.message));
+
+    await audit({
+      action: "update_member",
+      target_id: id,
+      diff: { name: payload.name, role: payload.role, email: payload.email },
+    });
 
     revalidatePath("/admin/members");
     redirectOK("Member updated.");
@@ -230,6 +273,12 @@ export async function deleteMember(id: string) {
       await svc.auth.admin.deleteUser(target.auth_user_id).catch(() => {});
     }
 
+    await audit({
+      action: "delete_member",
+      target_id: id,
+      diff: { had_login: !!target?.auth_user_id },
+    });
+
     revalidatePath("/admin/members");
     redirectOK("Member deleted.");
   } catch (e) {
@@ -269,4 +318,6 @@ export async function resetMemberPassword(
     password: newPassword,
   });
   if (error) throw new Error(friendlyError(error.message));
+
+  await audit({ action: "reset_member_password", target_id: memberId });
 }

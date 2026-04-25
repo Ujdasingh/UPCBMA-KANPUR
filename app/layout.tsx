@@ -10,9 +10,13 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "UPCBMA Kanpur",
+  metadataBase: new URL("https://upcbma.com"),
+  title: {
+    default: "UPCBMA — Uttar Pradesh Corrugated Box Manufacturers' Association",
+    template: "%s — UPCBMA",
+  },
   description:
-    "Uttar Pradesh Corrugated Box Manufacturers Association — Kanpur Chapter.",
+    "The state body for corrugated box manufacturers across Uttar Pradesh, with regional chapters in Kanpur, Lucknow, Agra, Meerut, Ghaziabad, and Varanasi.",
 };
 
 export default function RootLayout({
