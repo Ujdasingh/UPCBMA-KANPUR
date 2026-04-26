@@ -50,7 +50,7 @@ export default async function ChapterContact({
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-14 px-6 py-14 md:grid-cols-[1fr_1.6fr]">
+      <section className="mx-auto grid max-w-7xl gap-14 px-6 py-14 md:grid-cols-[1fr_1.6fr]">
         <div className="space-y-8">
           <div>
             <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">Chapter office</div>

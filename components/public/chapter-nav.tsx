@@ -117,7 +117,7 @@ export function ChapterNav({
 
       {mobileOpen && (
         <nav className="md:hidden border-t border-border bg-bg">
-          <div className="mx-auto flex max-w-6xl flex-col px-4 py-3">
+          <div className="mx-auto flex max-w-7xl flex-col px-4 py-3">
             {links.map(({ href, label }) => {
               const active =
                 href === base ? pathname === base : pathname.startsWith(href);

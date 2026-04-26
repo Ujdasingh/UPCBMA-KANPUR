@@ -81,7 +81,7 @@ export default async function ChapterLab({
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 py-16">
+      <section className="mx-auto max-w-7xl px-6 py-16">
         {categoryKeys.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <FlaskConical className="h-8 w-8 text-muted" strokeWidth={1.5} />

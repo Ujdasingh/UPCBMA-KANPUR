@@ -24,7 +24,7 @@ export async function ChapterFooter({
   return (
     <footer className="mt-20 bg-surface">
       <div className="h-[3px] w-full bg-gradient-to-r from-[#dca135] via-[#0d6b3e] to-[#dca135]" />
-      <div className="mx-auto max-w-6xl px-6 py-14">
+      <div className="mx-auto max-w-7xl px-6 py-14">
         <div className="grid gap-10 md:grid-cols-4">
           <div className="md:col-span-2">
             <div className="flex items-center gap-2.5">

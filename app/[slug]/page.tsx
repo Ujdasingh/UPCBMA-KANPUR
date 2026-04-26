@@ -108,7 +108,7 @@ export default async function ChapterHome({
   return (
     <ChapterShell chapter={chapter}>
       <section className="border-b border-border bg-surface">
-        <div className="mx-auto max-w-6xl px-6 py-16 md:py-24">
+        <div className="mx-auto max-w-7xl px-6 py-16 md:py-24">
           <div className="max-w-3xl">
             <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
               {chapter.state} &middot; {chapter.name}
@@ -157,7 +157,7 @@ export default async function ChapterHome({
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 py-20">
+      <section className="mx-auto max-w-7xl px-6 py-20">
         <div>
           <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
             What we do
@@ -208,7 +208,7 @@ export default async function ChapterHome({
       </section>
 
       <section className="border-t border-border bg-surface">
-        <div className="mx-auto grid max-w-6xl gap-12 px-6 py-20 md:grid-cols-2">
+        <div className="mx-auto grid max-w-7xl gap-12 px-6 py-20 md:grid-cols-2">
           <div>
             <div className="flex items-baseline justify-between">
               <div>
@@ -280,7 +280,7 @@ export default async function ChapterHome({
       </section>
 
       {featured.length > 0 && (
-        <section className="mx-auto max-w-6xl px-6 py-20">
+        <section className="mx-auto max-w-7xl px-6 py-20">
           <div className="flex items-baseline justify-between">
             <div>
               <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">Leadership</div>
@@ -319,7 +319,7 @@ export default async function ChapterHome({
       )}
 
       <section className="border-t border-border">
-        <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 px-6 py-16 md:flex-row md:items-center">
+        <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-6 px-6 py-16 md:flex-row md:items-center">
           <div className="max-w-2xl">
             <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">Lab services</div>
             <h2 className="mt-2 !text-2xl !tracking-tight">

@@ -19,7 +19,7 @@ export function StateFooter({ logoSrc }: { logoSrc?: string }) {
       {/* Brand accent stripe — mirrors the header */}
       <div className="h-[3px] w-full bg-gradient-to-r from-[#dca135] via-[#0d6b3e] to-[#dca135]" />
 
-      <div className="mx-auto max-w-6xl px-6 py-14">
+      <div className="mx-auto max-w-7xl px-6 py-14">
         {/* Top — brand + sitemap */}
         <div className="grid gap-10 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
           <div>

@@ -47,7 +47,7 @@ export default async function StateHome() {
     <StateShell>
       {/* ====== HERO ====== */}
       <section className="border-b border-border bg-surface">
-        <div className="mx-auto max-w-6xl px-6 py-16 md:py-24">
+        <div className="mx-auto max-w-7xl px-6 py-16 md:py-24">
           <div className="grid items-center gap-12 md:grid-cols-[1.2fr_1fr]">
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
@@ -102,7 +102,7 @@ export default async function StateHome() {
 
       {/* ====== STATS STRIP ====== */}
       <section className="border-b border-border">
-        <div className="mx-auto max-w-6xl px-6 py-12">
+        <div className="mx-auto max-w-7xl px-6 py-12">
           <dl className="grid grid-cols-2 gap-x-8 gap-y-8 md:grid-cols-4">
             <Stat label="Member firms" value={totalMembers != null ? String(totalMembers) : "—"} hint="Active across all chapters" />
             <Stat label="Chapters" value={totalChapters != null ? String(totalChapters) : "—"} hint="Cities and growing" />
@@ -113,7 +113,7 @@ export default async function StateHome() {
       </section>
 
       {/* ====== ABOUT TEASER ====== */}
-      <section className="mx-auto max-w-6xl px-6 py-20">
+      <section className="mx-auto max-w-7xl px-6 py-20">
         <div className="grid gap-10 md:grid-cols-[1fr_1.5fr]">
           <div>
             <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">About UPCBMA</div>
@@ -148,7 +148,7 @@ export default async function StateHome() {
       {/* ====== ACTIVE AGENDAS ====== */}
       {activeAgendas.length > 0 && (
         <section className="border-y border-border bg-surface">
-          <div className="mx-auto max-w-6xl px-6 py-16">
+          <div className="mx-auto max-w-7xl px-6 py-16">
             <div className="flex items-baseline justify-between">
               <div>
                 <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">Live agendas</div>
@@ -172,7 +172,7 @@ export default async function StateHome() {
       )}
 
       {/* ====== CHAPTERS ====== */}
-      <section className="mx-auto max-w-6xl px-6 py-20">
+      <section className="mx-auto max-w-7xl px-6 py-20">
         <div className="flex items-baseline justify-between">
           <div>
             <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">Chapters</div>
@@ -203,7 +203,7 @@ export default async function StateHome() {
 
       {/* ====== EVENTS / GALLERY ====== */}
       <section className="border-y border-border bg-surface">
-        <div className="mx-auto max-w-6xl px-6 py-16">
+        <div className="mx-auto max-w-7xl px-6 py-16">
           <div className="flex items-baseline justify-between">
             <div>
               <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">Events</div>
@@ -261,7 +261,7 @@ export default async function StateHome() {
       </section>
 
       {/* ====== NEWS ====== */}
-      <section className="mx-auto max-w-6xl px-6 py-20">
+      <section className="mx-auto max-w-7xl px-6 py-20">
         <div className="flex items-baseline justify-between">
           <div>
             <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">News</div>

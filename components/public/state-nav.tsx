@@ -98,7 +98,7 @@ export function StateNav({ logoSrc }: { logoSrc?: string }) {
 
       {open && (
         <nav className="md:hidden border-t border-border bg-bg">
-          <div className="mx-auto flex max-w-6xl flex-col px-4 py-3">
+          <div className="mx-auto flex max-w-7xl flex-col px-4 py-3">
             {links.map(({ href, label }) => {
               const active =
                 href === "/" ? pathname === "/" : pathname.startsWith(href);

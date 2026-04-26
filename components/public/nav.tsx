@@ -38,7 +38,7 @@ export function PublicNav() {
         scrolled ? "border-border" : "border-transparent",
       )}
     >
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
         {/* Wordmark */}
         <Link href="/" className="group no-underline">
           <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted group-hover:text-heading transition-colors">
@@ -95,7 +95,7 @@ export function PublicNav() {
       {/* Mobile menu */}
       {mobileOpen && (
         <nav className="md:hidden border-t border-border bg-bg">
-          <div className="mx-auto flex max-w-6xl flex-col px-4 py-3">
+          <div className="mx-auto flex max-w-7xl flex-col px-4 py-3">
             {links.map(({ href, label }) => {
               const active =
                 href === "/" ? pathname === "/" : pathname.startsWith(href);
