@@ -15,6 +15,7 @@ import {
   Crown,
   Tags,
   Shield,
+  Megaphone,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -33,6 +34,7 @@ const items: Item[] = [
   { href: "/admin/committee", label: "Committee", Icon: Landmark },
   { href: "/admin/committee-roles", label: "Committee roles", Icon: Crown },
   { href: "/admin/member-categories", label: "Member categories", Icon: Tags },
+  { href: "/admin/agendas", label: "Agendas", Icon: Megaphone },
   { href: "/admin/lab-tests", label: "Lab tests", Icon: FlaskConical },
   { href: "/admin/bookings", label: "Bookings", Icon: ClipboardList },
   { href: "/admin/news", label: "News", Icon: Newspaper },

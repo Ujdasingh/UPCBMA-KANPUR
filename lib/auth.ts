@@ -217,3 +217,73 @@ export function canActInChapter(ctx: AdminContext, chapterId: string): boolean {
   if (ctx.scopes.some((s) => s.chapter_id === null)) return true;
   return ctx.scopes.some((s) => s.chapter_id === chapterId);
 }
+
+// -------- Member-facing helpers (any logged-in user, not just admins) --------
+
+export type AuthedMemberLite = AuthedMember & { photo_url?: string | null };
+
+/**
+ * Resolve the logged-in auth user to their `members` row. Unlike
+ * getAuthedAdmin, this DOES NOT redirect — returns null when there's no
+ * session, no member row, or only a non-admin role. Use for member-facing
+ * actions (proposing agendas, commenting) where any logged-in member counts.
+ */
+export async function getAuthedMember(): Promise<AuthedMemberLite | null> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+  const svc = createServiceClient();
+  const { data: member } = await svc
+    .from("members")
+    .select("id, name, email, role, auth_user_id, photo_url")
+    .eq("auth_user_id", user.id)
+    .maybeSingle();
+  return (member as AuthedMemberLite) ?? null;
+}
+
+/**
+ * Can this member approve an agenda for the given chapter?
+ *   - super_admin: always
+ *   - admin with state-wide scope (admin_scopes.chapter_id IS NULL): always
+ *   - admin with this chapter scoped: yes
+ *   - explicit grant in agenda_approvers (chapter or state): yes
+ */
+export async function canApproveAgenda(
+  member: AuthedMember,
+  agendaChapterId: string | null,
+): Promise<boolean> {
+  if (member.role === "super_admin") return true;
+  const svc = createServiceClient();
+
+  if (member.role === "admin") {
+    const { data: scopes } = await svc
+      .from("admin_scopes")
+      .select("chapter_id")
+      .eq("member_id", member.id);
+    const hasStateScope = (scopes ?? []).some((s) => s.chapter_id === null);
+    if (hasStateScope) return true;
+    if (
+      agendaChapterId &&
+      (scopes ?? []).some((s) => s.chapter_id === agendaChapterId)
+    ) {
+      return true;
+    }
+  }
+
+  // Explicit agenda-approver grants for non-admins (or extra scopes for admins).
+  const { data: explicit } = await svc
+    .from("agenda_approvers")
+    .select("chapter_id")
+    .eq("member_id", member.id);
+  const hasStateApprover = (explicit ?? []).some((s) => s.chapter_id === null);
+  if (hasStateApprover) return true;
+  if (
+    agendaChapterId &&
+    (explicit ?? []).some((s) => s.chapter_id === agendaChapterId)
+  ) {
+    return true;
+  }
+  return false;
+}
