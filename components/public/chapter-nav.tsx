@@ -50,7 +50,7 @@ export function ChapterNav({
     >
       {/* Top utility strip — back link + chapter directory + sign-in */}
       <div className="border-b border-border/60 bg-surface">
-        <div className="mx-auto flex h-9 max-w-6xl items-center justify-between gap-4 px-6 text-xs">
+        <div className="mx-auto flex h-9 max-w-7xl items-center justify-between gap-4 px-6 lg:px-8 text-xs">
           <Link href="/" className="inline-flex items-center gap-1 text-muted hover:text-heading no-underline">
             <ArrowLeft className="h-3 w-3" strokeWidth={2} />
             UPCBMA &mdash; state site
@@ -67,14 +67,14 @@ export function ChapterNav({
       {/* Slim accent strip — anchors the chapter to the parent UPCBMA brand */}
       <div className="h-[3px] w-full bg-gradient-to-r from-[#dca135] via-[#0d6b3e] to-[#dca135]" />
 
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-        <Link href={base} className="group inline-flex items-center gap-2.5 no-underline">
-          <Logo size={32} src={logoSrc} />
+      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
+        <Link href={base} className="group inline-flex items-center gap-3 no-underline">
+          <Logo size={64} src={logoSrc} />
           <div>
             <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted group-hover:text-heading">
               {chapter.state}
             </div>
-            <div className="-mt-0.5 text-sm font-semibold text-heading">
+            <div className="-mt-0.5 text-base font-semibold text-heading">
               {chapter.name}
             </div>
           </div>
