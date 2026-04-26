@@ -4,13 +4,15 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Menu, X, LogIn } from "lucide-react";
+import { Menu, X, UserPlus } from "lucide-react";
 import { Logo } from "./logo";
+import { LoginButton } from "./login-dialog";
 
 const links = [
   { href: "/", label: "Home" },
   { href: "/about", label: "About" },
   { href: "/chapters", label: "Chapters" },
+  { href: "/agendas", label: "Agendas" },
   { href: "/news", label: "News" },
   { href: "/events", label: "Events" },
   { href: "/contact", label: "Contact" },
@@ -74,18 +76,13 @@ export function StateNav({ logoSrc }: { logoSrc?: string }) {
               </Link>
             );
           })}
+          <LoginButton className="ml-3" />
           <Link
-            href="/login"
-            className="ml-3 inline-flex h-9 items-center gap-1.5 rounded-sm border border-border px-3 text-sm font-medium text-heading no-underline hover:border-heading hover:bg-surface"
+            href="/join"
+            className="ml-1 inline-flex h-9 items-center gap-1.5 rounded-sm bg-heading px-4 text-sm font-medium text-white no-underline hover:bg-hover"
           >
-            <LogIn className="h-3.5 w-3.5" strokeWidth={2} />
-            Sign in
-          </Link>
-          <Link
-            href="/chapters"
-            className="ml-1 inline-flex h-9 items-center rounded-sm bg-heading px-4 text-sm font-medium text-white no-underline hover:bg-hover"
-          >
-            Find your chapter
+            <UserPlus className="h-3.5 w-3.5" strokeWidth={2} />
+            Join UPCBMA
           </Link>
         </nav>
 
@@ -118,18 +115,13 @@ export function StateNav({ logoSrc }: { logoSrc?: string }) {
                 </Link>
               );
             })}
+            <div className="mt-2"><LoginButton className="w-full" /></div>
             <Link
-              href="/login"
-              className="mt-2 inline-flex h-10 items-center justify-center gap-1.5 rounded-sm border border-border px-3 text-sm font-medium text-heading no-underline"
+              href="/join"
+              className="mt-2 inline-flex h-10 items-center justify-center gap-1.5 rounded-sm bg-heading px-4 text-sm font-medium text-white no-underline"
             >
-              <LogIn className="h-3.5 w-3.5" strokeWidth={2} />
-              Sign in
-            </Link>
-            <Link
-              href="/chapters"
-              className="mt-2 inline-flex h-10 items-center justify-center rounded-sm bg-heading px-4 text-sm font-medium text-white no-underline"
-            >
-              Find your chapter
+              <UserPlus className="h-3.5 w-3.5" strokeWidth={2} />
+              Join UPCBMA
             </Link>
           </div>
         </nav>

@@ -16,6 +16,7 @@ import {
   Tags,
   Shield,
   Megaphone,
+  UserPlus,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -40,6 +41,7 @@ const items: Item[] = [
   { href: "/admin/news", label: "News", Icon: Newspaper },
   { href: "/admin/events", label: "Events", Icon: CalendarDays },
   { href: "/admin/messages", label: "Messages", Icon: Mail },
+  { href: "/admin/membership-requests", label: "Join requests", Icon: UserPlus },
   { href: "/admin/office-info", label: "Office info", Icon: Building2 },
   { href: "/admin/chapters", label: "Chapters", Icon: Network, superOnly: true },
   { href: "/admin/super", label: "Super tools", Icon: Shield, superOnly: true },

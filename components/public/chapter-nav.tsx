@@ -5,8 +5,9 @@ import type { Chapter } from "@/lib/chapters";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Menu, X, ArrowLeft, LogIn } from "lucide-react";
+import { Menu, X, ArrowLeft } from "lucide-react";
 import { Logo } from "./logo";
+import { LoginButton } from "./login-dialog";
 
 export function ChapterNav({
   chapter,
@@ -58,13 +59,7 @@ export function ChapterNav({
             <Link href="/chapters" className="hidden sm:inline text-muted hover:text-heading no-underline">
               All chapters
             </Link>
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-1 text-muted hover:text-heading no-underline"
-            >
-              <LogIn className="h-3 w-3" strokeWidth={2} />
-              Sign in
-            </Link>
+            <LoginButton variant="ghost" />
           </div>
         </div>
       </div>
