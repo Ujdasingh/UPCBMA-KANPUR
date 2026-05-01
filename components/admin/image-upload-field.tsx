@@ -110,15 +110,18 @@ export function ImageUploadField({
 
       <input type="hidden" name={name} value={url} />
 
-      {/* Live preview */}
+      {/* Live preview — when an image is set, the preview honours the requested
+          aspect ratio AND the natural image proportions, but is also clamped
+          to a sensible max-height so a wide form doesn't stretch a square logo
+          into a giant tile. */}
       {url ? (
-        <div className="relative overflow-hidden rounded-sm border border-border bg-surface">
+        <div className="relative mx-auto w-full max-w-md overflow-hidden rounded-sm border border-border bg-surface">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={url}
             alt=""
             style={{ aspectRatio: aspect }}
-            className="w-full object-cover"
+            className="w-full object-contain"
             onError={() => setError("Couldn't load that image.")}
           />
           <button
@@ -147,13 +150,14 @@ export function ImageUploadField({
             const f = e.dataTransfer.files?.[0];
             if (f) void uploadFile(f);
           }}
+          // The dropzone has a fixed compact height — we don't want it ballooning
+          // to match aspect ratio when nothing's been uploaded yet.
           className={
-            "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-sm border border-dashed bg-surface px-4 py-8 text-center transition-colors " +
+            "flex h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-sm border border-dashed bg-surface px-4 text-center transition-colors sm:h-36 " +
             (dragOver
               ? "border-heading bg-bg"
               : "border-border hover:border-heading hover:bg-bg")
           }
-          style={{ aspectRatio: aspect }}
         >
           <input
             ref={fileInput}
