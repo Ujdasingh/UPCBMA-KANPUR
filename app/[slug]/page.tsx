@@ -81,11 +81,15 @@ export default async function ChapterHome({
     { data: activeAgendas },
     { data: office },
   ] = await Promise.all([
+    // Only count *paying* members — exclude admins/super_admins/staff who are
+    // also linked to the chapter via chapter_memberships. Inner-join into the
+    // members table so the role filter is enforced server-side.
     svc
       .from("chapter_memberships")
-      .select("*", { head: true, count: "exact" })
+      .select("member:members!inner(role)", { head: true, count: "exact" })
       .eq("chapter_id", chapter.id)
-      .eq("active", true),
+      .eq("active", true)
+      .eq("member.role", "member"),
     svc
       .from("lab_tests_catalog")
       .select("*", { head: true, count: "exact" })

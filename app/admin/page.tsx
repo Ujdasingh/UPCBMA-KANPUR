@@ -18,35 +18,30 @@ async function fetchStats(opts: {
   const supabase = createServiceClient();
   const { chapterId, canSeeSuperAdmin } = opts;
 
-  // Members: active roster. Chapter-scoped via chapter_memberships when set.
+  // Members card on the admin dashboard counts *paying* members only — the
+  // page already has a separate "Admins" / staff surface elsewhere, and the
+  // user expects this number to match the public-facing roster headline.
   let membersQuery;
   if (chapterId) {
     membersQuery = supabase
       .from("chapter_memberships")
-      .select("members!inner(id,role,active)", { count: "exact", head: true })
+      .select("member:members!inner(role,active)", {
+        count: "exact",
+        head: true,
+      })
       .eq("chapter_id", chapterId)
-      .eq("members.active", true);
+      .eq("member.active", true)
+      .eq("member.role", "member");
   } else {
     membersQuery = supabase
       .from("members")
       .select("*", { head: true, count: "exact" })
-      .eq("active", true);
-  }
-  if (!canSeeSuperAdmin && chapterId) {
-    // PostgREST doesn't support filtering inner joins with neq on role cleanly,
-    // so fall back to the plain members table.
-    membersQuery = supabase
-      .from("members")
-      .select("*", { head: true, count: "exact" })
       .eq("active", true)
-      .neq("role", "super_admin");
-  } else if (!canSeeSuperAdmin) {
-    membersQuery = supabase
-      .from("members")
-      .select("*", { head: true, count: "exact" })
-      .eq("active", true)
-      .neq("role", "super_admin");
+      .eq("role", "member");
   }
+  // canSeeSuperAdmin no longer needs a separate branch — once we filter to
+  // role = "member", super_admins are excluded everywhere by definition.
+  void canSeeSuperAdmin;
 
   // Helper: add chapter filter to a scoped query if chapterId is set.
   const withChapter = <T extends { eq: (k: string, v: string) => T }>(q: T) =>

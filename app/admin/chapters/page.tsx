@@ -27,10 +27,13 @@ export default async function ChaptersPage({
     )
     .order("display_order", { ascending: true });
 
-  // Member counts per chapter (via chapter_memberships)
+  // Member counts per chapter — only count rows where the linked member's
+  // role is "member" (admins/super_admins/staff are also linked to chapters
+  // via chapter_memberships and would otherwise inflate the count).
   const { data: memberships } = await svc
     .from("chapter_memberships")
-    .select("chapter_id");
+    .select("chapter_id, members!inner(role)")
+    .eq("members.role", "member");
 
   const counts = new Map<string, number>();
   (memberships ?? []).forEach((m) => {
