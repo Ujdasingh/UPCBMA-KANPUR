@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { Logo } from "@/components/public/logo";
 import { resolveAuthIdentity, isSuperAdmin } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/server";
@@ -28,13 +29,7 @@ type SettingDef = {
 };
 
 const SETTINGS: SettingDef[] = [
-  {
-    key: "state_logo_url",
-    label: "State logo URL",
-    placeholder: "https://images.example.com/upcbma-logo.png",
-    hint: "Public URL of an image (PNG/SVG/JPG). Used in the header, footer, login page, admin sidebar, and as the favicon. Leave blank to use the bundled fallback.",
-    type: "url",
-  },
+  // state_logo_url is rendered separately below with the upload widget.
   {
     key: "state_tagline",
     label: "Tagline",
@@ -131,25 +126,50 @@ export default async function SiteSettingsPage({
         </div>
       )}
 
-      {/* Live preview of the current state logo */}
-      <Card className="mb-6 flex items-center gap-4">
-        <div className="flex h-20 w-20 items-center justify-center rounded-sm border border-border bg-bg">
-          <Logo size={64} src={valueByKey.get("state_logo_url")} />
-        </div>
-        <div>
-          <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-            <ImageIcon className="h-3 w-3" strokeWidth={2} />
-            Currently using
+      {/* State logo: live preview + drag-drop / paste-URL upload widget */}
+      <Card className="mb-6">
+        <div className="flex items-center gap-4">
+          <div className="flex h-20 w-20 items-center justify-center rounded-sm border border-border bg-bg">
+            <Logo size={64} src={valueByKey.get("state_logo_url")} />
           </div>
-          <div className="mt-1 break-all font-mono text-xs text-text">
-            {valueByKey.get("state_logo_url") || "(bundled fallback at /upcbma-logo.svg)"}
+          <div>
+            <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+              <ImageIcon className="h-3 w-3" strokeWidth={2} />
+              State logo · currently using
+            </div>
+            <div className="mt-1 break-all font-mono text-xs text-text">
+              {valueByKey.get("state_logo_url") ||
+                "(bundled fallback at /upcbma-logo.svg)"}
+            </div>
+            <p className="mt-2 max-w-md text-xs text-muted">
+              Used in the header, footer, login page, admin sidebar, and as
+              the favicon. Per-chapter logos can override this — set them
+              under <strong>Chapters → edit</strong>.
+            </p>
           </div>
-          <p className="mt-2 max-w-md text-xs text-muted">
-            Paste a public image URL below to swap the logo across every state
-            page. Per-chapter logos can override this on each chapter&rsquo;s
-            pages — set them under <strong>Chapters → edit</strong>.
-          </p>
         </div>
+
+        <form
+          action={saveSiteSetting}
+          className="mt-5 space-y-4 border-t border-border pt-5"
+        >
+          <input type="hidden" name="key" value="state_logo_url" />
+          {/* The widget writes the resolved URL into a hidden input named
+              "value" — exactly what saveSiteSetting expects. */}
+          <ImageUploadField
+            name="value"
+            defaultValue={valueByKey.get("state_logo_url") ?? ""}
+            folder="chapters"
+            label="Upload a new logo (or paste a URL)"
+            hint="PNG, SVG, or JPG. Square crops look best. Leave empty to revert to the bundled fallback."
+            aspect="1/1"
+          />
+          <div className="flex justify-end">
+            <Button type="submit" size="sm">
+              Save state logo
+            </Button>
+          </div>
+        </form>
       </Card>
 
       <div className="space-y-4">

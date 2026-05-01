@@ -11,6 +11,7 @@ import { formatDate } from "@/lib/utils";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { createEvent, deleteEvent, updateEvent } from "./actions";
+import { ImageUploadField } from "@/components/admin/image-upload-field";
 
 type Mode =
   | { kind: "closed" }
@@ -191,7 +192,7 @@ function EventForm({
         />
       </Field>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Field label="Date" htmlFor="event_date">
           <Input
             id="event_date"
@@ -227,6 +228,13 @@ function EventForm({
           defaultValue={item?.description ?? ""}
         />
       </Field>
+
+      <ImageUploadField
+        defaultValue={(item as any)?.image_url ?? ""}
+        folder="events"
+        label="Cover image (optional)"
+        hint="Used on the chapter page event card and the /events listing."
+      />
 
       <label className="flex items-center gap-2 text-sm">
         <input

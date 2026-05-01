@@ -2,6 +2,7 @@
 
 import { createServiceClient } from "@/lib/supabase/server";
 import { getAdminContext } from "@/lib/auth";
+import { assertNotLocked } from "@/lib/locks";
 import { revalidatePath } from "next/cache";
 
 function parseForm(formData: FormData) {
@@ -39,6 +40,10 @@ export async function createAppointment(formData: FormData) {
   if (!ctx.activeChapterId) {
     throw new Error("Pick a chapter from the sidebar first.");
   }
+  await assertNotLocked(ctx.me, {
+    category: "committee",
+    chapterId: ctx.activeChapterId,
+  });
   const svc = createServiceClient();
   const payload = parseForm(formData);
   const { error } = await svc
@@ -46,10 +51,16 @@ export async function createAppointment(formData: FormData) {
     .insert({ ...payload, chapter_id: ctx.activeChapterId });
   if (error) throw new Error(error.message);
   revalidatePath("/admin/committee");
+  if (ctx.activeChapter?.slug) revalidatePath(`/${ctx.activeChapter.slug}`);
 }
 
 export async function updateAppointment(id: string, formData: FormData) {
-  await getAdminContext();
+  const ctx = await getAdminContext();
+  await assertNotLocked(ctx.me, {
+    category: "committee",
+    chapterId: ctx.activeChapterId,
+    resourceId: id,
+  });
   const svc = createServiceClient();
   const payload = parseForm(formData);
   const { error } = await svc
@@ -58,10 +69,16 @@ export async function updateAppointment(id: string, formData: FormData) {
     .eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/admin/committee");
+  if (ctx.activeChapter?.slug) revalidatePath(`/${ctx.activeChapter.slug}`);
 }
 
 export async function endAppointment(id: string) {
-  await getAdminContext();
+  const ctx = await getAdminContext();
+  await assertNotLocked(ctx.me, {
+    category: "committee",
+    chapterId: ctx.activeChapterId,
+    resourceId: id,
+  });
   const svc = createServiceClient();
   const { error } = await svc
     .from("committee_appointments")
@@ -69,10 +86,16 @@ export async function endAppointment(id: string) {
     .eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/admin/committee");
+  if (ctx.activeChapter?.slug) revalidatePath(`/${ctx.activeChapter.slug}`);
 }
 
 export async function deleteAppointment(id: string) {
-  await getAdminContext();
+  const ctx = await getAdminContext();
+  await assertNotLocked(ctx.me, {
+    category: "committee",
+    chapterId: ctx.activeChapterId,
+    resourceId: id,
+  });
   const svc = createServiceClient();
   const { error } = await svc
     .from("committee_appointments")
@@ -80,4 +103,5 @@ export async function deleteAppointment(id: string) {
     .eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/admin/committee");
+  if (ctx.activeChapter?.slug) revalidatePath(`/${ctx.activeChapter.slug}`);
 }

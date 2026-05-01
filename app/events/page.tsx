@@ -1,51 +1,126 @@
 import { createServiceClient } from "@/lib/supabase/server";
+import { listActiveChapters } from "@/lib/chapter-loader";
+import { getAuthedMember } from "@/lib/auth";
 import { StateShell } from "@/components/public/state-shell";
+import { ChapterPicker } from "@/components/public/chapter-picker";
 import { CalendarDays, MapPin } from "lucide-react";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Events — UPCBMA",
-  description: "State-wide UPCBMA events — AGM, training, statewide meets.",
+  description:
+    "UPCBMA events — AGMs, statewide training, plus chapter meets across Uttar Pradesh.",
 };
 
-export default async function StateEvents() {
+const STATE_SCOPE = "_state";
+const ALL_SCOPE = "_all";
+
+export default async function StateEvents({
+  searchParams,
+}: {
+  searchParams: Promise<{ chapter?: string }>;
+}) {
+  const { chapter: chapterParam } = await searchParams;
+
+  const [chapters, member] = await Promise.all([
+    listActiveChapters(),
+    getAuthedMember(),
+  ]);
+
+  let scope: string = chapterParam ?? "";
+  if (!scope && member) {
+    const svc = createServiceClient();
+    const { data: memberships } = await svc
+      .from("chapter_memberships")
+      .select("chapter_id, member_since")
+      .eq("member_id", member.id)
+      .eq("active", true)
+      .order("member_since", { ascending: true })
+      .limit(1);
+    const primary = memberships?.[0]?.chapter_id;
+    if (primary) {
+      const c = chapters.find((x) => x.id === primary);
+      if (c) scope = c.slug;
+    }
+  }
+  if (!scope) scope = STATE_SCOPE;
+
   const svc = createServiceClient();
   const today = new Date().toISOString().slice(0, 10);
 
+  // Build dynamic where-clause helper based on scope.
+  const applyScope = <T extends { is: any; or: any }>(q: T) => {
+    if (scope === STATE_SCOPE) return q.is("chapter_id", null);
+    if (scope === ALL_SCOPE) return q;
+    const c = chapters.find((x) => x.slug === scope);
+    if (!c) return q.is("chapter_id", null);
+    return q.or(`chapter_id.eq.${c.id},chapter_id.is.null`);
+  };
+
   const [{ data: upcoming }, { data: past }] = await Promise.all([
-    svc
-      .from("events")
-      .select("id, title, event_date, location, recurring, description")
-      .is("chapter_id", null)
-      .gte("event_date", today)
-      .order("event_date", { ascending: true }),
-    svc
-      .from("events")
-      .select("id, title, event_date, location, recurring, description")
-      .is("chapter_id", null)
-      .lt("event_date", today)
-      .order("event_date", { ascending: false })
-      .limit(10),
+    applyScope(
+      svc
+        .from("events")
+        .select("id, title, event_date, location, recurring, description, chapter_id")
+        .gte("event_date", today)
+        .order("event_date", { ascending: true })
+        .limit(40) as any,
+    ),
+    applyScope(
+      svc
+        .from("events")
+        .select("id, title, event_date, location, recurring, description, chapter_id")
+        .lt("event_date", today)
+        .order("event_date", { ascending: false })
+        .limit(20) as any,
+    ),
   ]);
+
+  const activeName =
+    scope === STATE_SCOPE
+      ? "UPCBMA statewide"
+      : scope === ALL_SCOPE
+        ? "every chapter"
+        : (chapters.find((c) => c.slug === scope)?.name ?? "your chapter");
+
+  const pickerChapters = [
+    { id: STATE_SCOPE, slug: STATE_SCOPE, name: "State-wide only", city: "UPCBMA secretariat", state: "—", established_on: null, logo_url: null, accent_color: null, active: true, display_order: -1 },
+    { id: ALL_SCOPE, slug: ALL_SCOPE, name: "All chapters", city: "Aggregated", state: "—", established_on: null, logo_url: null, accent_color: null, active: true, display_order: 0 },
+    ...chapters,
+  ];
 
   return (
     <StateShell>
       <section className="border-b border-border bg-surface">
-        <div className="mx-auto max-w-3xl px-6 py-16">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">State-wide events</div>
-          <h1 className="mt-3 !tracking-tight">UPCBMA statewide calendar.</h1>
-          <p className="mt-4 text-[15px] leading-relaxed text-muted">
-            The annual general meeting, statewide training sessions, and
-            conferences across all chapters. For chapter-specific events, go
-            to your chapter&rsquo;s page.
-          </p>
+        <div className="mx-auto max-w-7xl px-4 py-9 sm:px-6 sm:py-14 lg:px-8">
+          <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
+            <div className="max-w-2xl">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
+                Events
+              </div>
+              <h1 className="mt-3 !tracking-tight">
+                Calendar for {activeName}.
+              </h1>
+              <p className="mt-3 text-[15px] leading-relaxed text-muted">
+                Statewide AGMs, training, and conferences plus local chapter
+                meets — pick a filter to narrow.
+              </p>
+            </div>
+            <ChapterPicker
+              chapters={pickerChapters as any}
+              value={scope}
+              basePath="/events"
+              label="Filter"
+            />
+          </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-4xl px-6 py-12 space-y-14">
-        <Section kicker="Upcoming" title="Scheduled" events={upcoming ?? []} empty="No upcoming statewide events." />
+      <section className="mx-auto max-w-4xl space-y-14 px-4 py-7 sm:px-6 sm:py-12 lg:px-8">
+        <Section kicker="Upcoming" title="Scheduled" events={(upcoming ?? []) as Ev[]} empty="No upcoming events for this filter." />
         {past && past.length > 0 && (
-          <Section kicker="Recent" title="Past" events={past} empty="" muted />
+          <Section kicker="Recent" title="Past" events={past as Ev[]} empty="" muted />
         )}
       </section>
     </StateShell>
@@ -59,6 +134,7 @@ type Ev = {
   location: string | null;
   recurring: boolean | null;
   description: string | null;
+  chapter_id: string | null;
 };
 
 function Section({
@@ -101,6 +177,11 @@ function Section({
               <div className="flex-1">
                 <div className="flex flex-wrap items-baseline gap-2">
                   <h3 className="text-base font-semibold text-heading">{e.title}</h3>
+                  {e.chapter_id === null && (
+                    <span className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-[10px] font-medium uppercase text-muted">
+                      state
+                    </span>
+                  )}
                   {e.recurring && (
                     <span className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-[10px] font-medium text-muted">recurring</span>
                   )}

@@ -21,28 +21,33 @@ export async function signIn(formData: FormData) {
     redirect(`/login?error=${msg}${back}`);
   }
 
-  // Resolve the role to decide where to land:
-  //   - admin / super_admin  → /admin (or whatever they came from, if it was admin)
-  //   - member               → /me
-  //   - no member row        → /  (treat as a regular signed-in visitor)
+  // Look up the member row so we can decide where to land AND whether they
+  // need to set a real password before going anywhere else.
   const svc = createServiceClient();
   const { data: member } = await svc
     .from("members")
-    .select("role")
+    .select("role, must_change_password")
     .eq("auth_user_id", data.user?.id ?? "")
     .maybeSingle();
 
   const role = member?.role;
 
+  // First-time invitees go straight to the change-password screen — but only
+  // ONCE, at login. A banner on /me reminds them after that. We deliberately
+  // don't gate every page navigation on this flag (it makes the site feel
+  // broken and prevents form submissions).
+  if (member?.must_change_password === true) {
+    redirect("/me/change-password?first=1");
+  }
+
   // If the caller specified ?next=, honour it as long as it's safe (starts with /).
-  const next =
-    requestedNext.startsWith("/")
-      ? requestedNext
-      : role === "admin" || role === "super_admin"
-        ? "/admin"
-        : role === "member"
-          ? "/me"
-          : "/";
+  const next = requestedNext.startsWith("/")
+    ? requestedNext
+    : role === "admin" || role === "super_admin"
+      ? "/admin"
+      : role === "member"
+        ? "/me"
+        : "/";
 
   redirect(next);
 }

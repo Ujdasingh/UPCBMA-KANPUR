@@ -2,6 +2,7 @@
 
 import { createServiceClient } from "@/lib/supabase/server";
 import { getAdminContext } from "@/lib/auth";
+import { assertNotLocked } from "@/lib/locks";
 import { revalidatePath } from "next/cache";
 
 function parseForm(formData: FormData) {
@@ -33,6 +34,10 @@ export async function createLabTest(formData: FormData) {
       "Pick a chapter from the sidebar before creating a lab test.",
     );
   }
+  await assertNotLocked(ctx.me, {
+    category: "lab_tests",
+    chapterId: ctx.activeChapterId,
+  });
   const svc = createServiceClient();
   const code = String(formData.get("code") ?? "").trim().toUpperCase();
   if (!code) throw new Error("Code is required");
@@ -44,10 +49,16 @@ export async function createLabTest(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/admin/lab-tests");
+  if (ctx.activeChapter?.slug) revalidatePath(`/lab?chapter=${ctx.activeChapter.slug}`);
 }
 
 export async function updateLabTest(code: string, formData: FormData) {
-  await getAdminContext();
+  const ctx = await getAdminContext();
+  await assertNotLocked(ctx.me, {
+    category: "lab_tests",
+    chapterId: ctx.activeChapterId,
+    resourceId: code,
+  });
   const svc = createServiceClient();
   const payload = parseForm(formData);
   const { error } = await svc
@@ -57,10 +68,16 @@ export async function updateLabTest(code: string, formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/admin/lab-tests");
+  if (ctx.activeChapter?.slug) revalidatePath(`/lab?chapter=${ctx.activeChapter.slug}`);
 }
 
 export async function toggleLabTestActive(code: string, active: boolean) {
-  await getAdminContext();
+  const ctx = await getAdminContext();
+  await assertNotLocked(ctx.me, {
+    category: "lab_tests",
+    chapterId: ctx.activeChapterId,
+    resourceId: code,
+  });
   const svc = createServiceClient();
   const { error } = await svc
     .from("lab_tests_catalog")
@@ -72,7 +89,12 @@ export async function toggleLabTestActive(code: string, active: boolean) {
 }
 
 export async function deleteLabTest(code: string) {
-  await getAdminContext();
+  const ctx = await getAdminContext();
+  await assertNotLocked(ctx.me, {
+    category: "lab_tests",
+    chapterId: ctx.activeChapterId,
+    resourceId: code,
+  });
   const svc = createServiceClient();
   const { error } = await svc
     .from("lab_tests_catalog")

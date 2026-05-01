@@ -41,12 +41,7 @@ export function CategoriesTable({ rows }: { rows: Row[] }) {
       {rows.length === 0 ? (
         <EmptyState
           title="No categories yet"
-          description="Chapters typically have one or two categories, e.g. Executive and Member, or Life / Patron / Associate."
-          action={
-            <Button onClick={() => setMode({ kind: "create" })}>
-              <Plus className="h-4 w-4" /> New category
-            </Button>
-          }
+          description="Use the New category button above. Chapters typically have one or two — e.g. Executive and Member, or Life / Patron / Associate."
         />
       ) : (
         <Table>

@@ -29,22 +29,23 @@ type Item = {
   superOnly?: boolean;
 };
 
+// Sidebar groups related sub-pages under one entry — the page itself shows
+// inline tabs (e.g. Committee → Appointments / Roles, Members → Roster /
+// Categories) so the sidebar stays short and scannable.
 const items: Item[] = [
-  { href: "/admin", label: "Dashboard", Icon: LayoutDashboard },
-  { href: "/admin/members", label: "Members", Icon: Users },
-  { href: "/admin/committee", label: "Committee", Icon: Landmark },
-  { href: "/admin/committee-roles", label: "Committee roles", Icon: Crown },
-  { href: "/admin/member-categories", label: "Member categories", Icon: Tags },
-  { href: "/admin/agendas", label: "Agendas", Icon: Megaphone },
-  { href: "/admin/lab-tests", label: "Lab tests", Icon: FlaskConical },
-  { href: "/admin/bookings", label: "Bookings", Icon: ClipboardList },
-  { href: "/admin/news", label: "News", Icon: Newspaper },
-  { href: "/admin/events", label: "Events", Icon: CalendarDays },
-  { href: "/admin/messages", label: "Messages", Icon: Mail },
-  { href: "/admin/membership-requests", label: "Join requests", Icon: UserPlus },
-  { href: "/admin/office-info", label: "Office info", Icon: Building2 },
-  { href: "/admin/chapters", label: "Chapters", Icon: Network, superOnly: true },
-  { href: "/admin/super", label: "Super tools", Icon: Shield, superOnly: true },
+  { href: "/admin",                    label: "Dashboard",     Icon: LayoutDashboard },
+  { href: "/admin/members",            label: "Members",       Icon: Users },
+  { href: "/admin/committee",          label: "Committee",     Icon: Landmark },
+  { href: "/admin/agendas",            label: "Agendas",       Icon: Megaphone },
+  { href: "/admin/lab-tests",          label: "Lab tests",     Icon: FlaskConical },
+  { href: "/admin/bookings",           label: "Bookings",      Icon: ClipboardList },
+  { href: "/admin/news",               label: "News",          Icon: Newspaper },
+  { href: "/admin/events",             label: "Events",        Icon: CalendarDays },
+  { href: "/admin/messages",           label: "Messages",      Icon: Mail },
+  { href: "/admin/membership-requests",label: "Join requests", Icon: UserPlus },
+  { href: "/admin/office-info",        label: "Office info",   Icon: Building2 },
+  { href: "/admin/chapters",           label: "Chapters",      Icon: Network, superOnly: true },
+  { href: "/admin/super",              label: "Super tools",   Icon: Shield, superOnly: true },
 ];
 
 export function Sidebar({ isSuper }: { isSuper: boolean }) {

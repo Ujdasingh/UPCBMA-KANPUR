@@ -19,6 +19,7 @@ import Link from "next/link";
 import { ExternalLink, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { createAgenda, deleteAgenda, updateAgenda } from "./actions";
+import { ImageUploadField } from "@/components/admin/image-upload-field";
 
 type AgendaRow = Agenda & { update_count?: number; comment_count?: number };
 
@@ -42,12 +43,7 @@ export function AgendasTable({ rows }: { rows: AgendaRow[] }) {
       {rows.length === 0 ? (
         <EmptyState
           title="No agendas yet"
-          description="Create the first one — for example, an LPG / paper-rate / supply-shortage issue the chapter is tracking."
-          action={
-            <Button onClick={() => setMode({ kind: "create" })}>
-              <Plus className="h-4 w-4" /> New agenda
-            </Button>
-          }
+          description="Use the New agenda button above — e.g. an LPG / paper-rate / supply-shortage issue the chapter is tracking."
         />
       ) : (
         <Table>
@@ -197,7 +193,14 @@ function AgendaForm({
         />
       </Field>
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+      <ImageUploadField
+        defaultValue={agenda?.image_url ?? ""}
+        folder="agendas"
+        label="Cover image (optional)"
+        hint="Used as the agenda banner. A photo of the issue helps members recognise it."
+      />
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
         <Field label="Category" htmlFor="category">
           <Select id="category" name="category" defaultValue={agenda?.category ?? "other"}>
             {AGENDA_CATEGORIES.map((o) => (
@@ -227,7 +230,7 @@ function AgendaForm({
         </Field>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Field label="Started" htmlFor="started_on">
           <Input id="started_on" name="started_on" type="date" defaultValue={agenda?.started_on ?? ""} />
         </Field>

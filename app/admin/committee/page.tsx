@@ -1,8 +1,14 @@
 import { PageHeader } from "@/components/admin/page-header";
+import { SectionTabs } from "@/components/admin/section-tabs";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getAdminContext, isSuperAdmin } from "@/lib/auth";
 import { Building2 } from "lucide-react";
 import { CommitteeTable } from "./committee-table";
+
+const COMMITTEE_TABS = [
+  { href: "/admin/committee", label: "Appointments", exact: true },
+  { href: "/admin/committee-roles", label: "Roles" },
+];
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Committee — UPCBMA Admin" };
@@ -18,6 +24,7 @@ export default async function CommitteePage() {
           title="Committee"
           description="Each chapter keeps its own committee."
         />
+        <SectionTabs tabs={COMMITTEE_TABS} />
         <div className="flex gap-3 rounded-sm border border-border bg-surface p-4">
           <Building2
             className="mt-0.5 h-5 w-5 shrink-0 text-muted"
@@ -88,8 +95,9 @@ export default async function CommitteePage() {
     <>
       <PageHeader
         title={`Committee · ${ctx.activeChapter!.name}`}
-        description="Assign roles with fixed tenure. Ending an appointment preserves history. Roles are defined per chapter in the 'Committee roles' page."
+        description="Assign roles with fixed tenure. Ending an appointment preserves history. Switch to the Roles tab to edit which positions exist."
       />
+      <SectionTabs tabs={COMMITTEE_TABS} />
       <CommitteeTable
         rows={filteredAppts as never}
         members={members as never}

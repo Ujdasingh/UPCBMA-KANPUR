@@ -83,12 +83,7 @@ export function CommitteeTable({
       {rows.length === 0 ? (
         <EmptyState
           title="No committee appointments yet"
-          description="Assign a role to a member to get started."
-          action={
-            <Button onClick={() => setMode({ kind: "create" })}>
-              <Plus className="h-4 w-4" /> New appointment
-            </Button>
-          }
+          description="Use the New appointment button above to assign a role to a member."
         />
       ) : (
         categoryOrder
@@ -104,7 +99,7 @@ export function CommitteeTable({
                     <Th>Member</Th>
                     <Th>Role</Th>
                     <Th>Area</Th>
-                    <Th>Term</Th>
+                    <Th>Financial year</Th>
                     <Th>Status</Th>
                     <Th className="text-right">Actions</Th>
                   </Tr>
@@ -125,7 +120,7 @@ export function CommitteeTable({
                         <Td className="text-sm">{r.role?.name ?? r.role_key}</Td>
                         <Td className="text-sm">{r.area_name ?? "—"}</Td>
                         <Td className="text-xs text-muted tabular-nums">
-                          {formatDate(r.term_start)} → {formatDate(r.term_end)}
+                          {formatFY(r.term_start, r.term_end)}
                         </Td>
                         <Td>
                           <Badge tone={STATUS_TONE[r.status]}>{r.status}</Badge>
@@ -273,28 +268,12 @@ function AppointmentForm({
         />
       </Field>
 
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Term start" htmlFor="term_start" required>
-          <Input
-            id="term_start"
-            name="term_start"
-            type="date"
-            required
-            defaultValue={row?.term_start ?? ""}
-          />
-        </Field>
-        <Field label="Term end" htmlFor="term_end" required>
-          <Input
-            id="term_end"
-            name="term_end"
-            type="date"
-            required
-            defaultValue={row?.term_end ?? ""}
-          />
-        </Field>
-      </div>
+      <FinancialYearField
+        defaultStart={row?.term_start ?? ""}
+        defaultEnd={row?.term_end ?? ""}
+      />
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Field label="Status" htmlFor="status">
           <Select id="status" name="status" defaultValue={row?.status ?? "active"}>
             <option value="active">active</option>
@@ -338,3 +317,137 @@ function AppointmentForm({
     </form>
   );
 }
+
+/**
+ * Show "FY 2026-27" if the dates line up with an Apr 1 → Mar 31 window;
+ * otherwise fall back to the raw date range so custom terms still read.
+ */
+function formatFY(start: string, end: string): string {
+  if (!start || !end) return "—";
+  const s = new Date(start + "T00:00:00");
+  const e = new Date(end + "T00:00:00");
+  if (
+    s.getMonth() === 3 &&
+    s.getDate() === 1 &&
+    e.getMonth() === 2 &&
+    e.getDate() === 31 &&
+    e.getFullYear() === s.getFullYear() + 1
+  ) {
+    return `FY ${s.getFullYear()}-${String(e.getFullYear()).slice(2)}`;
+  }
+  return `${formatDate(start)} → ${formatDate(end)}`;
+}
+
+/**
+ * Financial-year picker. Renders a "FY 2026-27" dropdown that auto-fills
+ * the underlying term_start / term_end date inputs (Apr 1 → Mar 31). Admins
+ * can still pick "Custom dates" to override the range manually — useful for
+ * partial-year appointments.
+ *
+ * Why this matters: UPCBMA committees rotate on the Indian financial year
+ * (Apr–Mar), so the calendar-year date pickers were always producing the same
+ * two values. A dropdown is one click instead of two date pickers.
+ */
+function FinancialYearField({
+  defaultStart,
+  defaultEnd,
+}: {
+  defaultStart: string;
+  defaultEnd: string;
+}) {
+  // Build 5 surrounding financial years (2 past, current, 2 ahead).
+  const now = new Date();
+  // The current FY starts 1 Apr of the current calendar year if we're past
+  // April, otherwise the previous year.
+  const currentFyStart =
+    now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+
+  const years: { start: string; end: string; label: string }[] = [];
+  for (let i = -1; i <= 3; i++) {
+    const y = currentFyStart + i;
+    years.push({
+      start: `${y}-04-01`,
+      end: `${y + 1}-03-31`,
+      label: `FY ${y}-${String(y + 1).slice(2)}`,
+    });
+  }
+
+  // Resolve which preset (if any) matches the existing values.
+  const matched = years.find(
+    (y) => y.start === defaultStart && y.end === defaultEnd,
+  );
+  const initialPreset = matched
+    ? matched.start
+    : defaultStart || defaultEnd
+      ? "custom"
+      : years.find((y) => y.start === `${currentFyStart}-04-01`)!.start;
+
+  // Inline state for the form. Server action reads term_start/term_end so we
+  // sync those hidden inputs (or visible ones in custom mode).
+  const [preset, setPreset] = useState(initialPreset);
+  const isCustom = preset === "custom";
+
+  const startVal = isCustom
+    ? defaultStart
+    : years.find((y) => y.start === preset)?.start ?? defaultStart;
+  const endVal = isCustom
+    ? defaultEnd
+    : years.find((y) => y.start === preset)?.end ?? defaultEnd;
+
+  return (
+    <div className="space-y-3">
+      <Field
+        label="Financial year"
+        htmlFor="fy_preset"
+        hint={
+          isCustom
+            ? "Custom date range — enter the term start and end below."
+            : "Apr 1 to Mar 31. Switch to custom for partial-year terms."
+        }
+      >
+        <Select
+          id="fy_preset"
+          value={preset}
+          onChange={(e) => setPreset(e.target.value)}
+        >
+          {years.map((y) => (
+            <option key={y.start} value={y.start}>
+              {y.label}{" "}
+              {y.start === `${currentFyStart}-04-01` ? "· current" : ""}
+            </option>
+          ))}
+          <option value="custom">Custom date range…</option>
+        </Select>
+      </Field>
+
+      {isCustom ? (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <Field label="Term start" htmlFor="term_start" required>
+            <Input
+              id="term_start"
+              name="term_start"
+              type="date"
+              required
+              defaultValue={defaultStart}
+            />
+          </Field>
+          <Field label="Term end" htmlFor="term_end" required>
+            <Input
+              id="term_end"
+              name="term_end"
+              type="date"
+              required
+              defaultValue={defaultEnd}
+            />
+          </Field>
+        </div>
+      ) : (
+        <>
+          <input type="hidden" name="term_start" value={startVal} />
+          <input type="hidden" name="term_end" value={endVal} />
+        </>
+      )}
+    </div>
+  );
+}
+

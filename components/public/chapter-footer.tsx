@@ -51,28 +51,33 @@ export async function ChapterFooter({
             </div>
             <ul className="mt-4 space-y-2 text-sm">
               <li>
-                <Link href={`${base}/committee`} className="no-underline text-text hover:text-heading">
+                <Link href={`${base}#committee`} className="no-underline text-text hover:text-heading">
                   Committee
                 </Link>
               </li>
               <li>
-                <Link href={`${base}/lab`} className="no-underline text-text hover:text-heading">
+                <Link href={`/lab?chapter=${chapter.slug}`} className="no-underline text-text hover:text-heading">
                   Lab services
                 </Link>
               </li>
               <li>
-                <Link href={`${base}/news`} className="no-underline text-text hover:text-heading">
+                <Link href={`/news?chapter=${chapter.slug}`} className="no-underline text-text hover:text-heading">
                   News
                 </Link>
               </li>
               <li>
-                <Link href={`${base}/events`} className="no-underline text-text hover:text-heading">
+                <Link href={`/events?chapter=${chapter.slug}`} className="no-underline text-text hover:text-heading">
                   Events
                 </Link>
               </li>
               <li>
-                <Link href={`${base}/contact`} className="no-underline text-text hover:text-heading">
+                <Link href={`${base}#contact`} className="no-underline text-text hover:text-heading">
                   Contact
+                </Link>
+              </li>
+              <li>
+                <Link href={`${base}#raise-problem`} className="no-underline text-amber-700 hover:text-heading">
+                  Raise a problem
                 </Link>
               </li>
               <li className="pt-2 border-t border-border mt-3">

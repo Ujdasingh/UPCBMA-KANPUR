@@ -17,13 +17,17 @@ export function ChapterNav({
   logoSrc?: string;
 }) {
   const base = `/${chapter.slug}`;
+  // The chapter page is now a single rich view. Anchor links jump within it
+  // for the chapter-scoped sections (committee, contact, raise-a-problem),
+  // and lab/news/events go to the state-level pages pre-filtered to this
+  // chapter via ?chapter=<slug>.
   const links = [
-    { href: base, label: "Home" },
-    { href: `${base}/committee`, label: "Committee" },
-    { href: `${base}/lab`, label: "Lab" },
-    { href: `${base}/news`, label: "News" },
-    { href: `${base}/events`, label: "Events" },
-    { href: `${base}/contact`, label: "Contact" },
+    { href: base,                          label: "Home"      },
+    { href: `${base}#committee`,           label: "Committee" },
+    { href: `/lab?chapter=${chapter.slug}`,    label: "Lab"       },
+    { href: `/news?chapter=${chapter.slug}`,   label: "News"      },
+    { href: `/events?chapter=${chapter.slug}`, label: "Events"    },
+    { href: `${base}#contact`,             label: "Contact"   },
   ];
 
   const pathname = usePathname();
@@ -67,9 +71,9 @@ export function ChapterNav({
       {/* Slim accent strip — anchors the chapter to the parent UPCBMA brand */}
       <div className="h-[3px] w-full bg-gradient-to-r from-[#dca135] via-[#0d6b3e] to-[#dca135]" />
 
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:h-20 sm:px-6 lg:px-8">
         <Link href={base} className="group inline-flex items-center gap-3 no-underline">
-          <Logo size={64} src={logoSrc} />
+          <Logo size={56} src={logoSrc} />
           <div>
             <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted group-hover:text-heading">
               {chapter.state}
@@ -98,7 +102,7 @@ export function ChapterNav({
             );
           })}
           <Link
-            href={`${base}/lab/book`}
+            href={`/lab/book?chapter=${chapter.slug}`}
             className="ml-3 inline-flex h-9 items-center rounded-sm bg-heading px-4 text-sm font-medium text-white no-underline hover:bg-hover"
           >
             Book a test
@@ -135,7 +139,7 @@ export function ChapterNav({
               );
             })}
             <Link
-              href={`${base}/lab/book`}
+              href={`/lab/book?chapter=${chapter.slug}`}
               className="mt-2 inline-flex h-10 items-center justify-center rounded-sm bg-heading px-4 text-sm font-medium text-white no-underline"
             >
               Book a test

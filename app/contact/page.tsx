@@ -24,7 +24,7 @@ export default async function StateContactPage({
   return (
     <StateShell>
       <section className="border-b border-border bg-surface">
-        <div className="mx-auto max-w-3xl px-6 py-16">
+        <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-16">
           <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Contact</div>
           <h1 className="mt-3 !tracking-tight">Contact UPCBMA secretariat.</h1>
           <p className="mt-4 text-[15px] leading-relaxed text-muted">
@@ -38,7 +38,7 @@ export default async function StateContactPage({
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-7xl gap-14 px-6 py-14 md:grid-cols-[1fr_1.6fr]">
+      <section className="mx-auto grid max-w-7xl gap-10 px-4 py-10 sm:gap-14 sm:px-6 sm:py-14 md:grid-cols-[1fr_1.6fr]">
         <div className="space-y-8">
           <div>
             <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">Looking for a chapter?</div>

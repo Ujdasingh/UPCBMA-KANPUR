@@ -15,7 +15,7 @@ export default async function ChaptersDirectory() {
   return (
     <StateShell>
       <section className="border-b border-border bg-surface">
-        <div className="mx-auto max-w-3xl px-6 py-16">
+        <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-16">
           <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Chapters</div>
           <h1 className="mt-3 !tracking-tight">Find your chapter.</h1>
           <p className="mt-5 text-lg leading-relaxed text-muted">
@@ -26,7 +26,7 @@ export default async function ChaptersDirectory() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 py-16">
+      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-16">
         {chapters.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <Building2 className="h-8 w-8 text-muted" strokeWidth={1.5} />

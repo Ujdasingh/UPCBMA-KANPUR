@@ -24,7 +24,7 @@ export function OfficeInfoForm({ info }: { info: OfficeInfo | null }) {
         <h2 className="mb-4 text-sm font-semibold text-heading">
           Contact details
         </h2>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Field label="Office phone" htmlFor="phone">
             <Input
               id="phone"
@@ -84,7 +84,7 @@ export function OfficeInfoForm({ info }: { info: OfficeInfo | null }) {
         <h2 className="mb-4 text-sm font-semibold text-heading">
           Lab desk
         </h2>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Field label="Contact name" htmlFor="lab_contact_name">
             <Input
               id="lab_contact_name"

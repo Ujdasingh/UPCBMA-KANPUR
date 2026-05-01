@@ -18,7 +18,7 @@ export default async function AboutPage() {
   return (
     <StateShell>
       <section className="border-b border-border bg-surface">
-        <div className="mx-auto grid max-w-7xl gap-10 px-6 py-20 md:grid-cols-[1.2fr_1fr] md:items-center">
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-13 sm:px-6 sm:py-20 md:grid-cols-[1.2fr_1fr] md:items-center">
           <div>
             <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">About</div>
             <h1 className="mt-3 !tracking-tight">
@@ -47,7 +47,7 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-3xl px-6 py-16">
+      <section className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-16">
         <h2 className="!tracking-tight">What we do</h2>
         <div className="mt-6 space-y-5 text-[15px] leading-relaxed text-text">
           <p>
@@ -67,7 +67,7 @@ export default async function AboutPage() {
       </section>
 
       <section className="border-t border-border bg-surface">
-        <div className="mx-auto max-w-7xl px-6 py-16">
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-16">
           <div className="flex items-baseline justify-between">
             <div>
               <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">Chapters</div>

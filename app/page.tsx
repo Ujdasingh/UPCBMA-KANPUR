@@ -33,7 +33,7 @@ export default async function StateHome() {
     marketValue,
   ] = await Promise.all([
     listActiveChapters(),
-    svc.from("news").select("id, tag, title, body, published_date").is("chapter_id", null).order("published_date", { ascending: false }).limit(3).then((r) => r.data ?? []),
+    svc.from("news").select("id, tag, title, body, image_url, published_date").is("chapter_id", null).order("published_date", { ascending: false }).limit(3).then((r) => r.data ?? []),
     svc.from("events").select("id, title, event_date, location, description").is("chapter_id", null).gte("event_date", today).order("event_date", { ascending: true }).limit(4).then((r) => r.data ?? []),
     svc.from("events").select("id, title, event_date, location, description").is("chapter_id", null).lt("event_date", today).order("event_date", { ascending: false }).limit(6).then((r) => r.data ?? []),
     svc.from("agendas").select("id, slug, title, summary, category").eq("approval_status", "approved").eq("status", "active").is("chapter_id", null).order("started_on", { ascending: false }).limit(3).then((r) => r.data ?? []),
@@ -47,13 +47,13 @@ export default async function StateHome() {
     <StateShell>
       {/* ====== HERO ====== */}
       <section className="border-b border-border bg-surface">
-        <div className="mx-auto max-w-7xl px-6 py-16 md:py-24">
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-16 md:py-24">
           <div className="grid items-center gap-12 md:grid-cols-[1.2fr_1fr]">
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
                 Uttar Pradesh · Corrugated Box Industry
               </div>
-              <h1 className="mt-4 text-4xl leading-[1.1] !tracking-tight md:text-5xl">
+              <h1 className="mt-3 text-3xl leading-[1.1] !tracking-tight sm:mt-4 sm:text-4xl md:text-5xl">
                 One voice for the corrugated box industry of Uttar Pradesh.
               </h1>
               <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted">
@@ -113,7 +113,7 @@ export default async function StateHome() {
       </section>
 
       {/* ====== ABOUT TEASER ====== */}
-      <section className="mx-auto max-w-7xl px-6 py-20">
+      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-20">
         <div className="grid gap-10 md:grid-cols-[1fr_1.5fr]">
           <div>
             <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">About UPCBMA</div>
@@ -172,7 +172,7 @@ export default async function StateHome() {
       )}
 
       {/* ====== CHAPTERS ====== */}
-      <section className="mx-auto max-w-7xl px-6 py-20">
+      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-20">
         <div className="flex items-baseline justify-between">
           <div>
             <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">Chapters</div>
@@ -261,7 +261,7 @@ export default async function StateHome() {
       </section>
 
       {/* ====== NEWS ====== */}
-      <section className="mx-auto max-w-7xl px-6 py-20">
+      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-20">
         <div className="flex items-baseline justify-between">
           <div>
             <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">News</div>
@@ -275,14 +275,30 @@ export default async function StateHome() {
         <ul className="mt-8 grid gap-5 md:grid-cols-3">
           {stateNews.length > 0 ? (
             stateNews.map((n) => (
-              <li key={n.id} className="rounded-sm border border-border bg-bg p-5">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
-                  {n.tag} · {fmtDate(n.published_date)}
-                </div>
-                <Link href={`/news/${n.id}`} className="mt-2 block no-underline">
-                  <h3 className="text-base font-semibold text-heading hover:text-hover">{n.title}</h3>
+              <li key={n.id} className="overflow-hidden rounded-sm border border-border bg-bg">
+                <Link href={`/news/${n.id}`} className="group block no-underline">
+                  {n.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={n.image_url}
+                      alt=""
+                      className="aspect-[16/9] w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex aspect-[16/9] w-full items-center justify-center bg-surface text-muted">
+                      <Newspaper className="h-8 w-8" strokeWidth={1.25} />
+                    </div>
+                  )}
+                  <div className="p-5">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+                      {n.tag} · {fmtDate(n.published_date)}
+                    </div>
+                    <h3 className="mt-2 text-base font-semibold text-heading group-hover:text-hover">
+                      {n.title}
+                    </h3>
+                    {n.body && <p className="mt-1.5 line-clamp-3 text-sm text-muted">{n.body}</p>}
+                  </div>
                 </Link>
-                {n.body && <p className="mt-1.5 line-clamp-3 text-sm text-muted">{n.body}</p>}
               </li>
             ))
           ) : (

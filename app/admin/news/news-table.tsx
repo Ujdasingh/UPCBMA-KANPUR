@@ -11,6 +11,7 @@ import { formatDate } from "@/lib/utils";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { createNews, deleteNews, updateNews } from "./actions";
+import { ImageUploadField } from "@/components/admin/image-upload-field";
 
 type Mode =
   | { kind: "closed" }
@@ -167,6 +168,13 @@ function NewsForm({
           defaultValue={item?.published_date ?? ""}
         />
       </Field>
+
+      <ImageUploadField
+        defaultValue={item?.image_url ?? ""}
+        folder="news"
+        label="Cover image"
+        hint="Wide images crop best (16:9). Up to 6 MB."
+      />
 
       <Field label="Body" htmlFor="body" hint="Plain text. Keep it short.">
         <Textarea

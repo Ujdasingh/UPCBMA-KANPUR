@@ -1,7 +1,9 @@
 import { ChapterNav } from "./chapter-nav";
 import { ChapterFooter } from "./chapter-footer";
+import { MobileTabBar } from "./mobile-tab-bar";
 import type { Chapter } from "@/lib/chapters";
 import { resolveChapterLogo } from "@/lib/site-settings";
+import { getAuthedMember } from "@/lib/auth";
 
 /**
  * Wraps every chapter-scoped public page with a chapter-aware nav, footer,
@@ -15,7 +17,11 @@ export async function ChapterShell({
   chapter: Chapter;
   children: React.ReactNode;
 }) {
-  const logoSrc = await resolveChapterLogo(chapter.logo_url);
+  const [logoSrc, me] = await Promise.all([
+    resolveChapterLogo(chapter.logo_url),
+    getAuthedMember(),
+  ]);
+  const signedIn = !!me;
 
   const style = chapter.accent_color
     ? ({
@@ -27,9 +33,10 @@ export async function ChapterShell({
   return (
     <div style={style} data-chapter={chapter.slug}>
       <ChapterNav chapter={chapter} logoSrc={logoSrc} />
-      <div className="min-h-[calc(100vh-4rem)]">{children}</div>
+      <div className="min-h-[calc(100vh-4rem)] pb-16 md:pb-0">{children}</div>
       {/* @ts-expect-error Server Component */}
       <ChapterFooter chapter={chapter} logoSrc={logoSrc} />
+      <MobileTabBar signedIn={signedIn} />
     </div>
   );
 }

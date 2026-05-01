@@ -1,9 +1,15 @@
 import { PageHeader } from "@/components/admin/page-header";
+import { SectionTabs } from "@/components/admin/section-tabs";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getAdminContext } from "@/lib/auth";
 import { AlertTriangle, CheckCircle2, Building2 } from "lucide-react";
 import { MembersTable } from "./members-table";
 import type { Member } from "@/lib/db-types";
+
+const MEMBERS_TABS = [
+  { href: "/admin/members", label: "Roster", exact: true },
+  { href: "/admin/member-categories", label: "Categories" },
+];
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Members — UPCBMA Admin" };
@@ -90,6 +96,7 @@ export default async function MembersPage({
             : "Every member across every chapter. Switch to a specific chapter from the sidebar to add or scope changes to that chapter."
         }
       />
+      <SectionTabs tabs={MEMBERS_TABS} />
 
       {error && (
         <div className="mb-5 flex gap-3 rounded-sm border border-red-200 bg-red-50 p-4">

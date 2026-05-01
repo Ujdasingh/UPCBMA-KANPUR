@@ -31,7 +31,7 @@ export default async function JoinPage({
   return (
     <StateShell>
       <section className="border-b border-border bg-surface">
-        <div className="mx-auto max-w-3xl px-6 py-14">
+        <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
           <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
             Membership
           </div>
@@ -44,7 +44,7 @@ export default async function JoinPage({
         </div>
       </section>
 
-      <section className="mx-auto max-w-3xl px-6 py-10">
+      <section className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
         {ok === "1" && (
           <div className="mb-6 flex gap-3 rounded-sm border border-emerald-200 bg-emerald-50 p-4">
             <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" strokeWidth={1.75} />

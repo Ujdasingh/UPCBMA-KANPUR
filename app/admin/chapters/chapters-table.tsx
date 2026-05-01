@@ -10,6 +10,7 @@ import type { Chapter } from "@/lib/chapters";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { createChapter, deleteChapter, updateChapter } from "./actions";
+import { ImageUploadField } from "@/components/admin/image-upload-field";
 
 type Mode =
   | { kind: "closed" }
@@ -37,12 +38,7 @@ export function ChaptersTable({
       {rows.length === 0 ? (
         <EmptyState
           title="No chapters yet"
-          description="Create the first chapter."
-          action={
-            <Button onClick={() => setMode({ kind: "create" })}>
-              <Plus className="h-4 w-4" /> New chapter
-            </Button>
-          }
+          description="Use the New chapter button above to create the first one."
         />
       ) : (
         <Table>
@@ -223,15 +219,14 @@ function ChapterForm({
         </Field>
       </div>
 
-      <Field label="Logo URL" htmlFor="logo_url" hint="Optional. Public URL to chapter logo.">
-        <Input
-          id="logo_url"
-          name="logo_url"
-          type="url"
-          defaultValue={chapter?.logo_url ?? ""}
-          placeholder="https://…/logo.png"
-        />
-      </Field>
+      <ImageUploadField
+        name="logo_url"
+        defaultValue={chapter?.logo_url ?? ""}
+        folder="chapters"
+        label="Chapter logo (optional)"
+        hint="Square PNG/SVG/JPG. Falls back to the state logo if blank."
+        aspect="1/1"
+      />
 
       <label className="flex items-center gap-2 text-sm">
         <input

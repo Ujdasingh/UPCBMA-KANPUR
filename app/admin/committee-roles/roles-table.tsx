@@ -59,19 +59,7 @@ export function RolesTable({ rows }: { rows: Row[] }) {
       {rows.length === 0 ? (
         <EmptyState
           title="No roles yet"
-          description="Add roles manually or seed the conventional office-bearer list with one click."
-          action={
-            <div className="flex gap-2">
-              <form action={seedDefaultRoles}>
-                <Button type="submit" variant="secondary">
-                  Seed default roles
-                </Button>
-              </form>
-              <Button onClick={() => setMode({ kind: "create" })}>
-                <Plus className="h-4 w-4" /> New role
-              </Button>
-            </div>
-          }
+          description="Use the buttons above to seed the conventional office-bearer list or add roles manually."
         />
       ) : (
         <Table>

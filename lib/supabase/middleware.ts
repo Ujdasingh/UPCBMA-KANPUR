@@ -37,13 +37,14 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const url = request.nextUrl;
-  const isAdminRoute = url.pathname.startsWith("/admin");
-  const isLoginRoute = url.pathname === "/login";
+  const path = url.pathname;
+  const isAdminRoute = path.startsWith("/admin");
+  const isLoginRoute = path === "/login";
 
   if (isAdminRoute && !user) {
     const loginUrl = url.clone();
     loginUrl.pathname = "/login";
-    loginUrl.searchParams.set("next", url.pathname);
+    loginUrl.searchParams.set("next", path);
     return NextResponse.redirect(loginUrl);
   }
 
@@ -53,6 +54,11 @@ export async function updateSession(request: NextRequest) {
     adminUrl.search = "";
     return NextResponse.redirect(adminUrl);
   }
+
+  // First-time invitees: handled at sign-in time (login action redirects to
+  // /me/change-password) and via a banner on /me. We deliberately DO NOT
+  // intercept every request here — that would block form submissions, server
+  // actions, and generally feel like the site is broken.
 
   return response;
 }

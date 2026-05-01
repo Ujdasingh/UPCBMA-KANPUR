@@ -10,6 +10,7 @@ import {
   Shield,
   Users,
   Settings,
+  Lock,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +34,12 @@ const tools = [
     Icon: Shield,
     title: "Admin scopes",
     body: "Grant or revoke chapter admin rights. Grant state-wide scope.",
+  },
+  {
+    href: "/admin/super/locks",
+    Icon: Lock,
+    title: "Site locks",
+    body: "Block all admin mutations on a category, chapter, or single record. Use for go-live freezes or audits.",
   },
   {
     href: "/admin/super/impersonate",

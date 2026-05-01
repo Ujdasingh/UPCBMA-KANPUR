@@ -44,9 +44,9 @@ export function StateNav({ logoSrc }: { logoSrc?: string }) {
       {/* Slim accent strip on top — gives the header a confident edge */}
       <div className="h-[3px] w-full bg-gradient-to-r from-[#dca135] via-[#0d6b3e] to-[#dca135]" />
 
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
-        <Link href="/" className="group inline-flex items-center gap-3 no-underline">
-          <Logo size={64} src={logoSrc} />
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:h-20 sm:px-6 lg:px-8">
+        <Link href="/" className="group inline-flex items-center gap-2 no-underline sm:gap-3">
+          <Logo size={56} src={logoSrc} />
           <div>
             <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted group-hover:text-heading">
               Uttar Pradesh

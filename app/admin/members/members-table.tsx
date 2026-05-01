@@ -12,16 +12,21 @@ import { formatDate } from "@/lib/utils";
 import {
   KeyRound,
   Lock,
+  Mail,
   Pencil,
   Plus,
   RotateCcw,
+  Send,
   Trash2,
+  UserPlus,
   Wand2,
 } from "lucide-react";
 import { useState } from "react";
 import {
   createMember,
   deleteMember,
+  inviteMember,
+  resendInvite,
   resetMemberPassword,
   updateMember,
 } from "./actions";
@@ -33,6 +38,7 @@ type MemberRow = Member & { login_email: string | null };
 type Mode =
   | { kind: "closed" }
   | { kind: "create" }
+  | { kind: "invite" }
   | { kind: "edit"; member: MemberRow }
   | { kind: "reset"; member: MemberRow };
 
@@ -77,12 +83,23 @@ export function MembersTable({
           onChange={(e) => setQuery(e.target.value)}
           className="max-w-sm"
         />
-        <Button
-          onClick={() => setMode({ kind: "create" })}
-          disabled={availableChapters.length === 0}
-        >
-          <Plus className="h-4 w-4" /> New member
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            onClick={() => setMode({ kind: "invite" })}
+            disabled={availableChapters.length === 0}
+            title="Send a sign-in invite by email — fastest path"
+          >
+            <UserPlus className="h-4 w-4" /> Invite member
+          </Button>
+          <Button
+            onClick={() => setMode({ kind: "create" })}
+            disabled={availableChapters.length === 0}
+            title="Manually create a member row, with full control"
+          >
+            <Plus className="h-4 w-4" /> New member
+          </Button>
+        </div>
       </div>
 
       {filtered.length === 0 ? (
@@ -91,14 +108,7 @@ export function MembersTable({
           description={
             query
               ? "Try a different search term."
-              : "Add your first member to get started."
-          }
-          action={
-            !query && (
-              <Button onClick={() => setMode({ kind: "create" })}>
-                <Plus className="h-4 w-4" /> New member
-              </Button>
-            )
+              : "Use the buttons above to invite or add your first member."
           }
         />
       ) : (
@@ -177,6 +187,25 @@ export function MembersTable({
                   </Td>
                   <Td>
                     <div className="flex justify-end gap-1">
+                      {hasLogin && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={async () => {
+                            if (
+                              confirm(
+                                `Re-send the invite to ${m.name} at ${m.email}? This generates a fresh temp password and emails it.`,
+                              )
+                            ) {
+                              await resendInvite(m.id);
+                            }
+                          }}
+                          aria-label={`Re-send invite to ${m.name}`}
+                          title="Re-send invite email with a fresh temp password"
+                        >
+                          <Send className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
                       {hasLogin && (
                         <Button
                           size="sm"
@@ -279,7 +308,189 @@ export function MembersTable({
           />
         )}
       </Dialog>
+
+      {/* Invite dialog */}
+      <Dialog
+        open={mode.kind === "invite"}
+        onOpenChange={(o) => !o && setMode({ kind: "closed" })}
+        title="Invite a member"
+        description="Just name + their personal email. We auto-generate the @upcbma.com login and email them sign-in details. They'll be asked to set their own password on first sign-in."
+      >
+        {mode.kind === "invite" && (
+          <InviteForm
+            activeChapter={activeChapter}
+            availableChapters={availableChapters}
+            categoriesByChapter={categoriesByChapter}
+            onDone={() => setMode({ kind: "closed" })}
+          />
+        )}
+      </Dialog>
     </>
+  );
+}
+
+// ---------- Invite form ----------
+
+function InviteForm({
+  activeChapter,
+  availableChapters,
+  categoriesByChapter,
+  onDone,
+}: {
+  activeChapter: Chapter | null;
+  availableChapters: Chapter[];
+  categoriesByChapter: Record<string, MemberCategoryOption[]>;
+  onDone: () => void;
+}) {
+  const [chapterId, setChapterId] = useState<string>(
+    activeChapter?.id ?? availableChapters[0]?.id ?? "",
+  );
+  const [name, setName] = useState("");
+  const [showOverride, setShowOverride] = useState(false);
+
+  // Suggest a default member ID + login local-part from the name.
+  const suggestedSlug = name
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[^a-z0-9\s-]+/g, "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  const suggestedId = suggestedSlug.join("-").slice(0, 24);
+  const suggestedLogin =
+    suggestedSlug.length === 0
+      ? ""
+      : suggestedSlug.length === 1
+        ? suggestedSlug[0]
+        : `${suggestedSlug[0]}.${suggestedSlug[suggestedSlug.length - 1]}`;
+
+  const cats = chapterId ? categoriesByChapter[chapterId] ?? [] : [];
+
+  return (
+    <form action={inviteMember} className="space-y-4" onSubmit={() => onDone()}>
+      <Field label="Member ID" htmlFor="i_id" required>
+        <Input
+          id="i_id"
+          name="id"
+          required
+          placeholder={suggestedId || "unique-id"}
+          defaultValue={suggestedId}
+          key={suggestedId}
+        />
+      </Field>
+
+      <Field label="Full name" htmlFor="i_name" required>
+        <Input
+          id="i_name"
+          name="name"
+          required
+          autoComplete="name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Aman Sharma"
+        />
+      </Field>
+
+      <Field
+        label="Personal email"
+        htmlFor="i_email"
+        hint="The invite is sent here. This is also their contact email."
+        required
+      >
+        <Input
+          id="i_email"
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+          placeholder="aman@his-company.com"
+        />
+      </Field>
+
+      <Field label="Phone (optional)" htmlFor="i_phone">
+        <Input id="i_phone" name="phone" type="tel" autoComplete="tel" />
+      </Field>
+
+      <Field label="Company (optional)" htmlFor="i_company">
+        <Input id="i_company" name="company" autoComplete="organization" />
+      </Field>
+
+      <div className="grid gap-3 md:grid-cols-2">
+        <Field label="Chapter" htmlFor="i_chapter">
+          <Select
+            id="i_chapter"
+            name="chapter_id"
+            value={chapterId}
+            onChange={(e) => setChapterId(e.target.value)}
+          >
+            {availableChapters.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field label="Category (optional)" htmlFor="i_cat">
+          <Select id="i_cat" name="category_id" defaultValue="">
+            <option value="">None</option>
+            {cats.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      </div>
+
+      <div className="rounded-sm border border-dashed border-border bg-surface p-3 text-xs">
+        <div className="flex items-center justify-between">
+          <span className="text-muted">
+            Auto-generated login:{" "}
+            <code className="font-mono text-heading">
+              {suggestedLogin || "—"}
+              @upcbma.com
+            </code>
+          </span>
+          <button
+            type="button"
+            onClick={() => setShowOverride((s) => !s)}
+            className="text-[11px] font-medium text-heading hover:text-hover"
+          >
+            {showOverride ? "use suggested" : "override…"}
+          </button>
+        </div>
+        {showOverride && (
+          <div className="mt-2">
+            <Input
+              name="login_email"
+              placeholder="custom-login@upcbma.com"
+              autoComplete="off"
+            />
+            <p className="mt-1 text-[11px] text-muted">
+              Must end with @upcbma.com. Leave blank to use the auto suggestion.
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-start gap-2 rounded-sm border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+        <Mail className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.75} />
+        <span>
+          A 12-character temporary password is generated and emailed to the
+          personal address above. The member will be required to set their own
+          password the first time they sign in.
+        </span>
+      </div>
+
+      <div className="flex justify-end gap-2 pt-2">
+        <Button type="button" variant="ghost" onClick={onDone}>
+          Cancel
+        </Button>
+        <Button type="submit">
+          <Send className="h-3.5 w-3.5" /> Send invite
+        </Button>
+      </div>
+    </form>
   );
 }
 

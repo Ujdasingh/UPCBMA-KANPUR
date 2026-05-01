@@ -1,11 +1,15 @@
 "use server";
 
+import { randomUUID } from "crypto";
 import { createServiceClient } from "@/lib/supabase/server";
 import {
   assertCanMutateMember,
+  getAdminContext,
   getAuthedAdmin,
   resolveAuthIdentity,
 } from "@/lib/auth";
+import { assertNotLocked } from "@/lib/locks";
+import { sendEmail } from "@/lib/email";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -63,6 +67,33 @@ function friendlyError(raw: string): string {
   return raw;
 }
 
+/**
+ * Pre-check duplicates before hitting the unique-index trip wire. Postgres
+ * gives us a generic message; we want to name the offending row so the admin
+ * can edit/delete it instead of guessing.
+ *
+ * Case-insensitive match against `email` (we already lowercase on parse, but
+ * historic rows may have mixed-case data from before that change).
+ *
+ * Returns a friendly message string, or null if no existing match.
+ */
+async function findExistingMemberByEmail(
+  email: string,
+  ignoreId?: string,
+): Promise<string | null> {
+  if (!email) return null;
+  const svc = createServiceClient();
+  const { data } = await svc
+    .from("members")
+    .select("id, name, role, active")
+    .ilike("email", email)
+    .limit(2);
+  const match = (data ?? []).find((r) => r.id !== ignoreId);
+  if (!match) return null;
+  const status = match.active ? "active" : "inactive";
+  return `That contact email already belongs to "${match.name}" (id: ${match.id}, ${status} ${match.role}). Edit that member instead, change this email, or delete the existing row first.`;
+}
+
 function parseMemberForm(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
@@ -95,11 +126,21 @@ function parseMemberForm(formData: FormData) {
 export async function createMember(formData: FormData) {
   try {
     const me = await getAuthedAdmin();
+    const ctx = await getAdminContext();
+    await assertNotLocked(me, {
+      category: "members",
+      chapterId: ctx.activeChapterId,
+    });
     const id = String(formData.get("id") ?? "").trim();
     if (!id) redirectWithError("Member ID is required.");
 
     const payload = parseMemberForm(formData);
     await assertCanMutateMember({ caller: me, incomingRole: payload.role });
+
+    // Pre-check: surface an actionable error if this email already exists.
+    // (The DB constraint will still catch races; this is just the happy path.)
+    const conflict = await findExistingMemberByEmail(payload.email);
+    if (conflict) redirectWithError(conflict);
 
     const hasLogin = formData.get("has_login") === "on";
     const loginEmail = String(formData.get("login_email") ?? "")
@@ -201,6 +242,12 @@ export async function createMember(formData: FormData) {
 export async function updateMember(id: string, formData: FormData) {
   try {
     const me = await getAuthedAdmin();
+    const ctx = await getAdminContext();
+    await assertNotLocked(me, {
+      category: "members",
+      chapterId: ctx.activeChapterId,
+      resourceId: id,
+    });
     const payload = parseMemberForm(formData);
 
     await assertCanMutateMember({
@@ -208,6 +255,11 @@ export async function updateMember(id: string, formData: FormData) {
       targetId: id,
       incomingRole: payload.role,
     });
+
+    // Same friendly conflict check on edit — but exclude the current row so
+    // saving an unrelated field on an existing member doesn't trip itself up.
+    const conflict = await findExistingMemberByEmail(payload.email, id);
+    if (conflict) redirectWithError(conflict);
 
     const svc = createServiceClient();
     const { error } = await svc.from("members").update(payload).eq("id", id);
@@ -253,6 +305,12 @@ export async function toggleMemberActive(id: string, active: boolean) {
 export async function deleteMember(id: string) {
   try {
     const me = await getAuthedAdmin();
+    const ctx = await getAdminContext();
+    await assertNotLocked(me, {
+      category: "members",
+      chapterId: ctx.activeChapterId,
+      resourceId: id,
+    });
     await assertCanMutateMember({ caller: me, targetId: id });
 
     const svc = createServiceClient();
@@ -320,4 +378,337 @@ export async function resetMemberPassword(
   if (error) throw new Error(friendlyError(error.message));
 
   await audit({ action: "reset_member_password", target_id: memberId });
+}
+
+// ============================================================================
+// INVITE FLOW
+// ============================================================================
+
+/**
+ * Slugify a name into a likely UPCBMA login local-part. We aim for
+ * `firstname.lastname` and fall back to a single-word slug. Numeric suffixes
+ * are added (in checkAvailableLogin) when the address is already taken.
+ */
+function suggestLocalPart(name: string): string {
+  const cleaned = name
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]+/g, "")
+    .trim();
+  const parts = cleaned.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "member";
+  if (parts.length === 1) return parts[0]!.slice(0, 24);
+  return `${parts[0]}.${parts[parts.length - 1]}`.slice(0, 32);
+}
+
+/**
+ * Crypto-strong temp password — 12 chars, high entropy, mixed case + digits.
+ * Avoids look-alike characters (0/O, 1/l/I) so people can read it off the
+ * email and type it correctly.
+ */
+function generateTempPassword(): string {
+  const alphabet =
+    "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  // Use crypto.randomUUID for entropy and slice; fall back to Math.random.
+  let out = "";
+  for (let i = 0; i < 12; i++) {
+    out += alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+  return out;
+}
+
+/**
+ * Find a unique @upcbma.com login email. Tries the suggested local part,
+ * then `<suggested>2`, `<suggested>3`, … until a free one is found.
+ */
+async function pickAvailableLogin(suggested: string): Promise<string> {
+  const svc = createServiceClient();
+  const { data: list } = await svc.auth.admin.listUsers({ perPage: 1000 });
+  const taken = new Set(
+    (list?.users ?? [])
+      .map((u) => (u.email ?? "").toLowerCase())
+      .filter(Boolean),
+  );
+  let candidate = `${suggested}@upcbma.com`;
+  let n = 2;
+  while (taken.has(candidate.toLowerCase())) {
+    candidate = `${suggested}${n}@upcbma.com`;
+    n++;
+    if (n > 50) {
+      throw new Error(
+        "Couldn't find a free @upcbma.com login email — pick one manually.",
+      );
+    }
+  }
+  return candidate;
+}
+
+/**
+ * Invite a new member.
+ *
+ * Inputs (form):
+ *   id           — Member ID (required, unique)
+ *   name         — Full name
+ *   email        — Their PERSONAL contact email; the invite is sent here
+ *   phone        — optional
+ *   company      — optional
+ *   login_email  — optional override for @upcbma.com login (else auto-generated)
+ *   chapter_id   — chapter this member belongs to (optional, but recommended)
+ *   category_id  — member category within that chapter (optional)
+ *
+ * Effect:
+ *   1. Picks a free @upcbma.com login (suggestion or admin override).
+ *   2. Generates a 12-char temp password.
+ *   3. Creates the auth user with email_confirm=true (no email confirmation
+ *      step — admin is vouching for this person).
+ *   4. Inserts the members row with must_change_password=true and a
+ *      chapter_membership tying them to the chosen chapter.
+ *   5. Emails the invite to the member's PERSONAL email — both the new login
+ *      address and the temp password — with instructions to sign in and reset.
+ */
+export async function inviteMember(formData: FormData) {
+  try {
+    const me = await getAuthedAdmin();
+    const ctx = await getAdminContext();
+    await assertNotLocked(me, {
+      category: "members",
+      chapterId: ctx.activeChapterId,
+    });
+
+    const id = String(formData.get("id") ?? "").trim();
+    const name = String(formData.get("name") ?? "").trim();
+    const personalEmail = String(formData.get("email") ?? "")
+      .trim()
+      .toLowerCase();
+    const phone = String(formData.get("phone") ?? "").trim() || null;
+    const company = String(formData.get("company") ?? "").trim() || null;
+    const overrideLogin = String(formData.get("login_email") ?? "")
+      .trim()
+      .toLowerCase();
+    const chapterId =
+      String(formData.get("chapter_id") ?? "").trim() || null;
+    const categoryId =
+      String(formData.get("category_id") ?? "").trim() || null;
+
+    if (!id) redirectWithError("Member ID is required.");
+    if (!name) redirectWithError("Name is required.");
+    if (!personalEmail) redirectWithError("Personal email is required (the invite goes here).");
+
+    // Pre-flight: friendly conflict error.
+    const conflict = await findExistingMemberByEmail(personalEmail);
+    if (conflict) redirectWithError(conflict);
+
+    // Pick (or validate) the @upcbma.com login email.
+    let loginEmail: string;
+    if (overrideLogin) {
+      if (!overrideLogin.endsWith("@upcbma.com")) {
+        redirectWithError("Login email must end with @upcbma.com.");
+      }
+      loginEmail = overrideLogin;
+    } else {
+      loginEmail = await pickAvailableLogin(suggestLocalPart(name));
+    }
+
+    const tempPassword = generateTempPassword();
+    const svc = createServiceClient();
+
+    // 1. Create the auth user.
+    const { data: authData, error: authError } = await svc.auth.admin.createUser(
+      {
+        email: loginEmail,
+        password: tempPassword,
+        email_confirm: true,
+        user_metadata: { invited_by: me.id, must_change_password: true },
+      },
+    );
+    if (authError || !authData?.user) {
+      redirectWithError(
+        friendlyError(authError?.message ?? "Could not create login account."),
+      );
+    }
+    const authUserId = authData.user.id;
+
+    // 2. Insert the members row.
+    const { error: insertError } = await svc.from("members").insert({
+      id,
+      name,
+      email: personalEmail,
+      phone,
+      company,
+      role: "member",
+      active: true,
+      member_since: new Date().toISOString().slice(0, 10),
+      auth_user_id: authUserId,
+      must_change_password: true,
+    });
+    if (insertError) {
+      // Roll back the orphaned auth user so the admin can retry cleanly.
+      await svc.auth.admin.deleteUser(authUserId).catch(() => {});
+      redirectWithError(friendlyError(insertError.message));
+    }
+
+    // 3. Attach to chapter (best-effort — chapter membership failure shouldn't
+    //    unwind the auth+member rows we just created).
+    if (chapterId) {
+      const { error: cmErr } = await svc.from("chapter_memberships").insert({
+        member_id: id,
+        chapter_id: chapterId,
+        category_id: categoryId,
+        member_since: new Date().toISOString().slice(0, 10),
+        active: true,
+      });
+      if (cmErr) console.warn("chapter_memberships insert:", cmErr.message);
+    }
+
+    // 4. Send the invitation email to the member's personal address.
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL ?? "https://upcbma.com";
+    const text = [
+      `Hi ${name},`,
+      ``,
+      `You've been invited to UPCBMA — the Uttar Pradesh Corrugated Box Manufacturers' Association.`,
+      ``,
+      `Sign in here: ${siteUrl}/login`,
+      `  Email:    ${loginEmail}`,
+      `  Password: ${tempPassword}`,
+      ``,
+      `For security you'll be asked to set your own password right after you sign in for the first time.`,
+      ``,
+      `Once you're in, head to your profile to add a photo and a short quote — those will appear on the public committee page if you hold a position.`,
+      ``,
+      `If you weren't expecting this, ignore the email — the temporary password becomes useless once it's reset or after we revoke the invite.`,
+      ``,
+      `— UPCBMA secretariat`,
+    ].join("\n");
+
+    const html = `
+      <p>Hi ${name},</p>
+      <p>You&rsquo;ve been invited to <strong>UPCBMA</strong> &mdash; the Uttar Pradesh Corrugated Box Manufacturers&rsquo; Association.</p>
+      <table cellpadding="0" cellspacing="0" style="margin:16px 0;border-collapse:collapse">
+        <tr><td style="padding:6px 12px 6px 0;color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:0.08em;font-weight:600">Sign in at</td>
+            <td style="padding:6px 0;font-size:14px"><a href="${siteUrl}/login" style="color:#0d6b3e">${siteUrl}/login</a></td></tr>
+        <tr><td style="padding:6px 12px 6px 0;color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:0.08em;font-weight:600">Email</td>
+            <td style="padding:6px 0;font-size:14px;font-family:ui-monospace,monospace">${loginEmail}</td></tr>
+        <tr><td style="padding:6px 12px 6px 0;color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:0.08em;font-weight:600">Temp password</td>
+            <td style="padding:6px 0;font-size:14px;font-family:ui-monospace,monospace">${tempPassword}</td></tr>
+      </table>
+      <p style="font-size:13px;color:#64748b">For security you&rsquo;ll be asked to set your own password right after you sign in for the first time.</p>
+      <p style="font-size:13px;color:#64748b">Once you&rsquo;re in, head to your profile to add a photo and a short quote &mdash; those will appear on the public committee page if you hold a position.</p>
+      <p style="font-size:12px;color:#94a3b8;margin-top:24px">If you weren&rsquo;t expecting this email, ignore it &mdash; the temporary password becomes useless once it&rsquo;s reset or after we revoke the invite.</p>
+    `;
+
+    const emailRes = await sendEmail({
+      to: personalEmail,
+      subject: `You've been invited to UPCBMA — sign in details inside`,
+      text,
+      html,
+      tag: "member_invite",
+    });
+
+    // 5. Audit + redirect with the right success message.
+    await audit({
+      action: "invite_member",
+      target_id: id,
+      diff: {
+        login_email: loginEmail,
+        contact_email: personalEmail,
+        chapter_id: chapterId,
+        email_sent: emailRes.ok,
+      },
+    });
+
+    revalidatePath("/admin/members");
+
+    if (emailRes.ok) {
+      redirectOK(
+        `Invited ${name}. Email sent to ${personalEmail}. Login: ${loginEmail}.`,
+      );
+    } else {
+      // Email didn't go through (no Resend key, or send failed). Show the
+      // credentials inline so the admin can copy-paste manually instead of
+      // losing them.
+      redirectOK(
+        `Invited ${name} (email did NOT send — share these manually). Login: ${loginEmail} · Temp password: ${tempPassword}`,
+      );
+    }
+  } catch (e) {
+    if (isRedirect(e)) throw e;
+    redirectWithError(
+      friendlyError(e instanceof Error ? e.message : String(e)),
+    );
+  }
+}
+
+/**
+ * Re-issue the invite — useful when the original email got lost. Generates
+ * a fresh temp password, sets must_change_password=true, and re-emails.
+ */
+export async function resendInvite(memberId: string) {
+  try {
+    const me = await getAuthedAdmin();
+    await assertCanMutateMember({ caller: me, targetId: memberId });
+
+    const svc = createServiceClient();
+    const { data: target } = await svc
+      .from("members")
+      .select("id, name, email, auth_user_id")
+      .eq("id", memberId)
+      .maybeSingle();
+    if (!target?.auth_user_id) {
+      redirectWithError("This member doesn't have a login account yet.");
+    }
+
+    // Resolve their @upcbma login from auth.users.
+    const { data: list } = await svc.auth.admin.listUsers({ perPage: 1000 });
+    const u = list?.users?.find((u) => u.id === target.auth_user_id);
+    const loginEmail = u?.email ?? "(unknown)";
+
+    const tempPassword = generateTempPassword();
+    const { error: updErr } = await svc.auth.admin.updateUserById(
+      target.auth_user_id,
+      { password: tempPassword },
+    );
+    if (updErr) redirectWithError(friendlyError(updErr.message));
+
+    await svc
+      .from("members")
+      .update({ must_change_password: true })
+      .eq("id", memberId);
+
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL ?? "https://upcbma.com";
+    const emailRes = await sendEmail({
+      to: target.email,
+      subject: `Your UPCBMA login — fresh credentials`,
+      text:
+        `Hi ${target.name},\n\n` +
+        `Here are fresh sign-in details for UPCBMA.\n\n` +
+        `Sign in: ${siteUrl}/login\n` +
+        `  Email:    ${loginEmail}\n` +
+        `  Password: ${tempPassword}\n\n` +
+        `You'll be asked to set your own password on next sign-in.\n\n— UPCBMA secretariat`,
+      tag: "member_invite_resend",
+    });
+
+    await audit({
+      action: "resend_invite",
+      target_id: memberId,
+      diff: { email_sent: emailRes.ok },
+    });
+
+    revalidatePath("/admin/members");
+    if (emailRes.ok) {
+      redirectOK(`Re-sent invite to ${target.email}.`);
+    } else {
+      redirectOK(
+        `Reset password (email did NOT send). Login: ${loginEmail} · Temp password: ${tempPassword}`,
+      );
+    }
+  } catch (e) {
+    if (isRedirect(e)) throw e;
+    redirectWithError(
+      friendlyError(e instanceof Error ? e.message : String(e)),
+    );
+  }
 }

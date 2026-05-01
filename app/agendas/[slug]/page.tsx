@@ -78,7 +78,7 @@ export default async function AgendaDetailPage({
 
   return (
     <StateShell>
-      <article className="mx-auto max-w-3xl px-6 py-10">
+      <article className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-10">
         <Link href="/agendas" className="inline-flex items-center text-xs font-medium text-muted no-underline hover:text-heading">
           <ArrowLeft className="mr-1 h-3.5 w-3.5" strokeWidth={2} />
           All agendas

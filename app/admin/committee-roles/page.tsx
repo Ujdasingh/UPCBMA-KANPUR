@@ -1,8 +1,14 @@
 import { PageHeader } from "@/components/admin/page-header";
+import { SectionTabs } from "@/components/admin/section-tabs";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getAdminContext } from "@/lib/auth";
 import { AlertTriangle, Building2, CheckCircle2 } from "lucide-react";
 import { RolesTable } from "./roles-table";
+
+const COMMITTEE_TABS = [
+  { href: "/admin/committee", label: "Appointments", exact: true },
+  { href: "/admin/committee-roles", label: "Roles" },
+];
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Committee roles — UPCBMA Admin" };
@@ -19,9 +25,10 @@ export default async function CommitteeRolesPage({
     return (
       <>
         <PageHeader
-          title="Committee roles"
+          title="Committee · Roles"
           description="Each chapter defines its own role list (President, VP1, Secretary, and so on)."
         />
+        <SectionTabs tabs={COMMITTEE_TABS} />
         <div className="flex gap-3 rounded-sm border border-border bg-surface p-4">
           <Building2 className="mt-0.5 h-5 w-5 shrink-0 text-muted" strokeWidth={1.75} />
           <div className="text-sm text-text">
@@ -42,9 +49,10 @@ export default async function CommitteeRolesPage({
   return (
     <>
       <PageHeader
-        title={`Committee roles · ${ctx.activeChapter.name}`}
+        title={`Committee · Roles · ${ctx.activeChapter.name}`}
         description={`Which roles exist on ${ctx.activeChapter.name}'s committee (President, VP, Secretary, Treasurer, etc.). Edit once per year to match the chapter's structure.`}
       />
+      <SectionTabs tabs={COMMITTEE_TABS} />
 
       {error && (
         <div className="mb-5 flex gap-3 rounded-sm border border-red-200 bg-red-50 p-4">

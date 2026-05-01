@@ -2,10 +2,16 @@
 
 import { createServiceClient } from "@/lib/supabase/server";
 import { getAdminContext } from "@/lib/auth";
+import { assertNotLocked } from "@/lib/locks";
 import { revalidatePath } from "next/cache";
 
 export async function setRequestStatus(id: string, status: string) {
   const ctx = await getAdminContext();
+  await assertNotLocked(ctx.me, {
+    category: "membership_requests",
+    chapterId: ctx.activeChapterId,
+    resourceId: id,
+  });
   const svc = createServiceClient();
   await svc
     .from("membership_requests")
@@ -19,7 +25,12 @@ export async function setRequestStatus(id: string, status: string) {
 }
 
 export async function deleteRequest(id: string) {
-  await getAdminContext();
+  const ctx = await getAdminContext();
+  await assertNotLocked(ctx.me, {
+    category: "membership_requests",
+    chapterId: ctx.activeChapterId,
+    resourceId: id,
+  });
   const svc = createServiceClient();
   await svc.from("membership_requests").delete().eq("id", id);
   revalidatePath("/admin/membership-requests");

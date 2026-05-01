@@ -1,8 +1,14 @@
 import { PageHeader } from "@/components/admin/page-header";
+import { SectionTabs } from "@/components/admin/section-tabs";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getAdminContext } from "@/lib/auth";
 import { AlertTriangle, Building2, CheckCircle2 } from "lucide-react";
 import { CategoriesTable } from "./categories-table";
+
+const MEMBERS_TABS = [
+  { href: "/admin/members", label: "Roster", exact: true },
+  { href: "/admin/member-categories", label: "Categories" },
+];
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Member categories — UPCBMA Admin" };
@@ -19,9 +25,10 @@ export default async function MemberCategoriesPage({
     return (
       <>
         <PageHeader
-          title="Member categories"
+          title="Members · Categories"
           description="Each chapter defines its own membership tiers (Executive, Member, Life, Patron, etc.)."
         />
+        <SectionTabs tabs={MEMBERS_TABS} />
         <div className="flex gap-3 rounded-sm border border-border bg-surface p-4">
           <Building2 className="mt-0.5 h-5 w-5 shrink-0 text-muted" strokeWidth={1.75} />
           <div className="text-sm text-text">
@@ -61,9 +68,10 @@ export default async function MemberCategoriesPage({
   return (
     <>
       <PageHeader
-        title={`Member categories · ${ctx.activeChapter.name}`}
+        title={`Members · Categories · ${ctx.activeChapter.name}`}
         description={`Define the membership tiers on ${ctx.activeChapter.name}. Members pick one when joining the chapter.`}
       />
+      <SectionTabs tabs={MEMBERS_TABS} />
 
       {error && (
         <div className="mb-5 flex gap-3 rounded-sm border border-red-200 bg-red-50 p-4">

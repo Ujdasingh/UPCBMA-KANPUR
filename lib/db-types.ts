@@ -145,6 +145,7 @@ export type Database = {
           tag: "ANNOUNCEMENT" | "EVENT" | "NOTICE" | "UPDATE";
           title: string;
           body: string | null;
+          image_url: string | null;
           published_date: string;
           created_at: string;
         };
@@ -153,6 +154,7 @@ export type Database = {
           tag?: "ANNOUNCEMENT" | "EVENT" | "NOTICE" | "UPDATE";
           title: string;
           body?: string | null;
+          image_url?: string | null;
           published_date?: string;
         };
         Update: Partial<Database["public"]["Tables"]["news"]["Row"]>;

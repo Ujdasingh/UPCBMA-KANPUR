@@ -2,6 +2,7 @@
 
 import { createServiceClient } from "@/lib/supabase/server";
 import { canApproveAgenda, getAdminContext } from "@/lib/auth";
+import { assertNotLocked } from "@/lib/locks";
 import { slugifyAgenda } from "@/lib/agendas";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -22,7 +23,10 @@ function parseForm(formData: FormData) {
   const slugRaw = String(formData.get("slug") ?? "").trim();
   const summary = String(formData.get("summary") ?? "").trim() || null;
   const body = String(formData.get("body") ?? "").trim() || null;
-  const image_url = String(formData.get("image_url") ?? "").trim() || null;
+  // Only accept http(s) URLs — the upload widget always returns one of these
+  // via Supabase Storage's getPublicUrl(); anything else is junk paste.
+  const imgRaw = String(formData.get("image_url") ?? "").trim();
+  const image_url = imgRaw && /^https?:\/\//i.test(imgRaw) ? imgRaw : null;
   const category = String(formData.get("category") ?? "other");
   const status = String(formData.get("status") ?? "active");
   const priority = String(formData.get("priority") ?? "medium");
@@ -52,6 +56,10 @@ function parseForm(formData: FormData) {
 export async function createAgenda(formData: FormData) {
   try {
     const ctx = await getAdminContext();
+    await assertNotLocked(ctx.me, {
+      category: "agendas",
+      chapterId: ctx.activeChapterId,
+    });
     const p = parseForm(formData);
     if (!p.title) fail("Title is required.");
     if (!p.slug) fail("Slug is required.");
@@ -82,7 +90,12 @@ export async function createAgenda(formData: FormData) {
 
 export async function updateAgenda(id: string, formData: FormData) {
   try {
-    await getAdminContext();
+    const ctx = await getAdminContext();
+    await assertNotLocked(ctx.me, {
+      category: "agendas",
+      chapterId: ctx.activeChapterId,
+      resourceId: id,
+    });
     const p = parseForm(formData);
     const svc = createServiceClient();
     const { error } = await svc
@@ -103,7 +116,12 @@ export async function updateAgenda(id: string, formData: FormData) {
 
 export async function deleteAgenda(id: string) {
   try {
-    await getAdminContext();
+    const ctx = await getAdminContext();
+    await assertNotLocked(ctx.me, {
+      category: "agendas",
+      chapterId: ctx.activeChapterId,
+      resourceId: id,
+    });
     const svc = createServiceClient();
     const { error } = await svc.from("agendas").delete().eq("id", id);
     if (error) fail(error.message);

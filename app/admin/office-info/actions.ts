@@ -2,6 +2,7 @@
 
 import { createServiceClient } from "@/lib/supabase/server";
 import { getAdminContext } from "@/lib/auth";
+import { assertNotLocked } from "@/lib/locks";
 import { revalidatePath } from "next/cache";
 
 /**
@@ -13,6 +14,10 @@ export async function saveOfficeInfo(formData: FormData) {
   if (!ctx.activeChapterId) {
     throw new Error("Pick a chapter from the sidebar before saving office info.");
   }
+  await assertNotLocked(ctx.me, {
+    category: "office_info",
+    chapterId: ctx.activeChapterId,
+  });
   const svc = createServiceClient();
 
   const payload = {
