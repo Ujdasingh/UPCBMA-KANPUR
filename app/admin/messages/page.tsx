@@ -4,7 +4,7 @@ import { getAdminContext } from "@/lib/auth";
 import { MessagesTable } from "./messages-table";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Messages — UPCBMA Admin" };
+export const metadata = { title: "Messages · Admin" };
 
 export default async function MessagesPage() {
   const ctx = await getAdminContext();

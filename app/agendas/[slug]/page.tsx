@@ -22,9 +22,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const svc = createServiceClient();
   const { data } = await svc.from("agendas").select("title, summary, approval_status").eq("slug", slug).maybeSingle();
-  if (!data || data.approval_status !== "approved") return { title: "Agenda — UPCBMA" };
+  if (!data || data.approval_status !== "approved") return { title: "Agenda" };
   return {
-    title: `${data.title} — UPCBMA agenda`,
+    title: `${data.title} · Agenda`,
     description: (data.summary ?? "").slice(0, 160),
   };
 }

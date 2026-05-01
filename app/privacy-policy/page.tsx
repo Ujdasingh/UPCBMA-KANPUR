@@ -1,6 +1,6 @@
 import { StateShell } from "@/components/public/state-shell";
 
-export const metadata = { title: "Privacy policy — UPCBMA" };
+export const metadata = { title: "Privacy policy" };
 
 export default function PrivacyPolicyPage() {
   return (

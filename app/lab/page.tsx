@@ -17,7 +17,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Lab services — UPCBMA",
+  title: "Lab services",
   description:
     "Browse each chapter's testing lab — burst, compression, Cobb, GSM, and more. Book at member rates.",
 };

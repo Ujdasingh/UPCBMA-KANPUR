@@ -1,6 +1,6 @@
 import { StateShell } from "@/components/public/state-shell";
 
-export const metadata = { title: "Terms & conditions — UPCBMA" };
+export const metadata = { title: "Terms & conditions" };
 
 export default function TermsPage() {
   return (

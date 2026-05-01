@@ -9,7 +9,7 @@ import { setRequestStatus, deleteRequest } from "./actions";
 import { Mail, Phone, Building2, MapPin, Inbox } from "lucide-react";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Membership requests — UPCBMA Admin" };
+export const metadata = { title: "Membership requests · Admin" };
 
 const TABS = [
   { key: "new",       label: "New"        },

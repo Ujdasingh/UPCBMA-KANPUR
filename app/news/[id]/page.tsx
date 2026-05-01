@@ -25,9 +25,9 @@ export async function generateMetadata({
     .select("title,body,image_url")
     .eq("id", id)
     .maybeSingle();
-  if (!data) return { title: "News — UPCBMA" };
+  if (!data) return { title: "News" };
   return {
-    title: `${data.title} — UPCBMA`,
+    title: `${data.title}`,
     description: (data.body ?? "").slice(0, 160),
     openGraph: data.image_url ? { images: [data.image_url] } : undefined,
   };

@@ -5,7 +5,7 @@ import { Building2 } from "lucide-react";
 import { OfficeInfoForm } from "./office-info-form";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Office info — UPCBMA Admin" };
+export const metadata = { title: "Office info · Admin" };
 
 export default async function OfficeInfoPage() {
   const ctx = await getAdminContext();

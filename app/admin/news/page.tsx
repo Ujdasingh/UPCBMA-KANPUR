@@ -4,7 +4,7 @@ import { getAdminContext } from "@/lib/auth";
 import { NewsTable } from "./news-table";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "News — UPCBMA Admin" };
+export const metadata = { title: "News · Admin" };
 
 export default async function NewsPage() {
   const ctx = await getAdminContext();

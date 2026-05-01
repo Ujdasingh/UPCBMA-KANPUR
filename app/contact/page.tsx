@@ -8,7 +8,7 @@ import { submitContact } from "./actions";
 import { CheckCircle2, AlertTriangle, Building2 } from "lucide-react";
 
 export const metadata = {
-  title: "Contact — UPCBMA",
+  title: "Contact",
   description: "Contact the UPCBMA secretariat.",
 };
 

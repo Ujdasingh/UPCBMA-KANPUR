@@ -10,7 +10,7 @@ import { AlertTriangle, CheckCircle2, KeyRound, Mail } from "lucide-react";
 import { updateMyProfile } from "./actions";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Your profile — UPCBMA Admin" };
+export const metadata = { title: "Your profile · Admin" };
 
 export default async function ProfilePage({
   searchParams,

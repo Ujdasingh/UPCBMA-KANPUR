@@ -11,7 +11,7 @@ const MEMBERS_TABS = [
 ];
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Member categories — UPCBMA Admin" };
+export const metadata = { title: "Member categories · Admin" };
 
 export default async function MemberCategoriesPage({
   searchParams,

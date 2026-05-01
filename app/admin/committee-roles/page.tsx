@@ -11,7 +11,7 @@ const COMMITTEE_TABS = [
 ];
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Committee roles — UPCBMA Admin" };
+export const metadata = { title: "Committee roles · Admin" };
 
 export default async function CommitteeRolesPage({
   searchParams,

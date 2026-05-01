@@ -5,7 +5,7 @@ import { ArrowRight, MapPin, Building2 } from "lucide-react";
 
 export const revalidate = 300;
 export const metadata = {
-  title: "Chapters — UPCBMA",
+  title: "Chapters",
   description: "All UPCBMA chapters across Uttar Pradesh.",
 };
 

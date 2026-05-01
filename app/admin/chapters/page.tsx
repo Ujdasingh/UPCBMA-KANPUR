@@ -7,7 +7,7 @@ import { ChaptersTable } from "./chapters-table";
 import type { Chapter } from "@/lib/chapters";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Chapters — UPCBMA Admin" };
+export const metadata = { title: "Chapters · Admin" };
 
 export default async function ChaptersPage({
   searchParams,

@@ -1,6 +1,6 @@
 import { StateShell } from "@/components/public/state-shell";
 
-export const metadata = { title: "Disclaimer — UPCBMA" };
+export const metadata = { title: "Disclaimer" };
 
 export default function DisclaimerPage() {
   return (

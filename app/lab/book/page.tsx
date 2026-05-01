@@ -21,7 +21,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Book a lab test — UPCBMA",
+  title: "Book a lab test",
   description:
     "Members: book a sample test at any UPCBMA chapter lab. Your booking is sent to the chapter admin and lab desk.",
 };

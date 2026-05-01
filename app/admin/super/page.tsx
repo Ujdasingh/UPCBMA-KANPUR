@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Super admin — UPCBMA" };
+export const metadata = { title: "Super admin" };
 
 const tools = [
   {

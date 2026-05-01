@@ -5,7 +5,7 @@ import { Building2 } from "lucide-react";
 import { LabTestsTable } from "./lab-tests-table";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Lab tests — UPCBMA Admin" };
+export const metadata = { title: "Lab tests · Admin" };
 
 export default async function LabTestsPage() {
   const ctx = await getAdminContext();

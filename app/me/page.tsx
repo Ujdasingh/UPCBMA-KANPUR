@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "My account — UPCBMA" };
+export const metadata = { title: "My account" };
 
 /**
  * /me — the post-login member dashboard.

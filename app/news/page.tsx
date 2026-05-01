@@ -9,7 +9,7 @@ import { Newspaper } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "News — UPCBMA",
+  title: "News",
   description:
     "State and chapter announcements from UPCBMA. Filter by chapter to see local news.",
 };

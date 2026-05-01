@@ -15,7 +15,7 @@ import { Megaphone, Plus } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Agendas — UPCBMA",
+  title: "Agendas",
   description:
     "Live tracker of industry issues UPCBMA chapters are working on — gas, paper rates, supply, regulation, and more.",
 };

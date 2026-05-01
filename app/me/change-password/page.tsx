@@ -10,7 +10,7 @@ import { changeMyPassword } from "./actions";
 import { AlertTriangle, KeyRound, ShieldCheck } from "lucide-react";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Change password — UPCBMA" };
+export const metadata = { title: "Change password" };
 
 export default async function ChangePasswordPage({
   searchParams,

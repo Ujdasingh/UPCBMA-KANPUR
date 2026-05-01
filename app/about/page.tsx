@@ -5,7 +5,7 @@ import { StateShell } from "@/components/public/state-shell";
 import { CorrugatedWave } from "@/components/public/wave";
 
 export const metadata = {
-  title: "About — UPCBMA",
+  title: "About",
   description:
     "About the Uttar Pradesh Corrugated Box Manufacturers' Association — state body serving regional chapters across UP.",
 };

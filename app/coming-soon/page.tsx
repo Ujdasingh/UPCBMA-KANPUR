@@ -2,7 +2,7 @@ import Link from "next/link";
 import { StateShell } from "@/components/public/state-shell";
 import { Sparkles } from "lucide-react";
 
-export const metadata = { title: "Coming soon — UPCBMA" };
+export const metadata = { title: "Coming soon" };
 
 export default function ComingSoonPage() {
   return (

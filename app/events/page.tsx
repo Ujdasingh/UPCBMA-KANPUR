@@ -8,7 +8,7 @@ import { CalendarDays, MapPin } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Events — UPCBMA",
+  title: "Events",
   description:
     "UPCBMA events — AGMs, statewide training, plus chapter meets across Uttar Pradesh.",
 };

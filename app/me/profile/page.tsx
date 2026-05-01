@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Edit profile — UPCBMA" };
+export const metadata = { title: "Edit profile" };
 
 export default async function EditMyProfilePage({
   searchParams,

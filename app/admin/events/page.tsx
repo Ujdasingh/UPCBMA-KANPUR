@@ -4,7 +4,7 @@ import { getAdminContext } from "@/lib/auth";
 import { EventsTable } from "./events-table";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Events — UPCBMA Admin" };
+export const metadata = { title: "Events · Admin" };
 
 export default async function EventsPage() {
   const ctx = await getAdminContext();

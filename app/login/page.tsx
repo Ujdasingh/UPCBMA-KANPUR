@@ -8,7 +8,7 @@ import { getStateLogoUrl } from "@/lib/site-settings";
 import { signIn } from "./actions";
 
 export const metadata = {
-  title: "Sign in — UPCBMA",
+  title: "Sign in",
 };
 
 export default async function LoginPage({

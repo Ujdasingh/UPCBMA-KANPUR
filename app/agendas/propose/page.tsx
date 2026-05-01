@@ -11,7 +11,7 @@ import { proposeAgenda } from "./actions";
 import { CheckCircle2, AlertTriangle, Send, Info } from "lucide-react";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Propose an agenda — UPCBMA" };
+export const metadata = { title: "Propose an agenda" };
 
 export default async function ProposeAgendaPage({
   searchParams,

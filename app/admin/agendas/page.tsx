@@ -6,7 +6,7 @@ import { AgendasTable } from "./agendas-table";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Agendas — UPCBMA Admin" };
+export const metadata = { title: "Agendas · Admin" };
 
 const TABS = [
   { key: "pending",  label: "Pending review", filter: "pending" },
