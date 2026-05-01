@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/admin/page-header";
 import { createServiceClient } from "@/lib/supabase/server";
@@ -9,6 +10,9 @@ type Stat = {
   label: string;
   value: string | number;
   hint?: string;
+  /** Optional link target — turns the tile into a one-click jump to the
+   *  matching admin module so users don't have to hunt in the sidebar. */
+  href?: string;
 };
 
 async function fetchStats(opts: {
@@ -112,36 +116,43 @@ async function fetchStats(opts: {
       label: "Active members",
       value: membersActive.count ?? 0,
       hint: chapterId ? "In this chapter" : "Across all chapters",
+      href: "/admin/members",
     },
     {
       label: "Committee seats",
       value: apptActive.count ?? 0,
       hint: "Currently held",
+      href: "/admin/committee",
     },
     {
       label: "Bookings pending",
       value: bookingsPending.count ?? 0,
       hint: "Awaiting confirmation",
+      href: "/admin/bookings",
     },
     {
       label: "Unread messages",
       value: messagesNew.count ?? 0,
       hint: "From contact form",
+      href: "/admin/messages",
     },
     {
       label: "News items",
       value: newsTotal.count ?? 0,
       hint: "Published to date",
+      href: "/admin/news",
     },
     {
       label: "Upcoming events",
       value: eventsUpcoming.count ?? 0,
       hint: "From today forward",
+      href: "/admin/events",
     },
     {
       label: "Active lab tests",
       value: labTestsActive.count ?? 0,
       hint: "In catalog",
+      href: "/admin/lab-tests",
     },
   ];
 }
@@ -169,17 +180,32 @@ export default async function DashboardPage() {
       />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {stats.map((s) => (
-          <Card key={s.label}>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
-              {s.label}
-            </div>
-            <div className="mt-2 text-3xl font-semibold text-heading tabular-nums">
-              {s.value}
-            </div>
-            {s.hint && <div className="mt-1 text-xs text-muted">{s.hint}</div>}
-          </Card>
-        ))}
+        {stats.map((s) => {
+          const body = (
+            <>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
+                {s.label}
+              </div>
+              <div className="mt-2 text-3xl font-semibold text-heading tabular-nums">
+                {s.value}
+              </div>
+              {s.hint && <div className="mt-1 text-xs text-muted">{s.hint}</div>}
+            </>
+          );
+          // Tiles with an href become one-click jumps to the matching admin
+          // module — saves a sidebar trip on every dashboard glance.
+          return s.href ? (
+            <Link
+              key={s.label}
+              href={s.href}
+              className="block no-underline transition-colors hover:bg-surface focus-visible:bg-surface focus-visible:outline-none rounded-sm"
+            >
+              <Card>{body}</Card>
+            </Link>
+          ) : (
+            <Card key={s.label}>{body}</Card>
+          );
+        })}
       </div>
     </>
   );
