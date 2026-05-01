@@ -100,7 +100,7 @@ export function StateNav({
             />
           ) : (
             <>
-              <LoginButton className="ml-3" />
+              <LoginButton className="ml-3" logoSrc={logoSrc} />
               <Link
                 href="/join"
                 className="ml-1 inline-flex h-9 items-center gap-1.5 rounded-sm bg-heading px-4 text-sm font-medium text-white no-underline hover:bg-hover"
@@ -151,7 +151,7 @@ export function StateNav({
             ) : (
               <>
                 <div className="mt-2">
-                  <LoginButton className="w-full" />
+                  <LoginButton className="w-full" logoSrc={logoSrc} />
                 </div>
                 <Link
                   href="/join"

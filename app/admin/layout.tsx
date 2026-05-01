@@ -5,9 +5,10 @@ import { LockBanner } from "@/components/admin/lock-banner";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { Logo } from "@/components/public/logo";
 import { getAdminContext } from "@/lib/auth";
+import { getStateLogoUrl } from "@/lib/site-settings";
 import { stopImpersonation } from "./super/actions";
 import Link from "next/link";
-import { UserCircle, UserCheck } from "lucide-react";
+import { ExternalLink, UserCircle, UserCheck } from "lucide-react";
 
 // Always fetch fresh — the sidebar items (especially super_admin entries),
 // active chapter, and lock banner depend on auth state, so we never want the
@@ -21,24 +22,28 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const ctx = await getAdminContext();
+  // Same uploaded logo as the public nav so the admin panel doesn't fall back
+  // to the bundled placeholder when an org has set its own brand.
+  const logoSrc = await getStateLogoUrl();
 
   // The contents of the sidebar — same on desktop and inside the mobile
   // drawer. Keeping this as a single ReactNode lets AdminShell render it in
   // the right place per breakpoint.
   const sidebarContent = (
     <>
-      <Link
-        href="/admin"
-        className="mb-6 inline-flex items-center gap-2.5 no-underline"
-      >
-        <Logo size={32} />
-        <div>
+      {/* Logo links to the public website home (per spec). The "Admin"
+          wordmark below it stays distinct so the panel still feels labelled. */}
+      <div className="mb-6 flex items-center gap-2.5">
+        <Link href="/" className="shrink-0 no-underline" aria-label="UPCBMA website home">
+          <Logo size={32} src={logoSrc} />
+        </Link>
+        <Link href="/admin" className="no-underline">
           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
             UPCBMA
           </div>
           <div className="mt-0.5 text-sm font-semibold text-heading">Admin</div>
-        </div>
-      </Link>
+        </Link>
+      </div>
 
       {ctx.availableChapters.length > 0 && (
         <ChapterSwitcher
@@ -51,6 +56,16 @@ export default async function AdminLayout({
       <Sidebar isSuper={ctx.isSuper} />
 
       <div className="mt-auto space-y-2 border-t border-border pt-4">
+        <Link
+          href="/"
+          className="group flex items-center gap-2 rounded-sm px-3 py-2 text-sm font-medium text-heading no-underline hover:bg-surface"
+        >
+          <ExternalLink
+            className="h-4 w-4 shrink-0 text-muted group-hover:text-heading"
+            strokeWidth={1.75}
+          />
+          Visit website
+        </Link>
         <Link
           href="/me"
           className="group flex items-start gap-2 rounded-sm px-3 py-2 no-underline hover:bg-surface"

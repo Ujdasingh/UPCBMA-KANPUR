@@ -75,7 +75,7 @@ export function ChapterNav({
                 isAdmin={member.isAdmin}
               />
             ) : (
-              <LoginButton variant="ghost" />
+              <LoginButton variant="ghost" logoSrc={logoSrc} />
             )}
           </div>
         </div>
@@ -85,17 +85,26 @@ export function ChapterNav({
       <div className="h-[3px] w-full bg-gradient-to-r from-[#dca135] via-[#0d6b3e] to-[#dca135]" />
 
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:h-20 sm:px-6 lg:px-8">
-        <Link href={base} className="group inline-flex items-center gap-3 no-underline">
-          <Logo size={56} src={logoSrc} />
-          <div>
+        {/* Logo always returns visitors to the website home (state /). The
+            chapter wordmark next to it stays as a separate link to the chapter
+            home so people who only want to stay inside this chapter still can. */}
+        <div className="inline-flex items-center gap-3">
+          <Link
+            href="/"
+            className="shrink-0 no-underline"
+            aria-label="UPCBMA — back to website home"
+          >
+            <Logo size={56} src={logoSrc} />
+          </Link>
+          <Link href={base} className="group no-underline">
             <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted group-hover:text-heading">
               {chapter.state}
             </div>
             <div className="-mt-0.5 text-base font-semibold text-heading">
               {chapter.name}
             </div>
-          </div>
-        </Link>
+          </Link>
+        </div>
 
         <nav className="hidden md:flex items-center gap-1">
           {links.map(({ href, label }) => {

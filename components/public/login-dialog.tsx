@@ -21,10 +21,17 @@ export function LoginButton({
   className,
   variant = "outline",
   label = "Sign in",
+  logoSrc,
 }: {
   className?: string;
   variant?: "outline" | "ghost";
   label?: string;
+  /**
+   * Uploaded brand logo (from site_settings). When provided, the modal shows
+   * the org's actual logo instead of the bundled fallback. The parent nav
+   * already resolves this URL server-side, so we just pass it through.
+   */
+  logoSrc?: string;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -51,7 +58,7 @@ export function LoginButton({
         description="Access your UPCBMA dashboard."
       >
         <div className="mb-4 flex justify-center">
-          <Logo size={40} />
+          <Logo size={40} src={logoSrc} />
         </div>
         <form action={signIn} className="space-y-4">
           <input type="hidden" name="next" value="/admin" />

@@ -3,6 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Logo } from "@/components/public/logo";
+import Link from "next/link";
+import { getStateLogoUrl } from "@/lib/site-settings";
 import { signIn } from "./actions";
 
 export const metadata = {
@@ -15,12 +17,17 @@ export default async function LoginPage({
   searchParams: Promise<{ next?: string; error?: string }>;
 }) {
   const { next, error } = await searchParams;
+  const logoSrc = await getStateLogoUrl();
 
   return (
     <main className="grid min-h-screen place-items-center bg-surface px-6">
       <div className="w-full max-w-md">
         <div className="mb-8 flex flex-col items-center text-center">
-          <Logo size={48} />
+          {/* Logo doubles as a "back to website" affordance — mirrors the
+              behaviour everywhere else in the site. */}
+          <Link href="/" className="no-underline" aria-label="UPCBMA home">
+            <Logo size={48} src={logoSrc} />
+          </Link>
           <div className="mt-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
             UPCBMA · Member portal
           </div>
@@ -70,6 +77,14 @@ export default async function LoginPage({
 
         <p className="mt-6 text-center text-xs text-muted">
           Forgot your password? Contact your chapter admin to reset.
+        </p>
+        <p className="mt-3 text-center text-xs">
+          <Link
+            href="/"
+            className="text-muted hover:text-heading no-underline"
+          >
+            ← Back to website home
+          </Link>
         </p>
       </div>
     </main>

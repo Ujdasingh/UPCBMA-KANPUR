@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   ChevronDown,
+  Home,
   KeyRound,
   LogOut,
   ShieldCheck,
@@ -100,6 +101,7 @@ export function AvatarMenu({
           </div>
 
           <ul className="py-1 text-sm">
+            <MenuItem href="/" Icon={Home} label="Visit website" />
             <MenuItem href="/me" Icon={User} label="My account" />
             <MenuItem href="/me/profile" Icon={UserCog} label="Edit profile" />
             <MenuItem
