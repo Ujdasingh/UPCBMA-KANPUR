@@ -8,13 +8,17 @@ import { useEffect, useState } from "react";
 import { Menu, X, ArrowLeft } from "lucide-react";
 import { Logo } from "./logo";
 import { LoginButton } from "./login-dialog";
+import { AvatarMenu } from "./avatar-menu";
+import type { NavMember } from "./state-nav";
 
 export function ChapterNav({
   chapter,
   logoSrc,
+  member,
 }: {
   chapter: Chapter;
   logoSrc?: string;
+  member?: NavMember;
 }) {
   const base = `/${chapter.slug}`;
   // The chapter page is now a single rich view. Anchor links jump within it
@@ -63,7 +67,16 @@ export function ChapterNav({
             <Link href="/chapters" className="hidden sm:inline text-muted hover:text-heading no-underline">
               All chapters
             </Link>
-            <LoginButton variant="ghost" />
+            {member ? (
+              <AvatarMenu
+                name={member.name}
+                email={member.email}
+                photoUrl={member.photoUrl}
+                isAdmin={member.isAdmin}
+              />
+            ) : (
+              <LoginButton variant="ghost" />
+            )}
           </div>
         </div>
       </div>

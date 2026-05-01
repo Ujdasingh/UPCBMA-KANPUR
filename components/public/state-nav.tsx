@@ -7,6 +7,14 @@ import { useEffect, useState } from "react";
 import { Menu, X, UserPlus } from "lucide-react";
 import { Logo } from "./logo";
 import { LoginButton } from "./login-dialog";
+import { AvatarMenu } from "./avatar-menu";
+
+export type NavMember = {
+  name: string;
+  email: string;
+  photoUrl?: string | null;
+  isAdmin: boolean;
+} | null;
 
 const links = [
   { href: "/", label: "Home" },
@@ -18,7 +26,14 @@ const links = [
   { href: "/contact", label: "Contact" },
 ];
 
-export function StateNav({ logoSrc }: { logoSrc?: string }) {
+export function StateNav({
+  logoSrc,
+  member,
+}: {
+  logoSrc?: string;
+  /** When set, the top-right shows an avatar dropdown instead of "Sign in". */
+  member?: NavMember;
+}) {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -76,14 +91,25 @@ export function StateNav({ logoSrc }: { logoSrc?: string }) {
               </Link>
             );
           })}
-          <LoginButton className="ml-3" />
-          <Link
-            href="/join"
-            className="ml-1 inline-flex h-9 items-center gap-1.5 rounded-sm bg-heading px-4 text-sm font-medium text-white no-underline hover:bg-hover"
-          >
-            <UserPlus className="h-3.5 w-3.5" strokeWidth={2} />
-            Join UPCBMA
-          </Link>
+          {member ? (
+            <AvatarMenu
+              name={member.name}
+              email={member.email}
+              photoUrl={member.photoUrl}
+              isAdmin={member.isAdmin}
+            />
+          ) : (
+            <>
+              <LoginButton className="ml-3" />
+              <Link
+                href="/join"
+                className="ml-1 inline-flex h-9 items-center gap-1.5 rounded-sm bg-heading px-4 text-sm font-medium text-white no-underline hover:bg-hover"
+              >
+                <UserPlus className="h-3.5 w-3.5" strokeWidth={2} />
+                Join UPCBMA
+              </Link>
+            </>
+          )}
         </nav>
 
         <button
@@ -115,14 +141,27 @@ export function StateNav({ logoSrc }: { logoSrc?: string }) {
                 </Link>
               );
             })}
-            <div className="mt-2"><LoginButton className="w-full" /></div>
-            <Link
-              href="/join"
-              className="mt-2 inline-flex h-10 items-center justify-center gap-1.5 rounded-sm bg-heading px-4 text-sm font-medium text-white no-underline"
-            >
-              <UserPlus className="h-3.5 w-3.5" strokeWidth={2} />
-              Join UPCBMA
-            </Link>
+            {member ? (
+              <Link
+                href="/me"
+                className="mt-2 inline-flex h-10 items-center justify-center gap-2 rounded-sm border border-border px-4 text-sm font-medium text-heading no-underline"
+              >
+                Account · {member.name.split(" ")[0]}
+              </Link>
+            ) : (
+              <>
+                <div className="mt-2">
+                  <LoginButton className="w-full" />
+                </div>
+                <Link
+                  href="/join"
+                  className="mt-2 inline-flex h-10 items-center justify-center gap-1.5 rounded-sm bg-heading px-4 text-sm font-medium text-white no-underline"
+                >
+                  <UserPlus className="h-3.5 w-3.5" strokeWidth={2} />
+                  Join UPCBMA
+                </Link>
+              </>
+            )}
           </div>
         </nav>
       )}

@@ -62,7 +62,31 @@ export function MembersTable({
   const [mode, setMode] = useState<Mode>({ kind: "closed" });
   const [query, setQuery] = useState("");
 
+  // Role filter — admins are technically rows in `members` too, but most of
+  // the time you're managing actual association members, not staff. Default
+  // to the "Members" view; flip to Admins/Staff to manage chapter+state
+  // admins separately. "All" reveals everyone (super_admin still gated by
+  // canManageSuperAdmin upstream).
+  const [roleView, setRoleView] = useState<"member" | "admin" | "all">(
+    "member",
+  );
+  const memberCount = rows.filter((m) => m.role === "member").length;
+  const adminCount = rows.filter(
+    (m) => m.role === "admin" || m.role === "super_admin",
+  ).length;
+
   const filtered = rows.filter((m) => {
+    // Role filter.
+    if (roleView === "member" && m.role !== "member") return false;
+    if (
+      roleView === "admin" &&
+      m.role !== "admin" &&
+      m.role !== "super_admin"
+    ) {
+      return false;
+    }
+
+    // Search filter.
     if (!query) return true;
     const q = query.toLowerCase();
     return (
@@ -76,7 +100,30 @@ export function MembersTable({
 
   return (
     <>
-      <div className="mb-4 flex items-center justify-between gap-3">
+      {/* Role filter chips — separates regular members from admin/staff so
+          they're not visually mixed in the same roster. */}
+      <div className="mb-3 flex flex-wrap items-center gap-1">
+        <RoleChip
+          active={roleView === "member"}
+          onClick={() => setRoleView("member")}
+        >
+          Members <span className="ml-1 text-muted">{memberCount}</span>
+        </RoleChip>
+        <RoleChip
+          active={roleView === "admin"}
+          onClick={() => setRoleView("admin")}
+        >
+          Admins / Staff <span className="ml-1 text-muted">{adminCount}</span>
+        </RoleChip>
+        <RoleChip
+          active={roleView === "all"}
+          onClick={() => setRoleView("all")}
+        >
+          All
+        </RoleChip>
+      </div>
+
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <Input
           placeholder="Search by name, email, company, or ID…"
           value={query}
@@ -90,14 +137,14 @@ export function MembersTable({
             disabled={availableChapters.length === 0}
             title="Send a sign-in invite by email — fastest path"
           >
-            <UserPlus className="h-4 w-4" /> Invite member
+            <UserPlus className="h-4 w-4" /> Invite
           </Button>
           <Button
             onClick={() => setMode({ kind: "create" })}
             disabled={availableChapters.length === 0}
-            title="Manually create a member row, with full control"
+            title="Manually create a row, with full control"
           >
-            <Plus className="h-4 w-4" /> New member
+            <Plus className="h-4 w-4" /> New
           </Button>
         </div>
       </div>
@@ -889,5 +936,35 @@ function ResetPasswordForm({
         </Button>
       </div>
     </form>
+  );
+}
+
+/**
+ * Compact pill button used for the role filter chip row above the members
+ * table. Matches the SectionTabs styling so the page reads as one consistent
+ * surface even though tabs (Roster/Categories) come from a separate component.
+ */
+function RoleChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        "inline-flex h-8 items-center rounded-sm border px-3 text-xs font-medium transition-colors " +
+        (active
+          ? "border-heading bg-heading text-white"
+          : "border-border bg-bg text-muted hover:border-heading hover:text-heading")
+      }
+    >
+      {children}
+    </button>
   );
 }
