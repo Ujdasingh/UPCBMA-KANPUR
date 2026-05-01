@@ -3,6 +3,7 @@ import type { Chapter } from "@/lib/chapters";
 import Link from "next/link";
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
 import { Logo } from "./logo";
+import { getAuthedMember } from "@/lib/auth";
 
 export async function ChapterFooter({
   chapter,
@@ -11,6 +12,9 @@ export async function ChapterFooter({
   chapter: Chapter;
   logoSrc?: string;
 }) {
+  // Footer "Member login" no longer makes sense once they're already in.
+  // Swap it for an "Account" link when authed.
+  const me = await getAuthedMember();
   const svc = createServiceClient();
   const { data: office } = await svc
     .from("office_info")
@@ -133,9 +137,15 @@ export async function ChapterFooter({
         <div className="mt-12 flex flex-col items-start justify-between gap-3 border-t border-border pt-6 text-xs text-muted md:flex-row md:items-center">
           <div>&copy; {year} UPCBMA {chapter.name}. All rights reserved.</div>
           <div className="flex gap-5">
-            <Link href="/login" className="no-underline hover:text-heading">
-              Member login
-            </Link>
+            {me ? (
+              <Link href="/me" className="no-underline hover:text-heading">
+                My account
+              </Link>
+            ) : (
+              <Link href="/login" className="no-underline hover:text-heading">
+                Member login
+              </Link>
+            )}
           </div>
         </div>
       </div>

@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { Logo } from "./logo";
 import { Facebook, Instagram, Linkedin, Twitter, Youtube } from "lucide-react";
+import { getAuthedMember } from "@/lib/auth";
 
-export function StateFooter({ logoSrc }: { logoSrc?: string }) {
+export async function StateFooter({ logoSrc }: { logoSrc?: string }) {
+  const me = await getAuthedMember();
   const year = new Date().getFullYear();
 
   // Social-media destinations all point to /coming-soon for now (per spec).
@@ -73,7 +75,23 @@ export function StateFooter({ logoSrc }: { logoSrc?: string }) {
             <ul className="mt-4 space-y-2 text-sm">
               <li><Link href="/join" className="no-underline text-text hover:text-heading">Join UPCBMA</Link></li>
               <li><Link href="/agendas/propose" className="no-underline text-text hover:text-heading">Propose an agenda</Link></li>
-              <li><Link href="/login" className="no-underline text-text hover:text-heading">Sign in</Link></li>
+              <li>
+                {me ? (
+                  <Link
+                    href="/me"
+                    className="no-underline text-text hover:text-heading"
+                  >
+                    My account
+                  </Link>
+                ) : (
+                  <Link
+                    href="/login"
+                    className="no-underline text-text hover:text-heading"
+                  >
+                    Sign in
+                  </Link>
+                )}
+              </li>
               <li><Link href="/contact" className="no-underline text-text hover:text-heading">Contact secretariat</Link></li>
             </ul>
           </div>

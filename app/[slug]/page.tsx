@@ -48,9 +48,12 @@ export async function generateMetadata({
   const { slug } = await params;
   if (RESERVED_SLUGS.has(slug)) return {};
   const chapter = await getChapterBySlug(slug);
-  if (!chapter) return { title: "Chapter — UPCBMA" };
+  // Root layout already applies the "%s — UPCBMA" template, so we only set
+  // the chapter-specific bit here. Otherwise the document title doubles up
+  // ("Kanpur Chapter — UPCBMA — UPCBMA").
+  if (!chapter) return { title: "Chapter" };
   return {
-    title: `${chapter.name} — UPCBMA`,
+    title: chapter.name,
     description: `Home of UPCBMA's ${chapter.city} chapter — committee, lab services, news, agendas, events.`,
   };
 }
@@ -154,17 +157,20 @@ export default async function ChapterHome({
     ),
   ];
 
-  const stats = [
-    { label: "Active members", value: memberCount != null ? String(memberCount) : "—" },
-    { label: "Lab tests", value: testCount != null ? String(testCount) : "—" },
-    { label: "Committee seats", value: committeeCount != null ? String(committeeCount) : "—" },
-    {
-      label: "Established",
-      value: chapter.established_on
-        ? String(new Date(chapter.established_on).getFullYear())
-        : "—",
-    },
+  // Only include the Established tile when we actually know the year — an
+  // empty "—" placeholder makes the hero look unfinished. Likewise, prefer
+  // "0" over "—" for live counts so visitors don't think the data is broken.
+  const stats: { label: string; value: string }[] = [
+    { label: "Active members", value: String(memberCount ?? 0) },
+    { label: "Lab tests", value: String(testCount ?? 0) },
+    { label: "Committee seats", value: String(committeeCount ?? 0) },
   ];
+  if (chapter.established_on) {
+    stats.push({
+      label: "Established",
+      value: String(new Date(chapter.established_on).getFullYear()),
+    });
+  }
 
   // Committee email recipients for "Raise a problem"
   const committeeEmails = filteredAppointments
