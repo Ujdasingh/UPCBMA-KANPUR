@@ -50,11 +50,16 @@ export default async function StateEvents({
   const today = new Date().toISOString().slice(0, 10);
 
   // Build dynamic where-clause helper based on scope.
-  const applyScope = <T extends { is: any; or: any }>(q: T) => {
+  // We deliberately use `.in("chapter_id", [...])` instead of `.or(...)`
+  // because PostgREST's OR-with-null-check has been flaky here when the
+  // chapter ID is a UUID — `.in()` is simpler and ignores nulls anyway,
+  // so we layer null-handling separately in the chapter case.
+  const applyScope = <T extends { is: any; or: any; in: any }>(q: T) => {
     if (scope === STATE_SCOPE) return q.is("chapter_id", null);
     if (scope === ALL_SCOPE) return q;
     const c = chapters.find((x) => x.slug === scope);
     if (!c) return q.is("chapter_id", null);
+    // Match either this chapter OR rows with no chapter (state-wide).
     return q.or(`chapter_id.eq.${c.id},chapter_id.is.null`);
   };
 

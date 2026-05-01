@@ -317,10 +317,12 @@ export default async function ChapterHome({
                 The people running {chapter.name}
               </h2>
             </div>
-            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
-              {filteredAppointments.length}{" "}
-              {filteredAppointments.length === 1 ? "member" : "members"}
-            </div>
+            {filteredAppointments.length > 0 && (
+              <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+                {filteredAppointments.length}{" "}
+                {filteredAppointments.length === 1 ? "member" : "members"}
+              </div>
+            )}
           </div>
 
           {committeeCategoryKeys.length === 0 ? (
