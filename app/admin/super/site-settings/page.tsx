@@ -172,6 +172,60 @@ export default async function SiteSettingsPage({
         </form>
       </Card>
 
+      {/* Home hero — defaults to the logo so a fresh deployment has
+          something on-brand. Admins can swap in an industry photo here. */}
+      <Card className="mb-6">
+        <div className="flex items-center gap-4">
+          <div className="flex h-20 w-20 items-center justify-center rounded-sm border border-border bg-surface">
+            {valueByKey.get("home_hero_url") ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={valueByKey.get("home_hero_url")!}
+                alt="Home hero preview"
+                className="max-h-full max-w-full object-contain"
+              />
+            ) : (
+              <Logo size={64} src={valueByKey.get("state_logo_url")} />
+            )}
+          </div>
+          <div>
+            <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+              <ImageIcon className="h-3 w-3" strokeWidth={2} />
+              Home page hero · currently using
+            </div>
+            <div className="mt-1 break-all font-mono text-xs text-text">
+              {valueByKey.get("home_hero_url") ||
+                "(falling back to the state logo)"}
+            </div>
+            <p className="mt-2 max-w-md text-xs text-muted">
+              Shown on the right side of the state landing page hero. Leave
+              empty to keep the logo; upload a photo to feature an industry
+              shot or member event instead.
+            </p>
+          </div>
+        </div>
+
+        <form
+          action={saveSiteSetting}
+          className="mt-5 space-y-4 border-t border-border pt-5"
+        >
+          <input type="hidden" name="key" value="home_hero_url" />
+          <ImageUploadField
+            name="value"
+            defaultValue={valueByKey.get("home_hero_url") ?? ""}
+            folder="chapters"
+            label="Upload a hero image (or paste a URL)"
+            hint="Tall 4:5 crops look best — the hero panel is taller than it is wide. Leave blank to revert to the logo."
+            aspect="4/5"
+          />
+          <div className="flex justify-end">
+            <Button type="submit" size="sm">
+              Save home hero
+            </Button>
+          </div>
+        </form>
+      </Card>
+
       <div className="space-y-4">
         {SETTINGS.map((s) => (
           <Card key={s.key}>

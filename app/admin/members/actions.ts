@@ -302,6 +302,61 @@ export async function toggleMemberActive(id: string, active: boolean) {
   }
 }
 
+/**
+ * Promote a member to admin or demote them back to plain "member".
+ *
+ * Guard rails:
+ *   - super_admin role can only be modified by another super_admin (handled
+ *     inside assertCanMutateMember).
+ *   - We never overwrite super_admin via this action — the caller has to
+ *     pick "admin" or "member" explicitly.
+ *   - Audit log captures the before/after role and who flipped it.
+ */
+export async function setMemberAdmin(id: string, makeAdmin: boolean) {
+  try {
+    const me = await getAuthedAdmin();
+    await assertCanMutateMember({ caller: me, targetId: id });
+
+    const svc = createServiceClient();
+    const { data: existing } = await svc
+      .from("members")
+      .select("role, name")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (!existing) redirectWithError("Member not found.");
+    if (existing.role === "super_admin") {
+      redirectWithError("Super admins can't be flipped from this screen.");
+    }
+
+    const next = makeAdmin ? "admin" : "member";
+    if (existing.role === next) {
+      // No-op — quietly succeed so the UI just refreshes.
+      revalidatePath("/admin/members");
+      return;
+    }
+
+    const { error } = await svc
+      .from("members")
+      .update({ role: next })
+      .eq("id", id);
+    if (error) redirectWithError(friendlyError(error.message));
+
+    await audit({
+      action: makeAdmin ? "promote_admin" : "demote_admin",
+      target_id: id,
+      diff: { from: existing.role, to: next },
+    });
+
+    revalidatePath("/admin/members");
+  } catch (e) {
+    if (isRedirect(e)) throw e;
+    redirectWithError(
+      friendlyError(e instanceof Error ? e.message : String(e)),
+    );
+  }
+}
+
 export async function deleteMember(id: string) {
   try {
     const me = await getAuthedAdmin();

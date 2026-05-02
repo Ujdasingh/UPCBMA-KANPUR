@@ -98,10 +98,12 @@ export default async function StateBookPage({
 
   const svc = createServiceClient();
   const [{ data: tests }, { data: memberRow }] = await Promise.all([
+    // State-wide tests (chapter_id IS NULL) plus this chapter's overrides.
+    // Same pattern as the public lab catalogue page.
     svc
       .from("lab_tests_catalog")
       .select("code, name, category, price_inr, turnaround_days")
-      .eq("chapter_id", activeChapter.id)
+      .or(`chapter_id.eq.${activeChapter.id},chapter_id.is.null`)
       .eq("active", true)
       .order("sort_order", { ascending: true })
       .order("code", { ascending: true }),

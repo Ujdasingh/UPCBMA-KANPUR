@@ -17,6 +17,8 @@ import {
   Plus,
   RotateCcw,
   Send,
+  ShieldCheck,
+  ShieldOff,
   Trash2,
   UserPlus,
   Wand2,
@@ -28,6 +30,7 @@ import {
   inviteMember,
   resendInvite,
   resetMemberPassword,
+  setMemberAdmin,
   updateMember,
 } from "./actions";
 
@@ -272,6 +275,52 @@ export function MembersTable({
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
+                      {/* Promote / revoke admin. Hidden for super_admins
+                          (who must be managed via the super-admin tools)
+                          and for self (avoid the "I demoted myself" trap). */}
+                      {!isSelf && m.role !== "super_admin" && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={async () => {
+                            const isAdmin = m.role === "admin";
+                            const next = !isAdmin;
+                            const verb = next ? "Make" : "Revoke";
+                            if (
+                              confirm(
+                                `${verb} admin rights for ${m.name}? ${
+                                  next
+                                    ? "They'll be able to access /admin and edit chapter data."
+                                    : "They'll lose access to /admin."
+                                }`,
+                              )
+                            ) {
+                              await setMemberAdmin(m.id, next);
+                            }
+                          }}
+                          aria-label={
+                            m.role === "admin"
+                              ? `Revoke admin from ${m.name}`
+                              : `Make ${m.name} an admin`
+                          }
+                          title={
+                            m.role === "admin"
+                              ? "Revoke admin rights"
+                              : "Make admin"
+                          }
+                          className={
+                            m.role === "admin"
+                              ? "text-amber-600 hover:bg-amber-50"
+                              : ""
+                          }
+                        >
+                          {m.role === "admin" ? (
+                            <ShieldOff className="h-3.5 w-3.5" />
+                          ) : (
+                            <ShieldCheck className="h-3.5 w-3.5" />
+                          )}
+                        </Button>
+                      )}
                       {isSelf ? (
                         <Button
                           size="sm"

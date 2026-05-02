@@ -83,10 +83,13 @@ export default async function StateLabPage({
 
   const svc = createServiceClient();
   const [{ data: tests }, { data: office }] = await Promise.all([
+    // State-wide catalogue (chapter_id IS NULL) merged with this chapter's
+    // overrides (chapter_id = activeChapter.id). Lets every chapter share
+    // one source of truth without duplication.
     svc
       .from("lab_tests_catalog")
       .select("code, name, description, price_inr, turnaround_days, category, sort_order")
-      .eq("chapter_id", activeChapter.id)
+      .or(`chapter_id.eq.${activeChapter.id},chapter_id.is.null`)
       .eq("active", true)
       .order("sort_order", { ascending: true })
       .order("code", { ascending: true }),

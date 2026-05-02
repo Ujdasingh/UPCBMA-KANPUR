@@ -11,6 +11,9 @@ export default async function LabTestsPage() {
   const ctx = await getAdminContext();
   const svc = createServiceClient();
 
+  // Show state-wide rows alongside chapter-specific overrides when a chapter
+  // is active. State-wide rows have chapter_id = null and appear on every
+  // chapter's public page; chapter overrides win locally.
   let query = svc
     .from("lab_tests_catalog")
     .select("*")
@@ -18,7 +21,9 @@ export default async function LabTestsPage() {
     .order("code", { ascending: true });
 
   if (ctx.activeChapterId) {
-    query = query.eq("chapter_id", ctx.activeChapterId);
+    query = query.or(
+      `chapter_id.eq.${ctx.activeChapterId},chapter_id.is.null`,
+    );
   }
 
   const { data, error } = await query;

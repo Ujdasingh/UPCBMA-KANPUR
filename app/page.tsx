@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { createServiceClient } from "@/lib/supabase/server";
 import { listActiveChapters } from "@/lib/chapter-loader";
-import { getSetting } from "@/lib/site-settings";
+import { getHomeHeroUrl, getSetting } from "@/lib/site-settings";
 import { StateShell } from "@/components/public/state-shell";
 import { CorrugatedWave } from "@/components/public/wave";
 import {
@@ -42,6 +42,13 @@ export default async function StateHome() {
     getSetting("state_tagline"),
     getSetting("state_market_value"),
   ]);
+  // Hero image: admin-controlled. Falls back to the state logo, then to the
+  // bundled placeholder, so the page always has something to show.
+  const heroSrc = await getHomeHeroUrl();
+  // Detect the "logo mode" so we can render contain-fit on a transparent
+  // tile instead of a full-bleed cover image — keeps the brand readable.
+  const heroIsLogo =
+    /\.svg(?:\?|$)/i.test(heroSrc) || /upcbma-logo/i.test(heroSrc);
 
   return (
     <StateShell>
@@ -79,19 +86,42 @@ export default async function StateHome() {
               </div>
             </div>
 
-            <div className="relative aspect-[4/5] w-full overflow-hidden rounded-sm border border-border bg-stone-200">
-              <Image
-                src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=900&q=70"
-                alt="Corrugated board stacked at a manufacturing facility"
-                fill
-                sizes="(min-width: 768px) 42vw, 100vw"
-                className="object-cover"
-                priority
+            {/*
+             * Admin-controllable hero. When the source is the org logo
+             * (default), we render it contain-fit on a soft tile so it
+             * reads as a brand mark, not a stretched photo. When admins
+             * upload a real industry photo, it covers as before.
+             */}
+            <div
+              className={
+                "relative aspect-[4/5] w-full overflow-hidden rounded-sm border border-border " +
+                (heroIsLogo
+                  ? "bg-surface flex items-center justify-center p-10"
+                  : "bg-stone-200")
+              }
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={heroSrc}
+                alt={
+                  heroIsLogo
+                    ? "UPCBMA logo"
+                    : "UPCBMA member firms across Uttar Pradesh"
+                }
+                className={
+                  heroIsLogo
+                    ? "max-h-full max-w-full object-contain"
+                    : "absolute inset-0 h-full w-full object-cover"
+                }
               />
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/40 to-transparent" />
-              <div className="absolute bottom-3 left-4 right-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/85">
-                Member firms across Uttar Pradesh
-              </div>
+              {!heroIsLogo && (
+                <>
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/40 to-transparent" />
+                  <div className="absolute bottom-3 left-4 right-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/85">
+                    Member firms across Uttar Pradesh
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

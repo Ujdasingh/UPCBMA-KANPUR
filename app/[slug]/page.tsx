@@ -93,10 +93,12 @@ export default async function ChapterHome({
       .eq("chapter_id", chapter.id)
       .eq("active", true)
       .eq("member.role", "member"),
+    // Lab tests count: includes state-wide rows (chapter_id IS NULL) plus
+    // any chapter-specific overrides. Matches the public lab page query.
     svc
       .from("lab_tests_catalog")
       .select("*", { head: true, count: "exact" })
-      .eq("chapter_id", chapter.id)
+      .or(`chapter_id.eq.${chapter.id},chapter_id.is.null`)
       .eq("active", true),
     svc
       .from("committee_appointments")

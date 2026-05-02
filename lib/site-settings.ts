@@ -41,6 +41,21 @@ export async function resolveChapterLogo(
   return getStateLogoUrl();
 }
 
+/**
+ * Resolve the URL of the home-page hero image. Falls back to whatever
+ * the state logo is set to so a fresh deployment always renders something
+ * reasonable. Admins can override either separately:
+ *   - `home_hero_url` → custom hero (e.g. an industry photo)
+ *   - `state_logo_url` → org logo, used as the default
+ */
+export async function getHomeHeroUrl(): Promise<string> {
+  return (
+    (await getSetting("home_hero_url")) ??
+    (await getSetting("state_logo_url")) ??
+    FALLBACK_LOGO
+  );
+}
+
 export async function getAllSettings(): Promise<Record<string, string | null>> {
   const svc = createServiceClient();
   try {

@@ -107,12 +107,19 @@ async function fetchStats(opts: {
           .from("events")
           .select("*", { head: true, count: "exact" })
           .gte("event_date", today),
-    withChapter(
-      supabase
-        .from("lab_tests_catalog")
-        .select("*", { head: true, count: "exact" })
-        .eq("active", true),
-    ),
+    // Lab tests are state-wide by default (chapter_id IS NULL) plus chapter
+    // overrides — match the public page's count so the dashboard tile
+    // doesn't disagree with what visitors see.
+    chapterId
+      ? supabase
+          .from("lab_tests_catalog")
+          .select("*", { head: true, count: "exact" })
+          .eq("active", true)
+          .or(`chapter_id.eq.${chapterId},chapter_id.is.null`)
+      : supabase
+          .from("lab_tests_catalog")
+          .select("*", { head: true, count: "exact" })
+          .eq("active", true),
   ]);
 
   return [
