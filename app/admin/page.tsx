@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/admin/page-header";
+import {
+  OnboardingChecklist,
+  type OnboardingItem,
+} from "@/components/admin/onboarding-checklist";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getAdminContext, isSuperAdmin } from "@/lib/auth";
 
@@ -157,12 +161,108 @@ async function fetchStats(opts: {
   ];
 }
 
+/**
+ * Build the onboarding checklist for a chapter-scoped dashboard.
+ *
+ * "Done" is derived from the same numbers we already fetched for the stat
+ * tiles, plus two extra cheap lookups (office_info presence, chapter row).
+ * Returns null when there's no active chapter — the checklist only makes
+ * sense when the admin has a specific chapter selected.
+ */
+async function fetchOnboarding(
+  ctx: Awaited<ReturnType<typeof getAdminContext>>,
+  stats: Stat[],
+): Promise<OnboardingItem[] | null> {
+  if (!ctx.activeChapter) return null;
+  const chapter = ctx.activeChapter;
+  const supabase = createServiceClient();
+
+  // Pull the bits the stat tiles don't already cover.
+  const { data: office } = await supabase
+    .from("office_info")
+    .select("address")
+    .eq("chapter_id", chapter.id)
+    .maybeSingle();
+
+  const num = (label: string) => {
+    const v = stats.find((s) => s.label === label)?.value;
+    return typeof v === "number" ? v : Number(v) || 0;
+  };
+
+  return [
+    {
+      key: "members",
+      done: num("Active members") > 0,
+      title: "Invite your first members",
+      description:
+        "They get a personal invite email and land on the chapter the moment they accept.",
+      href: "/admin/members",
+      cta: "Invite",
+    },
+    {
+      key: "committee",
+      done: num("Committee seats") > 0,
+      title: "Appoint a committee",
+      description:
+        "Roles you assign show up in the public 'Leadership' section. Without this, the chapter page reads 'Committee to be announced'.",
+      href: "/admin/committee",
+      cta: "Add appointment",
+    },
+    {
+      key: "office",
+      done: !!office?.address,
+      title: "Set the office address & contact",
+      description:
+        "Visitors look here for the address, email, and visiting hours. Empty office info shows 'Contact details to be published.' on the public page.",
+      href: "/admin/office-info",
+      cta: "Update office",
+    },
+    {
+      key: "established",
+      done: !!chapter.established_on,
+      title: "Set the chapter's establishment year",
+      description:
+        "Adds the 'Established' tile to the chapter hero — a small but meaningful credibility signal.",
+      href: "/admin/chapters",
+      cta: "Edit chapter",
+    },
+    {
+      key: "news",
+      done: num("News items") > 0,
+      title: "Publish a first news post",
+      description:
+        "Even a one-line announcement keeps the page from looking dormant.",
+      href: "/admin/news",
+      cta: "Add news",
+    },
+    {
+      key: "events",
+      done: num("Upcoming events") > 0,
+      title: "Add an upcoming meet or event",
+      description:
+        "Lets members plan, and gives the chapter page something forward-looking.",
+      href: "/admin/events",
+      cta: "Add event",
+    },
+    {
+      key: "lab",
+      done: num("Active lab tests") > 0,
+      title: "Activate the lab catalogue",
+      description:
+        "Visitors can see what tests you offer and start booking. Without this, the lab page is empty.",
+      href: "/admin/lab-tests",
+      cta: "Set up lab",
+    },
+  ];
+}
+
 export default async function DashboardPage() {
   const ctx = await getAdminContext();
   const stats = await fetchStats({
     canSeeSuperAdmin: isSuperAdmin(ctx.me),
     chapterId: ctx.activeChapterId,
   });
+  const onboarding = await fetchOnboarding(ctx, stats);
 
   return (
     <>
@@ -178,6 +278,13 @@ export default async function DashboardPage() {
             : "Live snapshot across every chapter. Switch to a chapter in the sidebar to focus."
         }
       />
+
+      {onboarding && ctx.activeChapter && (
+        <OnboardingChecklist
+          items={onboarding}
+          chapterName={ctx.activeChapter.name}
+        />
+      )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {stats.map((s) => {
