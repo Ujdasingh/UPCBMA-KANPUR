@@ -1,9 +1,14 @@
 "use server";
 
 /**
- * Self-serve profile editor — name, phone, company, quote, photo. Any
- * signed-in member can call this; super_admin role isn't a requirement
- * because they're only modifying their own row.
+ * Self-serve profile editor — name, phone, quote, photo. Any signed-in
+ * member can call this; super_admin role isn't a requirement because
+ * they're only modifying their own row.
+ *
+ * NOTE: Company is intentionally NOT mutable here. It's the legal trail
+ * for bookings, dues, and representation, so only admins/committee (via
+ * /admin/members) can edit it. The form doesn't submit a `company`
+ * field, and we ignore any tampered values that arrive anyway.
  */
 
 import { redirect } from "next/navigation";
@@ -17,7 +22,6 @@ export async function updateMyProfile(formData: FormData) {
 
   const name = String(formData.get("name") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim() || null;
-  const company = String(formData.get("company") ?? "").trim() || null;
   const quote = String(formData.get("quote") ?? "").trim().slice(0, 240) || null;
   const photoRaw = String(formData.get("photo_url") ?? "").trim();
   const photo_url =
@@ -26,9 +30,10 @@ export async function updateMyProfile(formData: FormData) {
   if (!name) return fail("Name can't be empty.");
 
   const svc = createServiceClient();
+  // Deliberately omit `company` from the update payload — see file header.
   const { error } = await svc
     .from("members")
-    .update({ name, phone, company, quote, photo_url })
+    .update({ name, phone, quote, photo_url })
     .eq("id", me.id);
 
   if (error) return fail(error.message);

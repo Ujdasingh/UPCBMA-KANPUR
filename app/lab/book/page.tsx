@@ -220,13 +220,30 @@ export default async function StateBookPage({
                     autoComplete="name"
                   />
                 </Field>
-                <Field label="Company" htmlFor="company" required>
+                <Field
+                  label="Company"
+                  htmlFor="company"
+                  hint="Locked to your account. Contact your chapter admin to change it."
+                >
+                  {/*
+                   * Company comes from the member's profile and stays
+                   * uneditable here — bookings have to be traceable back to
+                   * a single firm. The hidden input ensures the form still
+                   * submits the value; the visible input is disabled so the
+                   * user can see it but can't tamper with it.
+                   */}
                   <Input
                     id="company"
+                    value={memberRow?.company ?? ""}
+                    disabled
+                    readOnly
+                    aria-readonly="true"
+                    className="cursor-not-allowed bg-surface text-muted"
+                  />
+                  <input
+                    type="hidden"
                     name="company"
-                    required
-                    defaultValue={memberRow?.company ?? ""}
-                    autoComplete="organization"
+                    value={memberRow?.company ?? ""}
                   />
                 </Field>
                 <Field label="Email" htmlFor="email">
@@ -302,7 +319,7 @@ export default async function StateBookPage({
                 )}
               </div>
 
-              <div className="grid gap-5 md:grid-cols-2">
+              <div className="grid gap-5 md:grid-cols-3">
                 <Field label="Sample count" htmlFor="sample_count">
                   <Input
                     id="sample_count"
@@ -318,6 +335,29 @@ export default async function StateBookPage({
                     name="preferred_date"
                     type="date"
                   />
+                </Field>
+                <Field label="Time slot" htmlFor="preferred_time">
+                  {/*
+                   * Static slot list keyed off the chapter's standard
+                   * weekday hours. We deliberately don't pre-check
+                   * availability live — the lab desk confirms by email
+                   * and can shift the slot if needed.
+                   */}
+                  <select
+                    id="preferred_time"
+                    name="preferred_time"
+                    defaultValue=""
+                    className="block h-10 w-full rounded-sm border border-border bg-bg px-3 text-sm focus-visible:border-heading focus-visible:outline-none"
+                  >
+                    <option value="">Pick a slot</option>
+                    <option value="10:00–11:00">10:00 – 11:00</option>
+                    <option value="11:00–12:00">11:00 – 12:00</option>
+                    <option value="12:00–13:00">12:00 – 13:00</option>
+                    <option value="14:00–15:00">14:00 – 15:00</option>
+                    <option value="15:00–16:00">15:00 – 16:00</option>
+                    <option value="16:00–17:00">16:00 – 17:00</option>
+                    <option value="17:00–18:00">17:00 – 18:00</option>
+                  </select>
                 </Field>
               </div>
 

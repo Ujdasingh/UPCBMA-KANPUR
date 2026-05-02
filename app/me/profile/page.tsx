@@ -184,13 +184,27 @@ export default async function EditMyProfilePage({
                     autoComplete="tel"
                   />
                 </Field>
-                <Field label="Company" htmlFor="p_company">
+                <Field
+                  label="Company"
+                  htmlFor="p_company"
+                  hint="Locked to your account. Email your chapter admin to change it."
+                >
+                  {/*
+                   * Company is the legal trail for bookings, dues, and
+                   * representation — members can't self-edit. Only admins
+                   * (via /admin/members) and committee can change it. We
+                   * keep the input rendered for visibility but disable it,
+                   * and skip submitting a `company` field so the server
+                   * action ignores any tampered value.
+                   */}
                   <Input
                     id="p_company"
-                    name="company"
-                    defaultValue={row?.company ?? ""}
+                    value={row?.company ?? ""}
+                    disabled
+                    readOnly
+                    aria-readonly="true"
                     autoComplete="organization"
-                    placeholder="Your firm"
+                    className="cursor-not-allowed bg-surface text-muted"
                   />
                 </Field>
               </div>

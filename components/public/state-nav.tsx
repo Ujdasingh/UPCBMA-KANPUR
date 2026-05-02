@@ -8,6 +8,7 @@ import { Menu, X, UserPlus } from "lucide-react";
 import { Logo } from "./logo";
 import { LoginButton } from "./login-dialog";
 import { AvatarMenu } from "./avatar-menu";
+import { NavLabDropdown, type ChapterPick } from "./nav-lab-dropdown";
 
 export type NavMember = {
   name: string;
@@ -16,6 +17,7 @@ export type NavMember = {
   isAdmin: boolean;
 } | null;
 
+// Lab is rendered separately as a hover dropdown — see NavLabDropdown.
 const links = [
   { href: "/", label: "Home" },
   { href: "/about", label: "About" },
@@ -29,10 +31,13 @@ const links = [
 export function StateNav({
   logoSrc,
   member,
+  chapters = [],
 }: {
   logoSrc?: string;
   /** When set, the top-right shows an avatar dropdown instead of "Sign in". */
   member?: NavMember;
+  /** All active chapters — drives the Lab dropdown. */
+  chapters?: ChapterPick[];
 }) {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
@@ -91,6 +96,11 @@ export function StateNav({
               </Link>
             );
           })}
+          {/* Lab is a dropdown — pick a chapter to jump straight into booking. */}
+          <NavLabDropdown
+            chapters={chapters}
+            isActive={pathname.startsWith("/lab")}
+          />
           {member ? (
             <AvatarMenu
               name={member.name}
@@ -141,6 +151,31 @@ export function StateNav({
                 </Link>
               );
             })}
+            {/* Mobile: render Lab as an inline section so users still get
+                the chapter picker without juggling a hover dropdown. */}
+            {chapters.length > 0 && (
+              <div className="mt-2 rounded-sm border border-border bg-surface p-2">
+                <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                  Lab — book at
+                </div>
+                {chapters.map((c) => (
+                  <Link
+                    key={c.slug}
+                    href={`/lab/book?chapter=${c.slug}`}
+                    className="block rounded-sm px-2 py-2 text-sm no-underline text-text hover:bg-bg"
+                  >
+                    {c.name}
+                    <span className="ml-1 text-xs text-muted">· {c.city}</span>
+                  </Link>
+                ))}
+                <Link
+                  href="/lab"
+                  className="mt-1 block rounded-sm px-2 py-2 text-xs font-medium text-heading no-underline hover:bg-bg"
+                >
+                  View full lab catalogue →
+                </Link>
+              </div>
+            )}
             {member ? (
               <Link
                 href="/me"

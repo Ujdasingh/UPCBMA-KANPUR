@@ -10,28 +10,31 @@ import { Logo } from "./logo";
 import { LoginButton } from "./login-dialog";
 import { AvatarMenu } from "./avatar-menu";
 import type { NavMember } from "./state-nav";
+import { NavLabDropdown, type ChapterPick } from "./nav-lab-dropdown";
 
 export function ChapterNav({
   chapter,
   logoSrc,
   member,
+  chapters = [],
 }: {
   chapter: Chapter;
   logoSrc?: string;
   member?: NavMember;
+  /** All active chapters — drives the Lab hover dropdown. */
+  chapters?: ChapterPick[];
 }) {
   const base = `/${chapter.slug}`;
-  // The chapter page is now a single rich view. Anchor links jump within it
-  // for the chapter-scoped sections (committee, contact, raise-a-problem),
-  // and lab/news/events go to the state-level pages pre-filtered to this
-  // chapter via ?chapter=<slug>.
+  // The chapter page is a single rich view. Anchor links jump within it for
+  // chapter-scoped sections (committee, contact). Lab is a hover dropdown
+  // letting visitors jump to any chapter's booking in one move.
   const links = [
-    { href: base,                          label: "Home"      },
-    { href: `${base}#committee`,           label: "Committee" },
-    { href: `/lab?chapter=${chapter.slug}`,    label: "Lab"       },
+    { href: base,                              label: "Home"      },
+    { href: `${base}#committee`,               label: "Committee" },
+    // Lab is rendered separately as a NavLabDropdown.
     { href: `/news?chapter=${chapter.slug}`,   label: "News"      },
     { href: `/events?chapter=${chapter.slug}`, label: "Events"    },
-    { href: `${base}#contact`,             label: "Contact"   },
+    { href: `${base}#contact`,                 label: "Contact"   },
   ];
 
   const pathname = usePathname();
@@ -107,7 +110,30 @@ export function ChapterNav({
         </div>
 
         <nav className="hidden md:flex items-center gap-1">
-          {links.map(({ href, label }) => {
+          {/* Insert "Home → Committee → Lab(▾) → News → Events → Contact" so
+              Lab keeps its position even though it's a special dropdown. */}
+          {links.slice(0, 2).map(({ href, label }) => {
+            const active =
+              href === base ? pathname === base : pathname.startsWith(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={cn(
+                  "rounded-sm px-3 py-2 text-sm no-underline transition-colors",
+                  active ? "text-heading font-semibold" : "text-text hover:text-heading",
+                )}
+              >
+                {label}
+              </Link>
+            );
+          })}
+          <NavLabDropdown
+            chapters={chapters}
+            activeSlug={chapter.slug}
+            isActive={pathname.startsWith("/lab")}
+          />
+          {links.slice(2).map(({ href, label }) => {
             const active =
               href === base ? pathname === base : pathname.startsWith(href);
             return (
@@ -160,11 +186,39 @@ export function ChapterNav({
                 </Link>
               );
             })}
+            {chapters.length > 0 && (
+              <div className="mt-2 rounded-sm border border-border bg-surface p-2">
+                <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                  Lab — book at
+                </div>
+                {chapters.map((c) => (
+                  <Link
+                    key={c.slug}
+                    href={`/lab/book?chapter=${c.slug}`}
+                    className={cn(
+                      "block rounded-sm px-2 py-2 text-sm no-underline hover:bg-bg",
+                      c.slug === chapter.slug
+                        ? "font-semibold text-heading"
+                        : "text-text",
+                    )}
+                  >
+                    {c.name}
+                    <span className="ml-1 text-xs text-muted">· {c.city}</span>
+                  </Link>
+                ))}
+                <Link
+                  href={`/lab?chapter=${chapter.slug}`}
+                  className="mt-1 block rounded-sm px-2 py-2 text-xs font-medium text-heading no-underline hover:bg-bg"
+                >
+                  View {chapter.city} catalogue →
+                </Link>
+              </div>
+            )}
             <Link
               href={`/lab/book?chapter=${chapter.slug}`}
               className="mt-2 inline-flex h-10 items-center justify-center rounded-sm bg-heading px-4 text-sm font-medium text-white no-underline"
             >
-              Book a test
+              Book a test at {chapter.city}
             </Link>
           </div>
         </nav>

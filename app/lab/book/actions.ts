@@ -35,23 +35,39 @@ export async function submitStateBooking(formData: FormData) {
   const base = `/lab/book?chapter=${slug}`;
 
   const name = str(formData.get("name"));
-  const company = str(formData.get("company"));
   const email = str(formData.get("email"));
   const phone = str(formData.get("phone"));
   const sampleCountRaw = str(formData.get("sample_count"));
   const preferredDate = str(formData.get("preferred_date"));
+  const preferredTime = str(formData.get("preferred_time"));
   const notes = str(formData.get("notes"));
   const tests = formData.getAll("tests").map(String).filter(Boolean);
 
+  // Company is read-only on the form, but we still pull from the member
+  // record server-side so a tampered hidden input can't override it.
+  const svc = createServiceClient();
+  const { data: memberRow } = await svc
+    .from("members")
+    .select("company")
+    .eq("id", member.id)
+    .maybeSingle();
+  const company = (memberRow?.company ?? "").trim();
+
   if (!name) return fail(base, "Please provide your name.");
-  if (!company) return fail(base, "Please provide your company name.");
+  if (!company)
+    return fail(
+      base,
+      "No company on file for your account — ask your chapter admin to set it.",
+    );
   if (!email && !phone) return fail(base, "Provide an email or phone number.");
   if (tests.length === 0) return fail(base, "Pick at least one test.");
 
   const sampleCount = sampleCountRaw ? Number(sampleCountRaw) : null;
 
-  const svc = createServiceClient();
-  const { error } = await svc.from("bookings").insert({
+  // preferred_time column is added by the migration in
+  // migrations/2026_05_03_booking_time_slot.sql. Falls back gracefully when
+  // the column hasn't been applied yet (the insert just omits the field).
+  const insertPayload: Record<string, unknown> = {
     id: randomUUID(),
     chapter_id: chapter.id,
     member_id: member.id,
@@ -62,10 +78,24 @@ export async function submitStateBooking(formData: FormData) {
     preferred_date: preferredDate || null,
     notes:
       `Email: ${email || "—"} | Phone: ${phone || "—"}` +
+      (preferredTime ? ` | Time: ${preferredTime}` : "") +
       (notes ? `\n\n${notes}` : ""),
     status: "pending",
     submitted_at: new Date().toISOString(),
-  });
+  };
+  if (preferredTime) insertPayload.preferred_time = preferredTime;
+
+  let { error } = await svc.from("bookings").insert(insertPayload);
+  // If the column doesn't exist yet (migration not applied), retry without it
+  // — the time still lives in `notes` for visibility.
+  if (
+    error &&
+    /preferred_time/i.test(error.message) &&
+    "preferred_time" in insertPayload
+  ) {
+    delete insertPayload.preferred_time;
+    ({ error } = await svc.from("bookings").insert(insertPayload));
+  }
 
   if (error) return fail(base, "Could not submit booking: " + error.message);
 
@@ -90,6 +120,7 @@ export async function submitStateBooking(formData: FormData) {
       ["Tests", tests.join(", ")],
       ["Sample count", sampleCount ? String(sampleCount) : "—"],
       ["Preferred drop-off", preferredDate || "—"],
+      ["Time slot", preferredTime || "—"],
       ["Email", email],
       ["Phone", phone],
     ]);

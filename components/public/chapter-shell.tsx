@@ -5,6 +5,7 @@ import type { NavMember } from "./state-nav";
 import type { Chapter } from "@/lib/chapters";
 import { resolveChapterLogo } from "@/lib/site-settings";
 import { getAuthedMember } from "@/lib/auth";
+import { listActiveChapters } from "@/lib/chapter-loader";
 
 /**
  * Wraps every chapter-scoped public page with a chapter-aware nav, footer,
@@ -18,9 +19,10 @@ export async function ChapterShell({
   chapter: Chapter;
   children: React.ReactNode;
 }) {
-  const [logoSrc, me] = await Promise.all([
+  const [logoSrc, me, allChapters] = await Promise.all([
     resolveChapterLogo(chapter.logo_url),
     getAuthedMember(),
+    listActiveChapters(),
   ]);
   const signedIn = !!me;
   const navMember: NavMember = me
@@ -31,6 +33,11 @@ export async function ChapterShell({
         isAdmin: me.role === "admin" || me.role === "super_admin",
       }
     : null;
+  const navChapters = allChapters.map((c) => ({
+    slug: c.slug,
+    name: c.name,
+    city: c.city,
+  }));
 
   const style = chapter.accent_color
     ? ({
@@ -41,7 +48,12 @@ export async function ChapterShell({
 
   return (
     <div style={style} data-chapter={chapter.slug}>
-      <ChapterNav chapter={chapter} logoSrc={logoSrc} member={navMember} />
+      <ChapterNav
+        chapter={chapter}
+        logoSrc={logoSrc}
+        member={navMember}
+        chapters={navChapters}
+      />
       <div className="min-h-[calc(100vh-4rem)] pb-16 md:pb-0">{children}</div>
       {/* @ts-expect-error Server Component */}
       <ChapterFooter chapter={chapter} logoSrc={logoSrc} />
