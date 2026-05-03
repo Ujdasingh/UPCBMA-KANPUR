@@ -75,14 +75,17 @@ export function NewsTable({ rows }: { rows: NewsItem[] }) {
                   )}
                 </Td>
                 <Td>
-                  <div className="flex justify-end gap-1">
+                  {/* Visible buttons with text labels — icon-only was too
+                      easy to miss on first glance. */}
+                  <div className="flex justify-end gap-2">
                     <Button
                       size="sm"
-                      variant="ghost"
+                      variant="outline"
                       onClick={() => setMode({ kind: "edit", item: n })}
                       aria-label="Edit post"
                     >
                       <Pencil className="h-3.5 w-3.5" />
+                      Edit
                     </Button>
                     <Button
                       size="sm"
@@ -96,6 +99,7 @@ export function NewsTable({ rows }: { rows: NewsItem[] }) {
                       className="text-danger hover:bg-red-50"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
+                      Delete
                     </Button>
                   </div>
                 </Td>
