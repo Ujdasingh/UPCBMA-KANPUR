@@ -95,10 +95,10 @@ export async function castAgendaVote(
     if (error) return { ok: false, error: error.message };
   }
 
-  // Slug + chapter routes both render vote totals. Slug is the most-hit
-  // surface; we revalidate the index too so the count tile stays fresh.
+  // Slug + index + chapter routes all render vote totals.
   revalidatePath("/agendas");
-  // /agendas/[slug] will revalidate when the route is re-entered.
+  revalidatePath(`/agendas/[slug]`, "page");
+  revalidatePath(`/[slug]`, "page");
   return { ok: true };
 }
 
@@ -161,7 +161,11 @@ export async function postAgendaComment(
   // Notifications — fire-and-forget so a flaky SMTP doesn't fail the post.
   notifyComment(agendaId, me.name, trimmed, validatedParentId).catch(() => {});
 
+  // Both index and individual slug pages render comments — invalidate
+  // both layers so the count updates on the next page hit instead of
+  // waiting out the 60s `revalidate` window.
   revalidatePath(`/agendas`);
+  revalidatePath(`/agendas/[slug]`, "page");
   return { ok: true };
 }
 
@@ -302,7 +306,11 @@ export async function editAgendaComment(
     .eq("id", commentId);
   if (error) return { ok: false, error: error.message };
 
+  // Both index and individual slug pages render comments — invalidate
+  // both layers so the count updates on the next page hit instead of
+  // waiting out the 60s `revalidate` window.
   revalidatePath(`/agendas`);
+  revalidatePath(`/agendas/[slug]`, "page");
   return { ok: true };
 }
 
@@ -339,6 +347,10 @@ export async function deleteAgendaComment(
     .eq("id", commentId);
   if (error) return { ok: false, error: error.message };
 
+  // Both index and individual slug pages render comments — invalidate
+  // both layers so the count updates on the next page hit instead of
+  // waiting out the 60s `revalidate` window.
   revalidatePath(`/agendas`);
+  revalidatePath(`/agendas/[slug]`, "page");
   return { ok: true };
 }
