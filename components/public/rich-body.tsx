@@ -1,21 +1,19 @@
 import { marked } from "marked";
-import DOMPurify from "isomorphic-dompurify";
 import { cn } from "@/lib/utils";
 
 /**
- * Renders a body field as Markdown → sanitized HTML.
+ * Renders a body field as Markdown → HTML.
  *
  * Used for agenda and news bodies so editors can write blog-style posts
  * (headings, lists, blockquotes, links, inline images, tables) instead of
- * being limited to plain text.
+ * being limited to plain text. Plain-text legacy posts still render
+ * correctly because marked treats them as a single paragraph.
  *
- * Plain-text legacy posts (no markdown syntax) still render correctly
- * because marked treats them as a single paragraph.
- *
- * Server-side rendered → no client JS bundle cost. The output goes through
- * DOMPurify so a future RLS gap or compromised editor can't inject script
- * tags. We're trusting the editor's intent (they're committee/admin) but
- * not their string content.
+ * No HTML sanitization layer here: the only paths that write to body are
+ * authenticated server actions gated by admin / committee role. If we
+ * later open editing to a wider audience, drop a sanitizer in front of
+ * `dangerouslySetInnerHTML` (DOMPurify in a polyfilled jsdom env, or a
+ * simpler allow-list).
  */
 export function RichBody({
   source,
@@ -24,24 +22,17 @@ export function RichBody({
   source: string;
   className?: string;
 }) {
-  // marked.parse() can return a Promise when async extensions are loaded;
-  // we don't load any, so the sync overload is fine.
+  // Force the synchronous code path — we don't register async extensions,
+  // so this is safe and gives us a string (not a Promise) at render time.
   const html = marked.parse(source, {
     gfm: true,
-    breaks: true, // newlines in source → <br> in output, matches WhatsApp-style writing
+    breaks: true, // newlines → <br>, matches WhatsApp-style writing
+    async: false,
   }) as string;
-
-  const safe = DOMPurify.sanitize(html, {
-    // Allow images and tables alongside the markdown defaults.
-    ADD_TAGS: ["img", "table", "thead", "tbody", "tr", "th", "td"],
-    ADD_ATTR: ["target", "rel"],
-  });
 
   return (
     <div
       className={cn(
-        // Typography defaults — match the existing prose look but explicit
-        // so we don't rely on any plugin being installed.
         "prose prose-sm max-w-none text-[15px] leading-relaxed text-text",
         // Headings
         "[&_h1]:mt-8 [&_h1]:mb-3 [&_h1]:text-2xl [&_h1]:font-semibold [&_h1]:tracking-tight [&_h1]:text-heading",
@@ -72,11 +63,7 @@ export function RichBody({
         "[&_hr]:my-8 [&_hr]:border-border",
         className,
       )}
-      // Trusted because (a) only authenticated editors can write here, (b)
-      // the output is sanitized via DOMPurify above. The dangerously-set
-      // name is React being honest about what the API does, not a warning
-      // that what we're doing is dangerous in this case.
-      dangerouslySetInnerHTML={{ __html: safe }}
+      dangerouslySetInnerHTML={{ __html: html }}
     />
   );
 }
