@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/server";
 import { StateShell } from "@/components/public/state-shell";
+import { RichBody } from "@/components/public/rich-body";
 import { ArrowLeft } from "lucide-react";
 
 export const revalidate = 60;
@@ -119,11 +120,7 @@ export default async function NewsDetail({
           />
         )}
 
-        {item.body && (
-          <div className="prose prose-sm mt-8 max-w-none whitespace-pre-wrap text-[15px] leading-relaxed text-text">
-            {item.body}
-          </div>
-        )}
+        {item.body && <RichBody source={item.body} className="mt-8" />}
       </article>
     </StateShell>
   );

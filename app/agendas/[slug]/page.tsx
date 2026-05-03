@@ -6,6 +6,7 @@ import { getAuthedMember } from "@/lib/auth";
 import { StateShell } from "@/components/public/state-shell";
 import { AgendaComments } from "@/components/public/agenda-comments";
 import { AgendaVoteButtons } from "@/components/public/agenda-vote-buttons";
+import { RichBody } from "@/components/public/rich-body";
 import {
   categoryLabel,
   priorityTone,
@@ -133,7 +134,7 @@ export default async function AgendaDetailPage({
         )}
 
         {agenda.body && (
-          <div className="mt-6 whitespace-pre-wrap text-[15px] leading-relaxed text-text">{agenda.body}</div>
+          <RichBody source={agenda.body} className="mt-6" />
         )}
 
         {/* UPDATES TIMELINE */}
