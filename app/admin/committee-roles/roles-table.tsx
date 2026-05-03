@@ -102,7 +102,7 @@ export function RolesTable({ rows }: { rows: Row[] }) {
                       onClick={() => setMode({ kind: "edit", role: r })}
                       aria-label={`Edit ${r.name}`}
                     >
-                      <Pencil className="h-3.5 w-3.5" />
+                      <Pencil className="h-3.5 w-3.5" /> Edit
                     </Button>
                     <Button
                       size="sm"
@@ -119,7 +119,7 @@ export function RolesTable({ rows }: { rows: Row[] }) {
                       aria-label={`Delete ${r.name}`}
                       className="text-danger hover:bg-red-50"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-3.5 w-3.5" /> Delete
                     </Button>
                   </div>
                 </Td>

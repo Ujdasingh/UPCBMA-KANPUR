@@ -92,7 +92,7 @@ export function LabTestsTable({ rows }: { rows: LabTest[] }) {
                       onClick={() => setMode({ kind: "edit", test: t })}
                       aria-label={`Edit ${t.code}`}
                     >
-                      <Pencil className="h-3.5 w-3.5" />
+                      <Pencil className="h-3.5 w-3.5" /> Edit
                     </Button>
                     <Button
                       size="sm"
@@ -115,7 +115,7 @@ export function LabTestsTable({ rows }: { rows: LabTest[] }) {
                       aria-label={`Delete ${t.code}`}
                       className="text-danger hover:bg-red-50"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-3.5 w-3.5" /> Delete
                     </Button>
                   </div>
                 </Td>

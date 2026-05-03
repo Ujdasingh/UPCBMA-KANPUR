@@ -273,7 +273,7 @@ export function MembersTable({
                         onClick={() => setMode({ kind: "edit", member: m })}
                         aria-label={`Edit ${m.name}`}
                       >
-                        <Pencil className="h-3.5 w-3.5" />
+                        <Pencil className="h-3.5 w-3.5" /> Edit
                       </Button>
                       {/* Promote / revoke admin. Hidden for super_admins
                           (who must be managed via the super-admin tools)
@@ -347,7 +347,7 @@ export function MembersTable({
                           aria-label={`Delete ${m.name}`}
                           className="text-danger hover:bg-red-50"
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <Trash2 className="h-3.5 w-3.5" /> Delete
                         </Button>
                       )}
                     </div>

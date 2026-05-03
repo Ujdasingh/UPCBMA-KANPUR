@@ -133,7 +133,7 @@ export function CommitteeTable({
                               onClick={() => setMode({ kind: "edit", row: r })}
                               aria-label="Edit appointment"
                             >
-                              <Pencil className="h-3.5 w-3.5" />
+                              <Pencil className="h-3.5 w-3.5" /> Edit
                             </Button>
                             {r.status === "active" && (
                               <Button
@@ -164,7 +164,7 @@ export function CommitteeTable({
                               aria-label="Delete appointment"
                               className="text-danger hover:bg-red-50"
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
+                              <Trash2 className="h-3.5 w-3.5" /> Delete
                             </Button>
                           </div>
                         </Td>

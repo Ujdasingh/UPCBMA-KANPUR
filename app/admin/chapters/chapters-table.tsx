@@ -84,7 +84,7 @@ export function ChaptersTable({
                       onClick={() => setMode({ kind: "edit", chapter: c })}
                       aria-label={`Edit ${c.name}`}
                     >
-                      <Pencil className="h-3.5 w-3.5" />
+                      <Pencil className="h-3.5 w-3.5" /> Edit
                     </Button>
                     <Button
                       size="sm"
@@ -101,7 +101,7 @@ export function ChaptersTable({
                       aria-label={`Delete ${c.name}`}
                       className="text-danger hover:bg-red-50"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-3.5 w-3.5" /> Delete
                     </Button>
                   </div>
                 </Td>

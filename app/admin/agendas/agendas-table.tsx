@@ -100,7 +100,7 @@ export function AgendasTable({ rows }: { rows: AgendaRow[] }) {
                       onClick={() => setMode({ kind: "edit", agenda: a })}
                       aria-label={`Edit ${a.title}`}
                     >
-                      <Pencil className="h-3.5 w-3.5" />
+                      <Pencil className="h-3.5 w-3.5" /> Edit
                     </Button>
                     <Button
                       size="sm"
@@ -117,7 +117,7 @@ export function AgendasTable({ rows }: { rows: AgendaRow[] }) {
                       aria-label={`Delete ${a.title}`}
                       className="text-danger hover:bg-red-50"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-3.5 w-3.5" /> Delete
                     </Button>
                   </div>
                 </Td>

@@ -330,12 +330,23 @@ export default async function ChapterHome({
                 The people running {chapter.name}
               </h2>
             </div>
-            {filteredAppointments.length > 0 && (
-              <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
-                {filteredAppointments.length}{" "}
-                {filteredAppointments.length === 1 ? "member" : "members"}
-              </div>
-            )}
+            <div className="flex items-baseline gap-4">
+              {filteredAppointments.length > 0 && (
+                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+                  {filteredAppointments.length}{" "}
+                  {filteredAppointments.length === 1 ? "member" : "members"}
+                </div>
+              )}
+              {/* Past committees archive — only renders the link
+                  unconditionally; the destination page itself is happy
+                  to be empty if no terms are recorded yet. */}
+              <Link
+                href={`/${chapter.slug}/past-committees`}
+                className="text-[11px] font-medium text-heading no-underline hover:underline"
+              >
+                Past committees →
+              </Link>
+            </div>
           </div>
 
           {committeeCategoryKeys.length === 0 ? (
