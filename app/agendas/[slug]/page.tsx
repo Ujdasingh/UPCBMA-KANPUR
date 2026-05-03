@@ -111,6 +111,7 @@ export default async function AgendaDetailPage({
             initial={voteSummary}
             signedIn={!!me}
             size="md"
+            showWeighted
           />
         </div>
 

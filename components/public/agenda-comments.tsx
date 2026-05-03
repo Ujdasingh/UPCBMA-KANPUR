@@ -1,8 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, useTransition } from "react";
-import { Pencil, Send, Trash2, X, Check, MessageSquare } from "lucide-react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
+import {
+  CornerDownRight,
+  Pencil,
+  Send,
+  Trash2,
+  X,
+  Check,
+  MessageSquare,
+} from "lucide-react";
 import { Avatar } from "./avatar";
 import { cn } from "@/lib/utils";
 import {
@@ -38,7 +52,24 @@ export function AgendaComments({
   signedInMemberId?: string;
 }) {
   const [comments, setComments] = useState<AgendaComment[]>(initial);
-  const [error, setError] = useState<string | null>(null);
+
+  // Group replies under their parents so the UI can render a single root
+  // list with a flat reply tail under each. We deliberately stay one level
+  // deep — deep threading on a small membership site adds noise.
+  const { roots, repliesByParent } = useMemo(() => {
+    const roots: AgendaComment[] = [];
+    const repliesByParent = new Map<string, AgendaComment[]>();
+    for (const c of comments) {
+      if (c.parent_id) {
+        const list = repliesByParent.get(c.parent_id) ?? [];
+        list.push(c);
+        repliesByParent.set(c.parent_id, list);
+      } else {
+        roots.push(c);
+      }
+    }
+    return { roots, repliesByParent };
+  }, [comments]);
 
   function handleNew(c: AgendaComment) {
     setComments((cur) => [...cur, c]);
@@ -49,7 +80,9 @@ export function AgendaComments({
     );
   }
   function handleDelete(id: string) {
-    setComments((cur) => cur.filter((c) => c.id !== id));
+    setComments((cur) =>
+      cur.filter((c) => c.id !== id && c.parent_id !== id),
+    );
   }
 
   return (
@@ -64,22 +97,48 @@ export function AgendaComments({
         </h2>
       </div>
 
-      {comments.length === 0 ? (
+      {roots.length === 0 ? (
         <div className="mt-6 rounded-sm border border-dashed border-border bg-surface p-6 text-center text-sm text-muted">
           No comments yet — be the first to weigh in.
         </div>
       ) : (
-        <ul className="mt-6 space-y-5">
-          {comments.map((c) => (
-            <li key={c.id}>
-              <CommentItem
-                comment={c}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                isSelf={c.member_id === signedInMemberId}
-              />
-            </li>
-          ))}
+        <ul className="mt-6 space-y-6">
+          {roots.map((c) => {
+            const replies = repliesByParent.get(c.id) ?? [];
+            return (
+              <li key={c.id}>
+                <CommentItem
+                  comment={c}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  onReply={handleNew}
+                  isSelf={c.member_id === signedInMemberId}
+                  signedInMemberId={signedInMemberId}
+                  agendaId={agendaId}
+                  signInHref={signInHref}
+                />
+                {replies.length > 0 && (
+                  <ul className="mt-4 space-y-4 border-l-2 border-border pl-5">
+                    {replies.map((r) => (
+                      <li key={r.id}>
+                        <CommentItem
+                          comment={r}
+                          onEdit={handleEdit}
+                          onDelete={handleDelete}
+                          onReply={handleNew}
+                          isSelf={r.member_id === signedInMemberId}
+                          signedInMemberId={signedInMemberId}
+                          agendaId={agendaId}
+                          signInHref={signInHref}
+                          isReply
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
 
@@ -103,12 +162,6 @@ export function AgendaComments({
           </div>
         )}
       </div>
-
-      {error && (
-        <div className="mt-4 rounded-sm border border-red-200 bg-red-50 p-3 text-xs text-red-900">
-          {error}
-        </div>
-      )}
     </section>
   );
 }
@@ -121,15 +174,30 @@ function Composer({
   agendaId,
   onPosted,
   signedInMemberId,
+  parentId,
+  compact,
+  onCancel,
 }: {
   agendaId: string;
   onPosted: (c: AgendaComment) => void;
   signedInMemberId: string;
+  /** When set, the post becomes a reply under this parent comment. */
+  parentId?: string;
+  /** Reply composers render tighter — used inline under a comment. */
+  compact?: boolean;
+  /** Optional cancel handler — closes the inline reply form. */
+  onCancel?: () => void;
 }) {
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const ref = useRef<HTMLTextAreaElement>(null);
+
+  // Reply composers should grab focus when they appear so the user can
+  // start typing immediately.
+  useEffect(() => {
+    if (compact) ref.current?.focus();
+  }, [compact]);
 
   function submit() {
     const trimmed = body.trim();
@@ -139,18 +207,17 @@ function Composer({
     }
     setError(null);
     startTransition(async () => {
-      const res = await postAgendaComment(agendaId, trimmed);
+      const res = await postAgendaComment(agendaId, trimmed, parentId ?? null);
       if (!res.ok) {
         setError(res.error);
         return;
       }
-      // Insert a placeholder comment — the next page revalidate will
-      // replace it with the canonical one. Keeps the UI snappy.
       const now = new Date().toISOString();
       onPosted({
         id: `pending-${now}`,
         agenda_id: agendaId,
         member_id: signedInMemberId,
+        parent_id: parentId ?? null,
         body: trimmed,
         posted_at: now,
         edited: false,
@@ -159,32 +226,48 @@ function Composer({
         canDelete: true,
       });
       setBody("");
-      // Refocus so the member can keep typing.
-      ref.current?.focus();
+      if (compact && onCancel) {
+        // Reply done — collapse the inline composer.
+        onCancel();
+      } else {
+        ref.current?.focus();
+      }
     });
   }
 
   return (
     <div>
-      <label
-        htmlFor="agenda-comment"
-        className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-muted"
-      >
-        Add a comment
-      </label>
+      {!compact && (
+        <label
+          htmlFor="agenda-comment"
+          className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-muted"
+        >
+          Add a comment
+        </label>
+      )}
       <textarea
         ref={ref}
-        id="agenda-comment"
+        id={compact ? undefined : "agenda-comment"}
         value={body}
         onChange={(e) => setBody(e.currentTarget.value)}
-        placeholder="Share what you know, or ask the chapter what they think."
-        rows={3}
+        placeholder={
+          compact
+            ? "Write your reply…"
+            : "Share what you know, or ask the chapter what they think."
+        }
+        rows={compact ? 2 : 3}
         maxLength={4000}
-        className="mt-2 block w-full rounded-sm border border-border bg-bg px-3 py-2 text-sm focus-visible:border-heading focus-visible:outline-none"
+        className={cn(
+          "block w-full rounded-sm border border-border bg-bg px-3 py-2 text-sm focus-visible:border-heading focus-visible:outline-none",
+          !compact && "mt-2",
+        )}
         onKeyDown={(e) => {
           if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
             e.preventDefault();
             submit();
+          }
+          if (e.key === "Escape" && compact && onCancel) {
+            onCancel();
           }
         }}
       />
@@ -192,15 +275,29 @@ function Composer({
         <p className="text-xs text-muted">
           ⌘+Enter to post · {body.length}/4000
         </p>
-        <button
-          type="button"
-          onClick={submit}
-          disabled={pending || !body.trim()}
-          className="inline-flex h-9 items-center gap-1.5 rounded-sm bg-heading px-4 text-sm font-medium text-white transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <Send className="h-3.5 w-3.5" strokeWidth={2} />
-          {pending ? "Posting…" : "Post comment"}
-        </button>
+        <div className="flex gap-2">
+          {compact && onCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="inline-flex h-8 items-center gap-1.5 rounded-sm border border-border bg-bg px-3 text-xs font-medium text-text hover:border-heading hover:text-heading"
+            >
+              Cancel
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={submit}
+            disabled={pending || !body.trim()}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-sm bg-heading text-white transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50",
+              compact ? "h-8 px-3 text-xs font-medium" : "h-9 px-4 text-sm font-medium",
+            )}
+          >
+            <Send className="h-3.5 w-3.5" strokeWidth={2} />
+            {pending ? "Posting…" : compact ? "Reply" : "Post comment"}
+          </button>
+        </div>
       </div>
       {error && (
         <p className="mt-2 text-xs text-danger">{error}</p>
@@ -217,14 +314,27 @@ function CommentItem({
   comment,
   onEdit,
   onDelete,
+  onReply,
   isSelf,
+  signedInMemberId,
+  agendaId,
+  signInHref,
+  isReply,
 }: {
   comment: AgendaComment;
   onEdit: (id: string, body: string) => void;
   onDelete: (id: string) => void;
+  /** Called when a successful reply is posted; same as onPosted in parent. */
+  onReply: (c: AgendaComment) => void;
   isSelf: boolean;
+  signedInMemberId?: string;
+  agendaId: string;
+  signInHref: string;
+  /** Tighter rendering for nested replies — no nested reply button. */
+  isReply?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
+  const [replying, setReplying] = useState(false);
   const [draft, setDraft] = useState(comment.body);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -340,8 +450,31 @@ function CommentItem({
           </p>
         )}
 
-        {(comment.canEdit || comment.canDelete) && !editing && !isPending && (
-          <div className="mt-2 flex items-center gap-3 text-[11px]">
+        {!editing && !isPending && (
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+            {/* Reply: only at the root level, never on already-nested
+                replies — keeps the thread one level deep. Anonymous
+                visitors get bounced to login. */}
+            {!isReply && (
+              signedInMemberId ? (
+                <button
+                  type="button"
+                  onClick={() => setReplying((r) => !r)}
+                  className="inline-flex items-center gap-1 text-muted no-underline hover:text-heading"
+                >
+                  <CornerDownRight className="h-3 w-3" strokeWidth={2} />
+                  {replying ? "Cancel" : "Reply"}
+                </button>
+              ) : (
+                <Link
+                  href={signInHref}
+                  className="inline-flex items-center gap-1 text-muted no-underline hover:text-heading"
+                >
+                  <CornerDownRight className="h-3 w-3" strokeWidth={2} />
+                  Sign in to reply
+                </Link>
+              )
+            )}
             {comment.canEdit && (
               <button
                 type="button"
@@ -367,6 +500,23 @@ function CommentItem({
                 Delete
               </button>
             )}
+          </div>
+        )}
+
+        {/* Inline reply composer — appears under the comment when toggled. */}
+        {replying && signedInMemberId && (
+          <div className="mt-3 rounded-sm border border-border bg-surface p-3">
+            <Composer
+              agendaId={agendaId}
+              parentId={comment.id}
+              signedInMemberId={signedInMemberId}
+              compact
+              onCancel={() => setReplying(false)}
+              onPosted={(c) => {
+                onReply(c);
+                setReplying(false);
+              }}
+            />
           </div>
         )}
 

@@ -22,19 +22,34 @@ export function AgendaVoteButtons({
   signedIn,
   size = "md",
   className,
+  showWeighted,
 }: {
   agendaId: string;
-  initial: { up: number; down: number; myVote: "up" | "down" | null };
+  initial: {
+    up: number;
+    down: number;
+    upWeighted?: number;
+    downWeighted?: number;
+    myVote: "up" | "down" | null;
+  };
   signedIn: boolean;
   /** "sm" suits inline cards, "md" suits the agenda detail header. */
   size?: "sm" | "md";
   className?: string;
+  /** Show the weighted-by-role score under the buttons. Defaults to true
+   *  on the detail page; cards keep it off to stay compact. */
+  showWeighted?: boolean;
 }) {
   const [up, setUp] = useState(initial.up);
   const [down, setDown] = useState(initial.down);
   const [myVote, setMyVote] = useState<"up" | "down" | null>(initial.myVote);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const upWeighted = initial.upWeighted ?? initial.up;
+  const downWeighted = initial.downWeighted ?? initial.down;
+  const hasWeighting =
+    showWeighted &&
+    (upWeighted !== initial.up || downWeighted !== initial.down);
 
   // Anonymous: render as a sign-in nudge that preserves the agenda URL
   // so they're returned here after logging in.
@@ -133,6 +148,14 @@ export function AgendaVoteButtons({
           <span className="tabular-nums">{down}</span>
         </button>
       </div>
+      {hasWeighting && (
+        <span
+          className="text-[10px] text-muted"
+          title="Vote weights: 1 = member, 2 = committee, 3 = officer (president/secretary/treasurer)"
+        >
+          weighted score · {upWeighted} for / {downWeighted} against
+        </span>
+      )}
       {error && (
         <span className="text-[11px] text-danger">{error}</span>
       )}

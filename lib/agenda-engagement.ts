@@ -12,16 +12,53 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { getAuthedMember } from "@/lib/auth";
 
 export type AgendaVoteSummary = {
+  /** Number of distinct members voting up — democratic count, shown publicly. */
   up: number;
+  /** Number of distinct members voting down. */
   down: number;
+  /** Sum of weights of up-votes (committee voters count more). */
+  upWeighted: number;
+  /** Sum of weights of down-votes. */
+  downWeighted: number;
   /** The signed-in member's current vote, if any. */
   myVote: "up" | "down" | null;
 };
+
+/**
+ * Officer roles get the highest weight. Other active committee roles get a
+ * mid weight. Plain members are 1. Match this set to AUTO_ADMIN_ROLES in
+ * app/admin/committee/actions.ts so the "officer" tier stays coherent.
+ */
+const OFFICER_ROLES = new Set(["president", "secretary", "treasurer"]);
+
+/**
+ * Look up the current vote weight for a member based on their *active*
+ * committee appointments today. Snapshotted at vote time by the action;
+ * exported here so other surfaces can preview the weight before voting.
+ */
+export async function computeMemberVoteWeight(
+  memberId: string,
+): Promise<number> {
+  const svc = createServiceClient();
+  const today = new Date().toISOString().slice(0, 10);
+  const { data } = await svc
+    .from("committee_appointments")
+    .select("role_key")
+    .eq("member_id", memberId)
+    .eq("status", "active")
+    .lte("term_start", today)
+    .gte("term_end", today);
+  if (!data || data.length === 0) return 1;
+  if (data.some((a) => OFFICER_ROLES.has(a.role_key))) return 3;
+  return 2;
+}
 
 export type AgendaComment = {
   id: string;
   agenda_id: string;
   member_id: string;
+  /** When non-null, this is a reply to the referenced comment. */
+  parent_id: string | null;
   body: string;
   posted_at: string;
   /** Present when the comment has been edited at least once. */
@@ -51,7 +88,17 @@ export async function getVoteSummary(
   const me = await getAuthedMember();
 
   const [allVotes, myVoteRow] = await Promise.all([
-    svc.from("agenda_votes").select("vote").eq("agenda_id", agendaId),
+    // Tolerate the older schema where `weight` doesn't exist yet — fall
+    // back to a plain `vote` select if the rich one fails.
+    svc
+      .from("agenda_votes")
+      .select("vote, weight")
+      .eq("agenda_id", agendaId)
+      .then((r) =>
+        r.error
+          ? svc.from("agenda_votes").select("vote").eq("agenda_id", agendaId)
+          : r,
+      ),
     me
       ? svc
           .from("agenda_votes")
@@ -62,18 +109,28 @@ export async function getVoteSummary(
       : Promise.resolve({ data: null }),
   ]);
 
-  let up = 0;
-  let down = 0;
-  for (const v of allVotes.data ?? []) {
-    if (v.vote === "up") up++;
-    else if (v.vote === "down") down++;
-  }
-
   return {
-    up,
-    down,
+    ...tallyVotes(allVotes.data ?? []),
     myVote: (myVoteRow.data?.vote as "up" | "down" | undefined) ?? null,
   };
+}
+
+function tallyVotes(rows: { vote: string; weight?: number | null }[]) {
+  let up = 0;
+  let down = 0;
+  let upWeighted = 0;
+  let downWeighted = 0;
+  for (const v of rows) {
+    const w = v.weight ?? 1;
+    if (v.vote === "up") {
+      up++;
+      upWeighted += w;
+    } else if (v.vote === "down") {
+      down++;
+      downWeighted += w;
+    }
+  }
+  return { up, down, upWeighted, downWeighted };
 }
 
 /**
@@ -89,11 +146,19 @@ export async function getVoteSummariesByAgenda(
   const svc = createServiceClient();
   const me = await getAuthedMember();
 
-  const [{ data: allVotes }, { data: myVotes }] = await Promise.all([
+  const [allVotesResp, { data: myVotes }] = await Promise.all([
     svc
       .from("agenda_votes")
-      .select("agenda_id, vote")
-      .in("agenda_id", agendaIds),
+      .select("agenda_id, vote, weight")
+      .in("agenda_id", agendaIds)
+      .then((r) =>
+        r.error
+          ? svc
+              .from("agenda_votes")
+              .select("agenda_id, vote")
+              .in("agenda_id", agendaIds)
+          : r,
+      ),
     me
       ? svc
           .from("agenda_votes")
@@ -104,13 +169,26 @@ export async function getVoteSummariesByAgenda(
   ]);
 
   for (const id of agendaIds) {
-    out.set(id, { up: 0, down: 0, myVote: null });
+    out.set(id, {
+      up: 0,
+      down: 0,
+      upWeighted: 0,
+      downWeighted: 0,
+      myVote: null,
+    });
   }
-  for (const v of allVotes ?? []) {
+  type Row = { agenda_id: string; vote: string; weight?: number | null };
+  for (const v of (allVotesResp.data as Row[]) ?? []) {
     const s = out.get(v.agenda_id);
     if (!s) continue;
-    if (v.vote === "up") s.up++;
-    else if (v.vote === "down") s.down++;
+    const w = v.weight ?? 1;
+    if (v.vote === "up") {
+      s.up++;
+      s.upWeighted += w;
+    } else if (v.vote === "down") {
+      s.down++;
+      s.downWeighted += w;
+    }
   }
   for (const v of (myVotes as { agenda_id: string; vote: string }[]) ?? []) {
     const s = out.get(v.agenda_id);
@@ -142,7 +220,7 @@ export async function listAgendaComments(
   let attempt = await svc
     .from("agenda_comments")
     .select(
-      "id, agenda_id, member_id, body, posted_at, updated_at, member:members(id, name, photo_url, company, role)",
+      "id, agenda_id, member_id, parent_id, body, posted_at, updated_at, member:members(id, name, photo_url, company, role)",
     )
     .eq("agenda_id", agendaId)
     .eq("hidden", false)
@@ -151,7 +229,7 @@ export async function listAgendaComments(
     attempt = await svc
       .from("agenda_comments")
       .select(
-        "id, agenda_id, member_id, body, posted_at, member:members(id, name, photo_url, company, role)",
+        "id, agenda_id, member_id, parent_id, body, posted_at, member:members(id, name, photo_url, company, role)",
       )
       .eq("agenda_id", agendaId)
       .eq("hidden", false)
@@ -174,6 +252,7 @@ export async function listAgendaComments(
       id: c.id,
       agenda_id: c.agenda_id,
       member_id: c.member_id,
+      parent_id: c.parent_id ?? null,
       body: c.body,
       posted_at: c.posted_at,
       edited,
@@ -196,6 +275,7 @@ type RawComment = {
   id: string;
   agenda_id: string;
   member_id: string;
+  parent_id: string | null;
   body: string;
   posted_at: string;
   updated_at?: string | null;

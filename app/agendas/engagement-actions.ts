@@ -11,7 +11,12 @@
 import { revalidatePath } from "next/cache";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getAuthedMember } from "@/lib/auth";
-import { COMMENT_EDIT_WINDOW_MS } from "@/lib/agenda-engagement";
+import {
+  COMMENT_EDIT_WINDOW_MS,
+  computeMemberVoteWeight,
+} from "@/lib/agenda-engagement";
+import { sendEmail, escapeHtml } from "@/lib/email";
+import { chapterAdmins } from "@/lib/notify";
 
 // ──────────────────────────────────────────────────────────────────────
 // VOTING
@@ -42,6 +47,11 @@ export async function castAgendaVote(
     .eq("member_id", me.id)
     .maybeSingle();
 
+  // Snapshot the current weight so a later role change doesn't retro-edit
+  // historical totals. computeMemberVoteWeight returns 1/2/3 based on
+  // active committee role.
+  const weight = await computeMemberVoteWeight(me.id);
+
   if (existing?.vote === direction) {
     // Toggle off — remove the row entirely so the count drops.
     const { error } = await svc
@@ -51,20 +61,37 @@ export async function castAgendaVote(
       .eq("member_id", me.id);
     if (error) return { ok: false, error: error.message };
   } else if (existing) {
-    // Switch direction.
-    const { error } = await svc
+    // Switch direction. Re-snapshot the weight in case the member's
+    // committee role has changed since their last vote on this agenda.
+    const updatePayload: Record<string, unknown> = { vote: direction, weight };
+    let { error } = await svc
       .from("agenda_votes")
-      .update({ vote: direction })
+      .update(updatePayload)
       .eq("agenda_id", agendaId)
       .eq("member_id", me.id);
+    if (error && /weight/i.test(error.message)) {
+      // Migration not yet applied — drop the column and retry.
+      delete updatePayload.weight;
+      ({ error } = await svc
+        .from("agenda_votes")
+        .update(updatePayload)
+        .eq("agenda_id", agendaId)
+        .eq("member_id", me.id));
+    }
     if (error) return { ok: false, error: error.message };
   } else {
     // First vote.
-    const { error } = await svc.from("agenda_votes").insert({
+    const insertPayload: Record<string, unknown> = {
       agenda_id: agendaId,
       member_id: me.id,
       vote: direction,
-    });
+      weight,
+    };
+    let { error } = await svc.from("agenda_votes").insert(insertPayload);
+    if (error && /weight/i.test(error.message)) {
+      delete insertPayload.weight;
+      ({ error } = await svc.from("agenda_votes").insert(insertPayload));
+    }
     if (error) return { ok: false, error: error.message };
   }
 
@@ -82,12 +109,15 @@ export async function castAgendaVote(
 const MAX_COMMENT_LEN = 4000;
 
 /**
- * Post a new comment on an agenda. Returns the new row so the client can
- * append it without refetching.
+ * Post a new comment on an agenda. Optionally a reply to another comment
+ * via parent_id (one level of nesting in the UI). Best-effort emails the
+ * agenda's proposer + the chapter committee on every new top-level
+ * comment; reply emails go to the parent commenter too.
  */
 export async function postAgendaComment(
   agendaId: string,
   body: string,
+  parentId?: string | null,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const me = await getAuthedMember();
   if (!me) return { ok: false, error: "Sign in to comment." };
@@ -102,17 +132,129 @@ export async function postAgendaComment(
   }
 
   const svc = createServiceClient();
-  const { error } = await svc.from("agenda_comments").insert({
+
+  // Validate the parent if one was supplied — must belong to the same
+  // agenda and be visible (not hidden). Defends against client tampering.
+  let validatedParentId: string | null = null;
+  if (parentId) {
+    const { data: parent } = await svc
+      .from("agenda_comments")
+      .select("agenda_id, hidden, member_id")
+      .eq("id", parentId)
+      .maybeSingle();
+    if (!parent || parent.hidden || parent.agenda_id !== agendaId) {
+      return { ok: false, error: "Parent comment not found." };
+    }
+    validatedParentId = parentId;
+  }
+
+  const insertPayload: Record<string, unknown> = {
     agenda_id: agendaId,
     member_id: me.id,
     body: trimmed,
-  });
+  };
+  if (validatedParentId) insertPayload.parent_id = validatedParentId;
+
+  const { error } = await svc.from("agenda_comments").insert(insertPayload);
   if (error) return { ok: false, error: error.message };
 
-  // Best-effort revalidate. Detail page is the only one that lists comments
-  // right now, so be specific to keep CDN cache effective elsewhere.
+  // Notifications — fire-and-forget so a flaky SMTP doesn't fail the post.
+  notifyComment(agendaId, me.name, trimmed, validatedParentId).catch(() => {});
+
   revalidatePath(`/agendas`);
   return { ok: true };
+}
+
+/**
+ * Email the agenda proposer + chapter committee + the parent commenter
+ * (when this is a reply) about a new comment. All looked up via service
+ * role; the actual delivery is best-effort.
+ */
+async function notifyComment(
+  agendaId: string,
+  authorName: string,
+  body: string,
+  parentId: string | null,
+) {
+  const svc = createServiceClient();
+
+  const { data: agenda } = await svc
+    .from("agendas")
+    .select("title, slug, chapter_id, created_by")
+    .eq("id", agendaId)
+    .maybeSingle();
+  if (!agenda) return;
+
+  // Recipients: proposer + chapter admins (or state-wide admins for state
+  // agendas) + parent commenter when this is a reply. De-duped lower-case.
+  const targets = new Set<string>();
+
+  if (agenda.created_by) {
+    const { data: proposer } = await svc
+      .from("members")
+      .select("email")
+      .eq("id", agenda.created_by)
+      .maybeSingle();
+    if (proposer?.email) targets.add(proposer.email.toLowerCase().trim());
+  }
+
+  if (agenda.chapter_id) {
+    const admins = await chapterAdmins(agenda.chapter_id);
+    admins.forEach((a) => targets.add(a));
+  } else {
+    // State-wide agenda: pull every active admin/super_admin email.
+    const { data: stateAdmins } = await svc
+      .from("members")
+      .select("email")
+      .in("role", ["admin", "super_admin"])
+      .eq("active", true);
+    (stateAdmins ?? []).forEach((m) => {
+      if (m.email) targets.add(m.email.toLowerCase().trim());
+    });
+  }
+
+  if (parentId) {
+    const { data: parent } = await svc
+      .from("agenda_comments")
+      .select("member:members!agenda_comments_member_id_fkey(email)")
+      .eq("id", parentId)
+      .maybeSingle();
+    const parentMember = Array.isArray(parent?.member)
+      ? parent?.member[0]
+      : parent?.member;
+    if (parentMember && (parentMember as { email?: string }).email) {
+      targets.add(
+        (parentMember as { email: string }).email.toLowerCase().trim(),
+      );
+    }
+  }
+
+  if (targets.size === 0) return;
+
+  const url =
+    (process.env.NEXT_PUBLIC_SITE_URL ?? "https://upcbma.com") +
+    `/agendas/${agenda.slug}#comments`;
+
+  await sendEmail({
+    to: Array.from(targets),
+    subject: `[UPCBMA] New comment on "${agenda.title}"`,
+    text: [
+      `${authorName} left a new comment on "${agenda.title}".`,
+      ``,
+      body.length > 600 ? body.slice(0, 600) + "…" : body,
+      ``,
+      `Read the full thread or reply: ${url}`,
+    ].join("\n"),
+    html: `
+      <p><strong>${escapeHtml(authorName)}</strong> left a new comment on
+      <a href="${url}" style="color:#0d6b3e">${escapeHtml(agenda.title)}</a>.</p>
+      <blockquote style="margin:12px 0;padding:8px 14px;border-left:3px solid #d6cfb6;color:#333;background:#fafaf6;font-size:14px;line-height:1.55;white-space:pre-wrap">${escapeHtml(body.length > 800 ? body.slice(0, 800) + "…" : body)}</blockquote>
+      <p style="font-size:13px;margin-top:16px">
+        <a href="${url}" style="color:#0d6b3e">Read the full thread or reply →</a>
+      </p>
+    `,
+    tag: "agenda_comment_notification",
+  });
 }
 
 /**
