@@ -6,6 +6,9 @@ import { ChapterShell } from "@/components/public/chapter-shell";
 import { Avatar } from "@/components/public/avatar";
 import { CorrugatedWave } from "@/components/public/wave";
 import { RaiseProblemForm } from "@/components/public/raise-problem-form";
+import { AgendaVoteButtons } from "@/components/public/agenda-vote-buttons";
+import { getVoteSummariesByAgenda } from "@/lib/agenda-engagement";
+import { getAuthedMember } from "@/lib/auth";
 import { statusTone, priorityTone, categoryLabel } from "@/lib/agendas";
 import {
   FlaskConical,
@@ -143,6 +146,14 @@ export default async function ChapterHome({
     const m = Array.isArray(a.member) ? a.member[0] : a.member;
     return m?.role !== "super_admin";
   });
+
+  // Vote summaries for the agenda cards. The summary fetch is a single
+  // round-trip regardless of how many agenda cards we render.
+  const meForVotes = await getAuthedMember();
+  const signedIn = !!meForVotes;
+  const agendaVoteSummaries = await getVoteSummariesByAgenda(
+    (activeAgendas ?? []).map((a) => a.id),
+  );
 
   // Group committee by category
   const committeeGroups: Record<string, typeof filteredAppointments> = {};
@@ -422,46 +433,72 @@ export default async function ChapterHome({
             </p>
           ) : (
             <ul className="mt-10 grid gap-5 md:grid-cols-2">
-              {activeAgendas.map((a) => (
-                <li key={a.id}>
-                  <Link
-                    href={`/agendas/${a.slug}`}
-                    className="group block rounded-sm border border-border bg-bg p-6 no-underline hover:border-heading"
+              {activeAgendas.map((a) => {
+                const summary = agendaVoteSummaries.get(a.id) ?? {
+                  up: 0,
+                  down: 0,
+                  myVote: null,
+                };
+                return (
+                  <li
+                    key={a.id}
+                    className="group rounded-sm border border-border bg-bg p-6 transition-colors hover:border-heading"
                   >
-                    <div className="flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em]">
-                      <span
-                        className={
-                          "rounded-sm border px-1.5 py-0.5 " + statusTone(a.status as any)
-                        }
-                      >
-                        {a.status.replace("_", " ")}
-                      </span>
-                      <span
-                        className={
-                          "rounded-sm border px-1.5 py-0.5 " + priorityTone(a.priority as any)
-                        }
-                      >
-                        {a.priority}
-                      </span>
-                      <span className="text-muted">{categoryLabel(a.category)}</span>
-                      {a.chapter_id === null && (
-                        <span className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-[9px] text-muted">
-                          state
+                    <Link
+                      href={`/agendas/${a.slug}`}
+                      className="block no-underline"
+                    >
+                      <div className="flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em]">
+                        <span
+                          className={
+                            "rounded-sm border px-1.5 py-0.5 " +
+                            statusTone(a.status as any)
+                          }
+                        >
+                          {a.status.replace("_", " ")}
                         </span>
+                        <span
+                          className={
+                            "rounded-sm border px-1.5 py-0.5 " +
+                            priorityTone(a.priority as any)
+                          }
+                        >
+                          {a.priority}
+                        </span>
+                        <span className="text-muted">
+                          {categoryLabel(a.category)}
+                        </span>
+                        {a.chapter_id === null && (
+                          <span className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-[9px] text-muted">
+                            state
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="mt-3 text-base font-semibold text-heading group-hover:text-hover">
+                        {a.title}
+                      </h3>
+                      {a.summary && (
+                        <p className="mt-1.5 line-clamp-2 text-sm text-muted">
+                          {a.summary}
+                        </p>
                       )}
+                      <div className="mt-3 text-[11px] text-muted">
+                        Started {fmtDate(a.started_on)}
+                      </div>
+                    </Link>
+                    {/* Vote pair sits outside the Link so clicks don't
+                        navigate to the detail page accidentally. */}
+                    <div className="mt-4 border-t border-border pt-3">
+                      <AgendaVoteButtons
+                        agendaId={a.id}
+                        initial={summary}
+                        signedIn={signedIn}
+                        size="sm"
+                      />
                     </div>
-                    <h3 className="mt-3 text-base font-semibold text-heading group-hover:text-hover">
-                      {a.title}
-                    </h3>
-                    {a.summary && (
-                      <p className="mt-1.5 line-clamp-2 text-sm text-muted">{a.summary}</p>
-                    )}
-                    <div className="mt-3 text-[11px] text-muted">
-                      Started {fmtDate(a.started_on)}
-                    </div>
-                  </Link>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
