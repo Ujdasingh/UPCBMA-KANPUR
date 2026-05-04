@@ -43,29 +43,20 @@ export default async function StateNews({
     getAuthedMember(),
   ]);
 
-  // Resolve effective scope. Anonymous + no param → state-wide only.
-  let scope: string = chapterParam ?? "";
-  if (!scope && member) {
-    const svc = createServiceClient();
-    const { data: memberships } = await svc
-      .from("chapter_memberships")
-      .select("chapter_id, member_since")
-      .eq("member_id", member.id)
-      .eq("active", true)
-      .order("member_since", { ascending: true })
-      .limit(1);
-    const primary = memberships?.[0]?.chapter_id;
-    if (primary) {
-      const c = chapters.find((x) => x.id === primary);
-      if (c) scope = c.slug;
-    }
-  }
-  if (!scope) scope = STATE_SCOPE;
+  // Default scope is now ALL chapters for everyone — landing on /news
+  // from the state homepage should show every chapter's posts side by
+  // side, not auto-filter to the signed-in member's chapter.
+  void member; // kept in scope for any future per-user customisation
+  let scope: string = chapterParam ?? ALL_SCOPE;
 
   const svc = createServiceClient();
+  // Join chapters so each card can carry a chapter name badge instead of
+  // an opaque uuid.
   let query = svc
     .from("news")
-    .select("id, tag, title, body, image_url, published_date, chapter_id")
+    .select(
+      "id, tag, title, body, image_url, published_date, chapter_id, chapter:chapters(slug, name)",
+    )
     .order("published_date", { ascending: false })
     .limit(80);
 
@@ -151,7 +142,7 @@ export default async function StateNews({
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-9 sm:px-6 sm:py-14 lg:px-8">
+      <section className="mx-auto max-w-4xl px-4 py-9 sm:px-6 sm:py-14 lg:px-8">
         {!items || items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <Newspaper className="h-8 w-8 text-muted" strokeWidth={1.5} />
@@ -161,54 +152,71 @@ export default async function StateNews({
             </p>
           </div>
         ) : (
-          <ul className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {items.map((n) => (
-              <li key={n.id}>
-                <Link
-                  href={`/news/${n.id}`}
-                  className="group block overflow-hidden rounded-sm border border-border bg-bg no-underline hover:border-heading"
-                >
-                  {n.image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={n.image_url}
-                      alt=""
-                      className="aspect-[16/9] w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex aspect-[16/9] w-full items-center justify-center bg-surface text-muted">
-                      <Newspaper className="h-8 w-8" strokeWidth={1.25} />
-                    </div>
-                  )}
-                  <div className="p-5">
-                    <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em]">
-                      <span
-                        className={
-                          "inline-flex items-center rounded-sm border px-1.5 py-0.5 " +
-                          (tagTone[n.tag] ?? tagTone.UPDATE)
-                        }
-                      >
-                        {n.tag}
-                      </span>
-                      <time className="text-muted">{fmt(n.published_date)}</time>
-                      {n.chapter_id === null && (
-                        <span className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-[9px] text-muted">
-                          state
+          <ul className="space-y-4">
+            {items.map((n) => {
+              const ch = (n as any).chapter as
+                | { slug: string; name: string }
+                | null;
+              const chapterLabel = ch ? ch.name : "State-wide";
+              const isStateWide = !ch;
+              return (
+                <li key={n.id}>
+                  <Link
+                    href={`/news/${n.id}`}
+                    className="group flex gap-4 rounded-sm border border-border bg-bg p-4 no-underline hover:border-heading sm:gap-5 sm:p-5"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-2 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em]">
+                        {/* Chapter / state badge first, colour-coded so the
+                            scope is the first thing the eye lands on. */}
+                        <span
+                          className={
+                            "inline-flex items-center rounded-sm border px-1.5 py-0.5 " +
+                            (isStateWide
+                              ? "border-amber-200 bg-amber-50 text-amber-800"
+                              : "border-emerald-200 bg-emerald-50 text-emerald-800")
+                          }
+                        >
+                          {chapterLabel}
                         </span>
+                        <span
+                          className={
+                            "inline-flex items-center rounded-sm border px-1.5 py-0.5 " +
+                            (tagTone[n.tag] ?? tagTone.UPDATE)
+                          }
+                        >
+                          {n.tag}
+                        </span>
+                        <time className="text-muted">
+                          {fmt(n.published_date)}
+                        </time>
+                      </div>
+                      <h3 className="text-base font-semibold text-heading group-hover:text-hover">
+                        {n.title}
+                      </h3>
+                      {n.body && (
+                        <p className="mt-1.5 line-clamp-3 text-sm leading-relaxed text-muted">
+                          {n.body}
+                        </p>
                       )}
                     </div>
-                    <h3 className="mt-2 text-base font-semibold text-heading group-hover:text-hover">
-                      {n.title}
-                    </h3>
-                    {n.body && (
-                      <p className="mt-1.5 line-clamp-3 text-sm text-muted">
-                        {n.body}
-                      </p>
+                    {/* Cover image on the right — only renders when present.
+                        Empty cards stay clean rather than showing a
+                        placeholder tile. */}
+                    {n.image_url && (
+                      <div className="hidden shrink-0 sm:block">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={n.image_url}
+                          alt=""
+                          className="h-24 w-32 rounded-sm border border-border object-cover sm:h-28 sm:w-40 md:h-32 md:w-44"
+                        />
+                      </div>
                     )}
-                  </div>
-                </Link>
-              </li>
-            ))}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>

@@ -34,24 +34,12 @@ export default async function AgendasListPage({
     getAuthedMember(),
   ]);
 
-  // Default scope: ALL_SCOPE for anonymous, signed-in member's chapter otherwise.
-  let scope: string = chapterParam ?? "";
-  if (!scope && member) {
-    const svc = createServiceClient();
-    const { data: memberships } = await svc
-      .from("chapter_memberships")
-      .select("chapter_id, member_since")
-      .eq("member_id", member.id)
-      .eq("active", true)
-      .order("member_since", { ascending: true })
-      .limit(1);
-    const primary = memberships?.[0]?.chapter_id;
-    if (primary) {
-      const c = chapters.find((x) => x.id === primary);
-      if (c) scope = c.slug;
-    }
-  }
-  if (!scope) scope = ALL_SCOPE;
+  // Default scope is now ALL chapters for everyone — landing on /agendas
+  // from the state homepage should show what every chapter is working on,
+  // not auto-filter to the signed-in member's chapter. Members can switch
+  // to their own chapter via the filter dropdown above the list.
+  void member; // kept for any future per-user customisation
+  let scope: string = chapterParam ?? ALL_SCOPE;
 
   const svc = createServiceClient();
   let q = svc
@@ -166,55 +154,80 @@ export default async function AgendasListPage({
                         {list.length} {list.length === 1 ? "agenda" : "agendas"}
                       </div>
                     </div>
-                    <ul className="space-y-5">
+                    <ul className="space-y-4">
                       {list.map((a) => {
                         const ch = (a as any).chapter as
                           | { slug: string; name: string }
                           | null;
+                        const chapterLabel = ch ? ch.name : "State-wide";
                         return (
                           <li key={a.id}>
                             <Link
                               href={`/agendas/${a.slug}`}
-                              className="group block rounded-sm border border-border bg-bg p-5 no-underline hover:border-heading"
+                              className="group flex gap-4 rounded-sm border border-border bg-bg p-4 no-underline hover:border-heading sm:gap-5 sm:p-5"
                             >
-                              <div className="mb-2 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em]">
-                                <span className="text-muted">
-                                  {categoryLabel(a.category)}
-                                </span>
-                                <span
-                                  className={
-                                    "inline-flex items-center rounded-sm border px-1.5 py-0.5 " +
-                                    statusTone(a.status)
-                                  }
-                                >
-                                  {a.status.replace("_", " ")}
-                                </span>
-                                <span
-                                  className={
-                                    "inline-flex items-center rounded-sm border px-1.5 py-0.5 " +
-                                    priorityTone(a.priority)
-                                  }
-                                >
-                                  {a.priority} priority
-                                </span>
-                                <span className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-[9px] text-muted">
-                                  {ch ? ch.name : "State-wide"}
-                                </span>
-                              </div>
-                              <h3 className="text-base font-semibold text-heading group-hover:text-hover">
-                                {a.title}
-                              </h3>
-                              {a.summary && (
-                                <p className="mt-1.5 line-clamp-3 text-sm leading-relaxed text-muted">
-                                  {a.summary}
-                                </p>
-                              )}
-                              <div className="mt-3 flex items-center gap-3 text-[11px] text-muted">
-                                <span>started {a.started_on}</span>
-                                {a.target_resolution_on && (
-                                  <span>target {a.target_resolution_on}</span>
+                              <div className="min-w-0 flex-1">
+                                <div className="mb-2 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em]">
+                                  {/* Chapter / state badge first — most important
+                                      on the aggregated default view. */}
+                                  <span
+                                    className={
+                                      "inline-flex items-center rounded-sm border px-1.5 py-0.5 " +
+                                      (ch
+                                        ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                                        : "border-amber-200 bg-amber-50 text-amber-800")
+                                    }
+                                  >
+                                    {chapterLabel}
+                                  </span>
+                                  <span className="text-muted">
+                                    {categoryLabel(a.category)}
+                                  </span>
+                                  <span
+                                    className={
+                                      "inline-flex items-center rounded-sm border px-1.5 py-0.5 " +
+                                      statusTone(a.status)
+                                    }
+                                  >
+                                    {a.status.replace("_", " ")}
+                                  </span>
+                                  <span
+                                    className={
+                                      "inline-flex items-center rounded-sm border px-1.5 py-0.5 " +
+                                      priorityTone(a.priority)
+                                    }
+                                  >
+                                    {a.priority} priority
+                                  </span>
+                                </div>
+                                <h3 className="text-base font-semibold text-heading group-hover:text-hover">
+                                  {a.title}
+                                </h3>
+                                {a.summary && (
+                                  <p className="mt-1.5 line-clamp-3 text-sm leading-relaxed text-muted">
+                                    {a.summary}
+                                  </p>
                                 )}
+                                <div className="mt-3 flex items-center gap-3 text-[11px] text-muted">
+                                  <span>started {a.started_on}</span>
+                                  {a.target_resolution_on && (
+                                    <span>target {a.target_resolution_on}</span>
+                                  )}
+                                </div>
                               </div>
+                              {/* Image on the right — only renders when the
+                                  agenda has a cover. Empty cards stay clean
+                                  rather than showing a placeholder tile. */}
+                              {a.image_url && (
+                                <div className="hidden shrink-0 sm:block">
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={a.image_url}
+                                    alt=""
+                                    className="h-24 w-32 rounded-sm border border-border object-cover sm:h-28 sm:w-40 md:h-32 md:w-44"
+                                  />
+                                </div>
+                              )}
                             </Link>
                           </li>
                         );
