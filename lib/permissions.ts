@@ -41,14 +41,37 @@ export type Permission = {
   display_order: number;
 };
 
-/** Permissions every active committee member gets for free. */
-export const COMMITTEE_AUTO_GRANTS = new Set<string>([
+/** Permissions an *officer-tier* admin_scopes row grants for the chapter. */
+export const OFFICER_GRANTS = new Set<string>([
+  "news.edit",
+  "agendas.edit",
+  "agendas.approve",
+  "events.edit",
+  "messages.manage",
+  "committee.edit",
+  "committee_roles.edit",
+  "lab.edit",
+  "bookings.manage",
+  "members.edit",
+  "members.invite",
+  "members.set_admin",
+  "office.edit",
+]);
+
+/** Permissions a *content-tier* admin_scopes row grants for the chapter. */
+export const CONTENT_GRANTS = new Set<string>([
   "news.edit",
   "agendas.edit",
   "events.edit",
   "committee.edit",
   "messages.manage",
 ]);
+
+/**
+ * Legacy alias — kept so existing callers compile. New code should reach
+ * for OFFICER_GRANTS or CONTENT_GRANTS directly via admin_scopes.tier.
+ */
+export const COMMITTEE_AUTO_GRANTS = CONTENT_GRANTS;
 
 /**
  * All permissions known to the app. Cached per request — the catalogue
@@ -64,59 +87,139 @@ export async function listPermissions(): Promise<Permission[]> {
 }
 
 /**
- * Resolve the effective set of permission keys for a member id. Returns
- * null when the member doesn't exist (treat as zero permissions).
+ * A scoped permission grant — what the member can do, where.
+ *
+ * `chapterId === null` means the grant applies state-wide (Tier 1 /
+ * Admin UPCBMA). Otherwise it's the chapter UUID the keys apply to.
+ */
+export type ScopedGrant = {
+  chapterId: string | null;
+  keys: Set<string>;
+};
+
+/**
+ * Resolve the effective scoped permissions for a member id. Returns
+ * one ScopedGrant per scope (state, plus one per chapter where they
+ * have rights).
+ *
+ * Order of precedence (additive across all sources):
+ *   1. Role baseline:
+ *        super_admin → every key, state-wide
+ *        admin       → every key except super.*, state-wide (legacy
+ *                      cross-chapter admin role; we're moving away from
+ *                      this but keep it working for any leftover rows)
+ *   2. admin_scopes rows — tier='officer' grants OFFICER_GRANTS for
+ *      the row's chapter (or state-wide if chapter_id IS NULL); tier=
+ *      'content' grants CONTENT_GRANTS for that chapter only.
+ *   3. member_permissions direct grants — applied state-wide so a
+ *      surgical "Lab desk" permission works regardless of chapter.
+ */
+export async function getScopedPermissions(
+  memberId: string,
+): Promise<ScopedGrant[]> {
+  const svc = createServiceClient();
+
+  const [memberRow, allPerms, directGrants, scopeRows] = await Promise.all([
+    svc.from("members").select("role").eq("id", memberId).maybeSingle(),
+    svc.from("permissions").select("key"),
+    svc
+      .from("member_permissions")
+      .select("permission_key")
+      .eq("member_id", memberId),
+    svc
+      .from("admin_scopes")
+      .select("chapter_id, tier")
+      .eq("member_id", memberId),
+  ]);
+
+  if (!memberRow.data) return [];
+  const role = memberRow.data.role;
+  const allKeys = (allPerms.data ?? []).map((r) => r.key as string);
+
+  // Map<chapterId | "STATE", Set<key>>.
+  const byScope = new Map<string, Set<string>>();
+  const stateKey = "STATE";
+  const ensure = (k: string) => {
+    if (!byScope.has(k)) byScope.set(k, new Set());
+    return byScope.get(k)!;
+  };
+
+  if (role === "super_admin") {
+    const s = ensure(stateKey);
+    allKeys.forEach((k) => s.add(k));
+    return [{ chapterId: null, keys: s }];
+  }
+  if (role === "admin") {
+    const s = ensure(stateKey);
+    allKeys.forEach((k) => {
+      if (!k.startsWith("super.")) s.add(k);
+    });
+  }
+
+  // admin_scopes rows.
+  for (const row of scopeRows.data ?? []) {
+    const cid: string | null = row.chapter_id ?? null;
+    const tier: string =
+      (row as { tier?: string | null }).tier ?? "officer";
+    const grants = tier === "content" ? CONTENT_GRANTS : OFFICER_GRANTS;
+    const s = ensure(cid ?? stateKey);
+    if (cid === null) {
+      // Tier 1 — state-wide. Officer grants applied at state level
+      // mean every chapter, and we let the action layer enforce
+      // chapter targeting.
+      grants.forEach((k) => s.add(k));
+    } else {
+      grants.forEach((k) => s.add(k));
+    }
+  }
+
+  // Direct grants — state-wide for now. Could be scoped later if we
+  // need (member_permissions would gain a chapter_id column).
+  if ((directGrants.data ?? []).length > 0) {
+    const s = ensure(stateKey);
+    for (const r of directGrants.data!) {
+      s.add((r as { permission_key: string }).permission_key);
+    }
+  }
+
+  return Array.from(byScope.entries()).map(([k, v]) => ({
+    chapterId: k === stateKey ? null : k,
+    keys: v,
+  }));
+}
+
+/**
+ * Backwards-compatible: returns the union of ALL scopes' keys. Use this
+ * only when the caller doesn't care about the chapter (e.g., to decide
+ * whether to render a sidebar item at all). For mutations, always check
+ * with hasScopedPermission(memberId, key, chapterId).
  */
 export async function getEffectivePermissions(
   memberId: string,
 ): Promise<Set<string>> {
-  const svc = createServiceClient();
-  const today = new Date().toISOString().slice(0, 10);
-
-  const [memberRow, allPerms, directGrants, activeAppointments] =
-    await Promise.all([
-      svc.from("members").select("role").eq("id", memberId).maybeSingle(),
-      svc.from("permissions").select("key"),
-      svc
-        .from("member_permissions")
-        .select("permission_key")
-        .eq("member_id", memberId),
-      svc
-        .from("committee_appointments")
-        .select("id")
-        .eq("member_id", memberId)
-        .eq("status", "active")
-        .lte("term_start", today)
-        .gte("term_end", today)
-        .limit(1),
-    ]);
-
+  const grants = await getScopedPermissions(memberId);
   const out = new Set<string>();
-  if (!memberRow.data) return out;
-  const role = memberRow.data.role;
-  const allKeys = (allPerms.data ?? []).map((r) => r.key as string);
-
-  if (role === "super_admin") {
-    allKeys.forEach((k) => out.add(k));
-    return out;
-  }
-  if (role === "admin") {
-    allKeys.forEach((k) => {
-      if (!k.startsWith("super.")) out.add(k);
-    });
-  }
-
-  // Direct grants always count.
-  for (const r of directGrants.data ?? []) {
-    out.add((r as { permission_key: string }).permission_key);
-  }
-
-  // Committee auto-grants (only when an active appointment exists).
-  if ((activeAppointments.data ?? []).length > 0) {
-    COMMITTEE_AUTO_GRANTS.forEach((k) => out.add(k));
-  }
-
+  for (const g of grants) g.keys.forEach((k) => out.add(k));
   return out;
+}
+
+/**
+ * Tighter check — does the caller have `key` for `chapterId`?
+ *  - State-wide grants (chapterId=null in the grant) satisfy any chapter.
+ *  - A grant scoped to chapter X only satisfies actions targeting chapter X.
+ */
+export async function hasScopedPermission(
+  memberId: string,
+  key: string,
+  chapterId: string | null,
+): Promise<boolean> {
+  const grants = await getScopedPermissions(memberId);
+  for (const g of grants) {
+    if (!g.keys.has(key)) continue;
+    if (g.chapterId === null) return true; // state-wide
+    if (chapterId !== null && g.chapterId === chapterId) return true;
+  }
+  return false;
 }
 
 /**
