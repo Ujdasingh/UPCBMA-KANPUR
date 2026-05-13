@@ -5,6 +5,7 @@ import { LockBanner } from "@/components/admin/lock-banner";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { Logo } from "@/components/public/logo";
 import { getAdminContext } from "@/lib/auth";
+import { resolveTier } from "@/lib/tier";
 import { getStateLogoUrl } from "@/lib/site-settings";
 import { stopImpersonation } from "./super/actions";
 import Link from "next/link";
@@ -25,6 +26,10 @@ export default async function AdminLayout({
   // Same uploaded logo as the public nav so the admin panel doesn't fall back
   // to the bundled placeholder when an org has set its own brand.
   const logoSrc = await getStateLogoUrl();
+  // Tier label — replaces the raw role string ("admin"/"member") in the
+  // sidebar identity card with a friendlier "Tier 3 · Chapter Admin ·
+  // Kanpur" that tells the holder which seat their rights flow from.
+  const tier = await resolveTier(ctx.me.id);
 
   // The contents of the sidebar — same on desktop and inside the mobile
   // drawer. Keeping this as a single ReactNode lets AdminShell render it in
@@ -81,7 +86,12 @@ export default async function AdminLayout({
             <div className="truncate text-sm font-medium text-heading">
               {ctx.me.name}
             </div>
-            <div className="truncate text-[11px] text-muted">{ctx.me.role}</div>
+            <div
+              className="truncate text-[11px] text-muted"
+              title={tier.longLabel}
+            >
+              {tier.label}
+            </div>
           </div>
         </Link>
         <SignOutButton />

@@ -26,11 +26,25 @@ export async function signIn(formData: FormData) {
   const svc = createServiceClient();
   const { data: member } = await svc
     .from("members")
-    .select("role, must_change_password")
+    .select("id, role, must_change_password")
     .eq("auth_user_id", data.user?.id ?? "")
     .maybeSingle();
 
   const role = member?.role;
+
+  // After the 2026-05-04 chapter-admin-tier migration, chapter admins can
+  // have role='member' but still hold admin_scopes. Resolve that here so
+  // their post-login redirect lands them in /admin, not /me.
+  let hasAdminScope = false;
+  if (member?.id && role !== "admin" && role !== "super_admin") {
+    const { data: scope } = await svc
+      .from("admin_scopes")
+      .select("id")
+      .eq("member_id", member.id)
+      .limit(1)
+      .maybeSingle();
+    hasAdminScope = !!scope;
+  }
 
   // First-time invitees go straight to the change-password screen — but only
   // ONCE, at login. A banner on /me reminds them after that. We deliberately
@@ -43,7 +57,7 @@ export async function signIn(formData: FormData) {
   // If the caller specified ?next=, honour it as long as it's safe (starts with /).
   const next = requestedNext.startsWith("/")
     ? requestedNext
-    : role === "admin" || role === "super_admin"
+    : role === "admin" || role === "super_admin" || hasAdminScope
       ? "/admin"
       : role === "member"
         ? "/me"

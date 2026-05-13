@@ -6,6 +6,7 @@ import type { Chapter } from "@/lib/chapters";
 import { resolveChapterLogo } from "@/lib/site-settings";
 import { getAuthedMember } from "@/lib/auth";
 import { listActiveChapters } from "@/lib/chapter-loader";
+import { resolveTier } from "@/lib/tier";
 
 /**
  * Wraps every chapter-scoped public page with a chapter-aware nav, footer,
@@ -25,12 +26,14 @@ export async function ChapterShell({
     listActiveChapters(),
   ]);
   const signedIn = !!me;
+  const tier = me ? await resolveTier(me.id) : null;
   const navMember: NavMember = me
     ? {
         name: me.name,
         email: me.email,
         photoUrl: me.photo_url ?? null,
-        isAdmin: me.role === "admin" || me.role === "super_admin",
+        isAdmin: tier?.hasAdminAccess ?? false,
+        tierLabel: tier?.label ?? null,
       }
     : null;
   const navChapters = allChapters.map((c) => ({

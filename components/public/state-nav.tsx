@@ -15,6 +15,8 @@ export type NavMember = {
   email: string;
   photoUrl?: string | null;
   isAdmin: boolean;
+  /** Tier label shown in the avatar dropdown — "Tier 3 · Chapter Admin · Kanpur" etc. */
+  tierLabel?: string | null;
 } | null;
 
 // Lab is rendered separately as a hover dropdown — see NavLabDropdown.
@@ -107,6 +109,7 @@ export function StateNav({
               email={member.email}
               photoUrl={member.photoUrl}
               isAdmin={member.isAdmin}
+              tierLabel={member.tierLabel}
             />
           ) : (
             <>

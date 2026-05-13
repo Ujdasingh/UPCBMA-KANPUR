@@ -76,6 +76,7 @@ export function ChapterNav({
                 email={member.email}
                 photoUrl={member.photoUrl}
                 isAdmin={member.isAdmin}
+                tierLabel={member.tierLabel}
               />
             ) : (
               <LoginButton variant="ghost" logoSrc={logoSrc} />

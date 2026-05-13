@@ -43,6 +43,8 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-feature-settings: "ss01", "cv11";
+    /* Mobile baseline (≤767px) — same as before so phones aren't oversized. */
+    font-size: 16px;
   }
   body {
     line-height: 1.6;
@@ -65,6 +67,40 @@
   }
   h3 {
     font-size: 1.125rem;
+  }
+
+  /* ─── Desktop bump ───────────────────────────────────────────────────
+     The mobile sizes above suit a phone reading at arm's length. On
+     desktop you're 60-80 cm away and the same numbers feel cramped, so
+     we scale the root + headings up at the md breakpoint (Tailwind's
+     default ≥768px) and a touch more at lg (≥1024px). Tailwind's rem-
+     based utilities scale with the root automatically, so a single
+     html { font-size } change ripples through every text-* class.
+     Mobile users see no change. */
+  @media (min-width: 768px) {
+    html {
+      font-size: 17px;
+    }
+    h1 {
+      font-size: 2.75rem;
+    }
+    h2 {
+      font-size: 1.875rem;
+    }
+    h3 {
+      font-size: 1.25rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    html {
+      font-size: 18px;
+    }
+    h1 {
+      font-size: 3rem;
+    }
+    h2 {
+      font-size: 2rem;
+    }
   }
   a {
     color: var(--color-heading);

@@ -29,11 +29,14 @@ export function AvatarMenu({
   email,
   photoUrl,
   isAdmin,
+  tierLabel,
 }: {
   name: string;
   email: string;
   photoUrl?: string | null;
   isAdmin: boolean;
+  /** Resolved tier — e.g. "Tier 3 · Chapter Admin · Kanpur". Hidden when null. */
+  tierLabel?: string | null;
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -44,24 +47,24 @@ export function AvatarMenu({
     setOpen(false);
   }, [pathname]);
 
-  // Close on click-outside.
+  // Close on Escape only — explicit user intent. We deliberately do NOT
+  // close on outside-click anymore: the panel holds your account info
+  // and tier/role badge, and accidental dismissal while moving the
+  // cursor to read it was the top usability complaint. Re-clicking the
+  // avatar toggles it shut; tapping any of the inner links navigates
+  // and closes via the route-change effect above.
   useEffect(() => {
     if (!open) return;
-    const onDoc = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
     const onEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
     };
-    document.addEventListener("mousedown", onDoc);
     document.addEventListener("keydown", onEsc);
     return () => {
-      document.removeEventListener("mousedown", onDoc);
       document.removeEventListener("keydown", onEsc);
     };
   }, [open]);
+  // ref is now only used for the wrapper; click-outside logic was removed.
+  void ref;
 
   return (
     <div ref={ref} className="relative ml-2">
@@ -98,6 +101,21 @@ export function AvatarMenu({
                 <div className="truncate text-xs text-muted">{email}</div>
               </div>
             </div>
+            {/* Tier chip — the live "what am I?" indicator. Colour-coded so
+                you can recognise your seat at a glance: Tier 1/2 are
+                power-roles (amber), Tier 3 is chapter-scoped (emerald),
+                Tier 4 is plain (surface). */}
+            {tierLabel && (
+              <div
+                className={
+                  "mt-2.5 inline-flex max-w-full items-center rounded-sm border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] " +
+                  tierTone(tierLabel)
+                }
+                title={tierLabel}
+              >
+                <span className="truncate">{tierLabel}</span>
+              </div>
+            )}
           </div>
 
           <ul className="py-1 text-sm">
@@ -135,6 +153,22 @@ export function AvatarMenu({
       )}
     </div>
   );
+}
+
+/**
+ * Map the tier label to a colour scheme. Amber = power (Tier 1/2),
+ * emerald = chapter (Tier 3), surface = plain (Tier 4). Matches the
+ * news/agendas chapter-badge colours so the user's mental model stays
+ * consistent across the site.
+ */
+function tierTone(label: string): string {
+  if (label.startsWith("Tier 1") || label.startsWith("Tier 2")) {
+    return "border-amber-200 bg-amber-50 text-amber-800";
+  }
+  if (label.startsWith("Tier 3")) {
+    return "border-emerald-200 bg-emerald-50 text-emerald-800";
+  }
+  return "border-border bg-surface text-muted";
 }
 
 function MenuItem({

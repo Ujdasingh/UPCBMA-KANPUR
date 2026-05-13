@@ -10,6 +10,7 @@ import {
 } from "@/lib/auth";
 import { assertNotLocked } from "@/lib/locks";
 import { sendEmail } from "@/lib/email";
+import { mintDefaultEmail } from "@/lib/default-email";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -136,6 +137,15 @@ export async function createMember(formData: FormData) {
 
     const payload = parseMemberForm(formData);
     await assertCanMutateMember({ caller: me, incomingRole: payload.role });
+
+    // If the admin left contact-email blank, mint a placeholder
+    // (john.doe@upcbma.com — auto-collision-handled to .2, .3, …) so the
+    // row is still valid. The member can change it themselves on first
+    // login or via /me/profile. Useful when backfilling rosters where
+    // half the emails aren't known yet.
+    if (!payload.email) {
+      payload.email = await mintDefaultEmail(payload.name);
+    }
 
     // Pre-check: surface an actionable error if this email already exists.
     // (The DB constraint will still catch races; this is just the happy path.)

@@ -54,11 +54,28 @@ export async function resolveAuthIdentity(): Promise<{
     .eq("auth_user_id", user.id)
     .maybeSingle();
 
-  if (
-    !realRow ||
-    (realRow.role !== "admin" && realRow.role !== "super_admin")
-  ) {
+  if (!realRow) {
     redirect("/");
+  }
+
+  // Admin access now flows from either:
+  //   (a) members.role in ('admin', 'super_admin')  — legacy cross-chapter admin
+  //   (b) at least one admin_scopes row — chapter-tier admin (officer or content)
+  //
+  // Before the 2026-05-04 migration, Kanpur officers had role='admin' and
+  // were auto-allowed. The migration demoted them to role='member' while
+  // granting them chapter-scoped admin_scopes rows, so this check has to
+  // honour both paths or those officers get bounced from /admin.
+  if (realRow.role !== "admin" && realRow.role !== "super_admin") {
+    const { data: scopeRow } = await svc
+      .from("admin_scopes")
+      .select("id")
+      .eq("member_id", realRow.id)
+      .limit(1)
+      .maybeSingle();
+    if (!scopeRow) {
+      redirect("/");
+    }
   }
   const real = realRow as AuthedMember;
 

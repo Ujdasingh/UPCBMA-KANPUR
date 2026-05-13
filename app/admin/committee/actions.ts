@@ -4,6 +4,9 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { getAdminContext, getAuthedAdmin } from "@/lib/auth";
 import { hasScopedPermission } from "@/lib/permissions";
 import { assertNotLocked } from "@/lib/locks";
+import { writeAudit } from "@/lib/audit";
+import { assertNotTargetingSuperAdmin } from "@/lib/super-shim";
+import { isSuperAdmin } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
 /**
@@ -173,10 +176,16 @@ export async function createAppointment(formData: FormData) {
   const svc = createServiceClient();
   const payload = parseForm(formData);
   await assertCanAssignRole(me.id, ctx.activeChapterId, payload.role_key);
+  // Block a non-super from seating a super_admin in a chapter committee
+  // — leaks identity AND would give them an extra (chapter-scoped)
+  // admin_scopes row via syncScopeForAppointment.
+  await assertNotTargetingSuperAdmin(payload.member_id, isSuperAdmin(me));
 
-  const { error } = await svc
+  const { data: inserted, error } = await svc
     .from("committee_appointments")
-    .insert({ ...payload, chapter_id: ctx.activeChapterId });
+    .insert({ ...payload, chapter_id: ctx.activeChapterId })
+    .select("id")
+    .maybeSingle();
   if (error) throw new Error(error.message);
 
   await syncScopeForAppointment(
@@ -186,6 +195,13 @@ export async function createAppointment(formData: FormData) {
     payload.role_key,
     payload.status,
   );
+  await writeAudit({
+    action: "committee_appointment_create",
+    target_table: "committee_appointments",
+    target_id: inserted?.id ?? null,
+    chapter_id: ctx.activeChapterId,
+    diff: { role_key: payload.role_key, member_id: payload.member_id, status: payload.status },
+  });
   revalidatePath("/admin/committee");
   revalidatePath("/admin/members");
   if (ctx.activeChapter?.slug) revalidatePath(`/${ctx.activeChapter.slug}`);
@@ -213,6 +229,10 @@ export async function updateAppointment(id: string, formData: FormData) {
   if (!existing) throw new Error("Appointment not found.");
 
   await assertCanAssignRole(me.id, existing.chapter_id, payload.role_key);
+  // Block targeting either the existing or new holder if they're a
+  // super_admin and the caller is not.
+  await assertNotTargetingSuperAdmin(existing.member_id, isSuperAdmin(me));
+  await assertNotTargetingSuperAdmin(payload.member_id, isSuperAdmin(me));
 
   const { error } = await svc
     .from("committee_appointments")
@@ -238,6 +258,20 @@ export async function updateAppointment(id: string, formData: FormData) {
       "ended",
     );
   }
+  await writeAudit({
+    action: "committee_appointment_update",
+    target_table: "committee_appointments",
+    target_id: id,
+    chapter_id: existing.chapter_id,
+    diff: {
+      from: { role_key: existing.role_key, member_id: existing.member_id },
+      to: {
+        role_key: payload.role_key,
+        member_id: payload.member_id,
+        status: payload.status,
+      },
+    },
+  });
   revalidatePath("/admin/committee");
   revalidatePath("/admin/members");
   if (ctx.activeChapter?.slug) revalidatePath(`/${ctx.activeChapter.slug}`);
@@ -271,6 +305,13 @@ export async function endAppointment(id: string) {
     existing.role_key,
     "ended",
   );
+  await writeAudit({
+    action: "committee_appointment_end",
+    target_table: "committee_appointments",
+    target_id: id,
+    chapter_id: existing.chapter_id,
+    diff: { role_key: existing.role_key, member_id: existing.member_id },
+  });
   revalidatePath("/admin/committee");
   revalidatePath("/admin/members");
   if (ctx.activeChapter?.slug) revalidatePath(`/${ctx.activeChapter.slug}`);
@@ -304,6 +345,13 @@ export async function deleteAppointment(id: string) {
       existing.role_key,
       "ended",
     );
+    await writeAudit({
+      action: "committee_appointment_delete",
+      target_table: "committee_appointments",
+      target_id: id,
+      chapter_id: existing.chapter_id,
+      diff: { role_key: existing.role_key, member_id: existing.member_id },
+    });
   }
   revalidatePath("/admin/committee");
   revalidatePath("/admin/members");

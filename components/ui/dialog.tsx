@@ -38,10 +38,11 @@ export function Dialog({
     <dialog
       ref={ref}
       onClose={() => onOpenChange(false)}
-      onClick={(e) => {
-        // Close when clicking the backdrop (outside the dialog content).
-        if (e.target === e.currentTarget) onOpenChange(false);
-      }}
+      // Backdrop-click dismissal was removed — these dialogs almost always
+      // wrap a form (committee appointment, news post, settings panel),
+      // and accidentally losing 5 minutes of typing because the cursor
+      // strayed outside the box was the recurring complaint. Use the
+      // explicit Cancel button or the X in the header, or press Escape.
       className={cn(
         "m-auto w-full max-w-lg rounded-sm border border-rule bg-bg p-0",
         "backdrop:bg-black/30 backdrop:backdrop-blur-[2px]",

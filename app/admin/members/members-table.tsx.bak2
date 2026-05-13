@@ -273,7 +273,7 @@ export function MembersTable({
                         onClick={() => setMode({ kind: "edit", member: m })}
                         aria-label={`Edit ${m.name}`}
                       >
-                        <Pencil className="h-3.5 w-3.5" /> Edit
+                        <Pencil className="h-3.5 w-3.5" />
                       </Button>
                       {/* Promote / revoke admin. Hidden for super_admins
                           (who must be managed via the super-admin tools)
@@ -347,7 +347,7 @@ export function MembersTable({
                           aria-label={`Delete ${m.name}`}
                           className="text-danger hover:bg-red-50"
                         >
-                          <Trash2 className="h-3.5 w-3.5" /> Delete
+                          <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       )}
                     </div>
@@ -745,22 +745,18 @@ function MemberForm({
           is shown here (login email is the read-only block above). */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Field
-          label={isEdit ? "Contact email" : "Contact email (optional)"}
+          label="Contact email"
           htmlFor="email"
-          required={isEdit}
-          hint={
-            isEdit
-              ? "Real inbox — for newsletters, notifications, and replies."
-              : "Real inbox if you have it. Leave blank to auto-generate a john.doe@upcbma.com placeholder the member can update later."
-          }
+          required
+          hint="Real inbox — for newsletters, notifications, and replies."
         >
           <Input
             id="email"
             name="email"
             type="email"
-            required={isEdit}
+            required
             defaultValue={member?.email ?? ""}
-            placeholder={isEdit ? "name@gmail.com" : "leave blank to auto-generate"}
+            placeholder="name@gmail.com"
           />
         </Field>
         {!isEdit && (
