@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { listActiveChapters } from "@/lib/chapter-loader";
+import { getStateLogoUrl } from "@/lib/site-settings";
 import { StateShell } from "@/components/public/state-shell";
 import { CorrugatedWave } from "@/components/public/wave";
 
@@ -13,7 +14,10 @@ export const metadata = {
 export const revalidate = 300;
 
 export default async function AboutPage() {
-  const chapters = await listActiveChapters();
+  const [chapters, logoSrc] = await Promise.all([
+    listActiveChapters(),
+    getStateLogoUrl(),
+  ]);
 
   return (
     <StateShell>
@@ -31,15 +35,37 @@ export default async function AboutPage() {
               advocacy, standards, and statewide training; chapters operate
               local committees, labs, and member programs.
             </p>
+            {/* Tier-1 affiliation badge — mention FCBM here so the
+                relationship is visible above the fold, then expand on it
+                below with the dedicated affiliation card. */}
+            <div className="mt-5 inline-flex items-center gap-2 rounded-sm border border-border bg-bg px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-heading">
+              <span className="text-muted">Affiliated to</span>
+              FCBM
+            </div>
           </div>
-          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-sm border border-border bg-stone-200">
-            <Image
-              src="https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?auto=format&fit=crop&w=800&q=70"
-              alt="Corrugated cardboard"
-              fill
-              sizes="(min-width: 768px) 40vw, 100vw"
-              className="object-cover"
-            />
+          {/* Logo card — the About hero used to ride on an Unsplash stock
+              photo that Unsplash had quietly reassigned to something off-
+              topic. We now lean on the brand: the uploaded state logo,
+              centered, sitting on a quiet surface with a small wordmark
+              below. Falls back to /upcbma-logo.svg when getStateLogoUrl
+              returns the bundled default, so this never goes blank. */}
+          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-sm border border-border bg-surface">
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 px-6 text-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={logoSrc}
+                alt="UPCBMA logo"
+                className="h-32 w-32 object-contain sm:h-40 sm:w-40 md:h-44 md:w-44"
+              />
+              <div>
+                <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
+                  Uttar Pradesh
+                </div>
+                <div className="mt-1 text-sm font-semibold text-heading sm:text-base">
+                  Corrugated Box Manufacturers&rsquo; Association
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <div className="text-border">
@@ -63,6 +89,49 @@ export default async function AboutPage() {
             labs. Chapters handle local operations; the state body handles
             the connective tissue.
           </p>
+        </div>
+      </section>
+
+      {/* FCBM affiliation card — sits between the "What we do" prose
+          and the chapter directory, so the federation context is the
+          first thing readers see after the value-prop paragraphs.
+          The logo lives at /public/fcbm-logo.png. If the file isn't
+          there yet, the card still reads fine; the <img> just shows
+          its alt text. */}
+      <section className="border-t border-border bg-bg">
+        <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-16">
+          <div className="flex flex-col items-center gap-6 text-center">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
+              Affiliated to
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/fcbm-logo.png"
+              alt="Federation of Corrugated Box Manufacturers of India (FCBM)"
+              className="h-24 w-auto max-w-xs object-contain sm:h-28 md:h-32"
+            />
+            <div>
+              <h2 className="!text-2xl !tracking-tight">
+                Federation of Corrugated Box Manufacturers of India
+              </h2>
+              <p className="mt-3 max-w-prose text-[15px] leading-relaxed text-muted">
+                UPCBMA is a constituent state body of FCBM &mdash; the apex
+                national federation that represents corrugated box
+                manufacturers across India. Through FCBM, members access
+                national-level advocacy, technical standards, and industry
+                forums; UPCBMA delivers the on-the-ground state programs
+                that connect the federation to local manufacturers.
+              </p>
+            </div>
+            <a
+              href="https://www.fcbm.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-10 items-center gap-1.5 rounded-sm border border-heading bg-bg px-4 text-sm font-medium text-heading no-underline hover:bg-surface"
+            >
+              Visit fcbm.org &rarr;
+            </a>
+          </div>
         </div>
       </section>
 
