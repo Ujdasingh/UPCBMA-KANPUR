@@ -1,20 +1,15 @@
 import Link from "next/link";
 import { Logo } from "./logo";
-import { Facebook, Instagram, Linkedin, Twitter, Youtube } from "lucide-react";
 import { getAuthedMember } from "@/lib/auth";
 
 export async function StateFooter({ logoSrc }: { logoSrc?: string }) {
   const me = await getAuthedMember();
   const year = new Date().getFullYear();
 
-  // Social-media destinations all point to /coming-soon for now (per spec).
-  const social = [
-    { Icon: Facebook,  label: "Facebook"  },
-    { Icon: Instagram, label: "Instagram" },
-    { Icon: Linkedin,  label: "LinkedIn"  },
-    { Icon: Twitter,   label: "Twitter"   },
-    { Icon: Youtube,   label: "YouTube"   },
-  ];
+  // Social icons used to live here, but every one of them pointed at
+  // /coming-soon — five dead links signalled an unfinished site. The row
+  // is removed entirely; when UPCBMA has real Facebook/Instagram/etc.
+  // handles, re-add only the platforms that actually exist.
 
   return (
     <footer className="mt-20 bg-surface">
@@ -39,19 +34,6 @@ export async function StateFooter({ logoSrc }: { logoSrc?: string }) {
               Pradesh — coordinating advocacy, lab testing, training, and
               member services through regional chapters.
             </p>
-
-            <div className="mt-5 flex flex-wrap items-center gap-2">
-              {social.map(({ Icon, label }) => (
-                <Link
-                  key={label}
-                  href="/coming-soon"
-                  aria-label={label}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-sm border border-border bg-bg text-muted no-underline hover:border-heading hover:text-heading"
-                >
-                  <Icon className="h-4 w-4" strokeWidth={1.75} />
-                </Link>
-              ))}
-            </div>
           </div>
 
           <div>

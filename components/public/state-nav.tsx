@@ -128,7 +128,7 @@ export function StateNav({
         <button
           type="button"
           aria-label={open ? "Close" : "Open"}
-          className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-sm border border-border text-heading"
+          className="md:hidden inline-flex h-11 w-11 items-center justify-center rounded-sm border border-border text-heading"
           onClick={() => setOpen((s) => !s)}
         >
           {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}

@@ -161,7 +161,7 @@ export function ChapterNav({
         <button
           type="button"
           aria-label={mobileOpen ? "Close menu" : "Open menu"}
-          className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-sm border border-border text-heading"
+          className="md:hidden inline-flex h-11 w-11 items-center justify-center rounded-sm border border-border text-heading"
           onClick={() => setMobileOpen((s) => !s)}
         >
           {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}

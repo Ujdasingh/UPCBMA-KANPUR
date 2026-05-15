@@ -5,6 +5,7 @@ import { listActiveChapters } from "@/lib/chapter-loader";
 import { getHomeHeroUrl, getSetting } from "@/lib/site-settings";
 import { StateShell } from "@/components/public/state-shell";
 import { CorrugatedWave } from "@/components/public/wave";
+import { stripMarkdown } from "@/lib/markdown";
 import {
   ArrowRight,
   MapPin,
@@ -30,7 +31,6 @@ export default async function StateHome() {
     { count: totalChapters },
     { count: totalMembers },
     tagline,
-    marketValue,
   ] = await Promise.all([
     listActiveChapters(),
     svc.from("news").select("id, tag, title, body, image_url, published_date").is("chapter_id", null).order("published_date", { ascending: false }).limit(3).then((r) => r.data ?? []),
@@ -40,7 +40,6 @@ export default async function StateHome() {
     svc.from("chapters").select("*", { head: true, count: "exact" }).eq("active", true),
     svc.from("members").select("*", { head: true, count: "exact" }).eq("active", true).neq("role", "super_admin"),
     getSetting("state_tagline"),
-    getSetting("state_market_value"),
   ]);
   // Hero image: admin-controlled. Falls back to the state logo, then to the
   // bundled placeholder, so the page always has something to show.
@@ -92,12 +91,18 @@ export default async function StateHome() {
              * reads as a brand mark, not a stretched photo. When admins
              * upload a real industry photo, it covers as before.
              */}
+            {/* Hidden on mobile — the logo column was eating the whole
+                first viewport on a 390-wide phone and pushing the CTAs
+                below the fold. The brand mark is already visible 56×56
+                in the sticky header, so on mobile we let the headline +
+                paragraph + buttons take the full width. Desktop still
+                gets the contain-fit logo / cover-image hero. */}
             <div
               className={
                 "relative aspect-[4/5] w-full overflow-hidden rounded-sm border border-border " +
                 (heroIsLogo
-                  ? "bg-surface flex items-center justify-center p-10"
-                  : "bg-stone-200")
+                  ? "hidden bg-surface p-10 md:flex md:items-center md:justify-center"
+                  : "hidden bg-stone-200 md:block")
               }
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -131,12 +136,15 @@ export default async function StateHome() {
       </section>
 
       {/* ====== STATS STRIP ====== */}
+      {/* The fourth "UP market" stat was a placeholder we never had a
+          reliable number for and the em-dash sat there next to real
+          values like 8 / 6 / 1985 — read as "broken metric". Dropped
+          the column; grid is now 3-up at every breakpoint. */}
       <section className="border-b border-border">
         <div className="mx-auto max-w-7xl px-6 py-12">
-          <dl className="grid grid-cols-2 gap-x-8 gap-y-8 md:grid-cols-4">
+          <dl className="grid grid-cols-3 gap-x-8 gap-y-8">
             <Stat label="Member firms" value={totalMembers != null ? String(totalMembers) : "—"} hint="Active across all chapters" />
             <Stat label="Chapters" value={totalChapters != null ? String(totalChapters) : "—"} hint="Cities and growing" />
-            <Stat label="UP market" value={marketValue ?? "—"} hint="Estimated industry size" />
             <Stat label="Founded" value="1985" hint="Decades of advocacy" />
           </dl>
         </div>
@@ -184,7 +192,7 @@ export default async function StateHome() {
                 <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">Live agendas</div>
                 <h2 className="mt-2 !text-2xl !tracking-tight">What we&rsquo;re working on right now.</h2>
               </div>
-              <Link href="/agendas" className="text-sm font-medium text-heading no-underline hover:text-hover">
+              <Link href="/agendas" className="shrink-0 whitespace-nowrap text-sm font-medium text-heading no-underline hover:text-hover">
                 All agendas &rarr;
               </Link>
             </div>
@@ -208,7 +216,7 @@ export default async function StateHome() {
             <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">Chapters</div>
             <h2 className="mt-2 !text-3xl !tracking-tight md:!text-4xl">Find your chapter.</h2>
           </div>
-          <Link href="/chapters" className="text-sm font-medium text-heading no-underline hover:text-hover">
+          <Link href="/chapters" className="shrink-0 whitespace-nowrap text-sm font-medium text-heading no-underline hover:text-hover">
             Directory &rarr;
           </Link>
         </div>
@@ -239,7 +247,7 @@ export default async function StateHome() {
               <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">Events</div>
               <h2 className="mt-2 !text-2xl !tracking-tight">Meets, training, recent gatherings.</h2>
             </div>
-            <Link href="/events" className="text-sm font-medium text-heading no-underline hover:text-hover">
+            <Link href="/events" className="shrink-0 whitespace-nowrap text-sm font-medium text-heading no-underline hover:text-hover">
               All events &rarr;
             </Link>
           </div>
@@ -297,7 +305,7 @@ export default async function StateHome() {
             <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">News</div>
             <h2 className="mt-2 !text-2xl !tracking-tight">Statewide announcements.</h2>
           </div>
-          <Link href="/news" className="text-sm font-medium text-heading no-underline hover:text-hover">
+          <Link href="/news" className="shrink-0 whitespace-nowrap text-sm font-medium text-heading no-underline hover:text-hover">
             All news &rarr;
           </Link>
         </div>
@@ -326,7 +334,7 @@ export default async function StateHome() {
                     <h3 className="mt-2 text-base font-semibold text-heading group-hover:text-hover">
                       {n.title}
                     </h3>
-                    {n.body && <p className="mt-1.5 line-clamp-3 text-sm text-muted">{n.body}</p>}
+                    {n.body && <p className="mt-1.5 line-clamp-3 text-sm text-muted">{stripMarkdown(n.body)}</p>}
                   </div>
                 </Link>
               </li>
