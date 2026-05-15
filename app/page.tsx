@@ -33,7 +33,12 @@ export default async function StateHome() {
     tagline,
   ] = await Promise.all([
     listActiveChapters(),
-    svc.from("news").select("id, tag, title, body, image_url, published_date").is("chapter_id", null).order("published_date", { ascending: false }).limit(3).then((r) => r.data ?? []),
+    // News on the state homepage used to be filtered to chapter_id IS NULL,
+    // so a chapter-level post (e.g. "Kanpur chapter installed") couldn't
+    // ever bubble up here. We now fetch the latest 3 posts across every
+    // scope and let the card render a chapter chip so readers can tell
+    // state-wide notices apart from chapter announcements at a glance.
+    svc.from("news").select("id, tag, title, body, image_url, published_date, chapter_id, chapter:chapters(name, slug)").order("published_date", { ascending: false }).limit(3).then((r) => r.data ?? []),
     svc.from("events").select("id, title, event_date, location, description").is("chapter_id", null).gte("event_date", today).order("event_date", { ascending: true }).limit(4).then((r) => r.data ?? []),
     svc.from("events").select("id, title, event_date, location, description").is("chapter_id", null).lt("event_date", today).order("event_date", { ascending: false }).limit(6).then((r) => r.data ?? []),
     svc.from("agendas").select("id, slug, title, summary, category").eq("approval_status", "approved").eq("status", "active").is("chapter_id", null).order("started_on", { ascending: false }).limit(3).then((r) => r.data ?? []),
@@ -220,19 +225,24 @@ export default async function StateHome() {
             Directory &rarr;
           </Link>
         </div>
-        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Chapter directory tiles — locked to a 2-column grid at every
+            breakpoint and visually halved (padding p-6 → p-3, name text-lg
+            → text-sm) so the section feels like a tight reference index,
+            not a hero-sized CTA stack. Even on a 320 px viewport, two
+            tiles fit comfortably side by side. */}
+        <div className="mt-8 grid grid-cols-2 gap-3">
           {chapters.map((c) => (
-            <Link key={c.id} href={`/${c.slug}`} className="group rounded-sm border border-border bg-bg p-6 no-underline hover:border-heading">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">{c.state}</div>
-                  <div className="mt-1 text-lg font-semibold text-heading group-hover:text-hover">{c.name}</div>
-                  <div className="mt-1 flex items-center gap-1 text-xs text-muted">
-                    <MapPin className="h-3 w-3" strokeWidth={2} />
-                    {c.city}
+            <Link key={c.id} href={`/${c.slug}`} className="group rounded-sm border border-border bg-bg p-3 no-underline hover:border-heading">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="text-[9px] font-semibold uppercase tracking-[0.18em] text-muted">{c.state}</div>
+                  <div className="mt-0.5 truncate text-sm font-semibold text-heading group-hover:text-hover">{c.name}</div>
+                  <div className="mt-0.5 flex items-center gap-1 text-[11px] text-muted">
+                    <MapPin className="h-3 w-3 shrink-0" strokeWidth={2} />
+                    <span className="truncate">{c.city}</span>
                   </div>
                 </div>
-                <ArrowRight className="h-4 w-4 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-heading" strokeWidth={2} />
+                <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-heading" strokeWidth={2} />
               </div>
             </Link>
           ))}
@@ -312,33 +322,53 @@ export default async function StateHome() {
 
         <ul className="mt-8 grid gap-5 md:grid-cols-3">
           {stateNews.length > 0 ? (
-            stateNews.map((n) => (
-              <li key={n.id} className="overflow-hidden rounded-sm border border-border bg-bg">
-                <Link href={`/news/${n.id}`} className="group block no-underline">
-                  {n.image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={n.image_url}
-                      alt=""
-                      className="aspect-[16/9] w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex aspect-[16/9] w-full items-center justify-center bg-surface text-muted">
-                      <Newspaper className="h-8 w-8" strokeWidth={1.25} />
+            stateNews.map((n) => {
+              // chapter_id IS NULL → state-wide secretariat post.
+              // chapter_id set → originated from a chapter; show its name
+              // as a green chip so the scope is the first thing the eye
+              // catches when scanning the announcements row.
+              const ch = (n as any).chapter as { name: string; slug: string } | null;
+              const isStateWide = !ch;
+              return (
+                <li key={n.id} className="overflow-hidden rounded-sm border border-border bg-bg">
+                  <Link href={`/news/${n.id}`} className="group block no-underline">
+                    {n.image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={n.image_url}
+                        alt=""
+                        className="aspect-[16/9] w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex aspect-[16/9] w-full items-center justify-center bg-surface text-muted">
+                        <Newspaper className="h-8 w-8" strokeWidth={1.25} />
+                      </div>
+                    )}
+                    <div className="p-5">
+                      <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.18em]">
+                        <span
+                          className={
+                            "inline-flex items-center rounded-sm border px-1.5 py-0.5 " +
+                            (isStateWide
+                              ? "border-amber-200 bg-amber-50 text-amber-800"
+                              : "border-emerald-200 bg-emerald-50 text-emerald-800")
+                          }
+                        >
+                          {isStateWide ? "State-wide" : ch!.name}
+                        </span>
+                        <span className="text-muted">
+                          {n.tag} · {fmtDate(n.published_date)}
+                        </span>
+                      </div>
+                      <h3 className="mt-2 text-base font-semibold text-heading group-hover:text-hover">
+                        {n.title}
+                      </h3>
+                      {n.body && <p className="mt-1.5 line-clamp-3 text-sm text-muted">{stripMarkdown(n.body)}</p>}
                     </div>
-                  )}
-                  <div className="p-5">
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
-                      {n.tag} · {fmtDate(n.published_date)}
-                    </div>
-                    <h3 className="mt-2 text-base font-semibold text-heading group-hover:text-hover">
-                      {n.title}
-                    </h3>
-                    {n.body && <p className="mt-1.5 line-clamp-3 text-sm text-muted">{stripMarkdown(n.body)}</p>}
-                  </div>
-                </Link>
-              </li>
-            ))
+                  </Link>
+                </li>
+              );
+            })
           ) : (
             <li className="rounded-sm border border-dashed border-border bg-surface p-6 text-center md:col-span-3">
               <Newspaper className="mx-auto h-7 w-7 text-muted" strokeWidth={1.5} />
