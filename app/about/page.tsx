@@ -22,7 +22,7 @@ export default async function AboutPage() {
   return (
     <StateShell>
       <section className="border-b border-border bg-surface">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-13 sm:px-6 sm:py-20 md:grid-cols-[1.2fr_1fr] md:items-center">
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 sm:py-20 md:grid-cols-[1.2fr_1fr] md:items-center">
           <div>
             <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">About</div>
             <h1 className="mt-3 !tracking-tight">
@@ -58,7 +58,7 @@ export default async function AboutPage() {
                 className="h-32 w-32 object-contain sm:h-40 sm:w-40 md:h-44 md:w-44"
               />
               <div>
-                <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
                   Uttar Pradesh
                 </div>
                 <div className="mt-1 text-sm font-semibold text-heading sm:text-base">
@@ -101,7 +101,7 @@ export default async function AboutPage() {
       <section className="border-t border-border bg-bg">
         <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-16">
           <div className="flex flex-col items-center gap-6 text-center">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
               Affiliated to
             </div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -139,7 +139,7 @@ export default async function AboutPage() {
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-16">
           <div className="flex items-baseline justify-between">
             <div>
-              <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">Chapters</div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Chapters</div>
               <h2 className="mt-2 !text-2xl !tracking-tight">
                 {chapters.length} active chapter{chapters.length === 1 ? "" : "s"} across UP
               </h2>

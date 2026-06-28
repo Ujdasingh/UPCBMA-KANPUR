@@ -43,7 +43,7 @@ export async function StateShell({ children }: { children: React.ReactNode }) {
     <>
       <StateNav logoSrc={logoSrc} member={navMember} chapters={navChapters} />
       <div className="min-h-[calc(100vh-4rem)] pb-16 md:pb-0">{children}</div>
-      <StateFooter logoSrc={logoSrc} />
+      <StateFooter logoSrc={logoSrc} className="pb-16 md:pb-0" />
       <MobileTabBar signedIn={!!me} />
     </>
   );

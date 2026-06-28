@@ -202,7 +202,7 @@ export default async function LocksPage({
                       strokeWidth={1.75}
                     />
                     <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.16em]">
+                      <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em]">
                         <span className="rounded-sm border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-amber-900">
                           {l.scope}
                         </span>
@@ -217,7 +217,7 @@ export default async function LocksPage({
                             : "All chapters"}
                         </span>
                         {l.resource_id && (
-                          <code className="rounded-sm border border-border bg-surface px-1.5 py-0.5 font-mono text-[10px] text-muted">
+                          <code className="rounded-sm border border-border bg-surface px-1.5 py-0.5 font-mono text-[11px] text-muted">
                             {l.resource_id.length > 14
                               ? l.resource_id.slice(0, 8) + "…"
                               : l.resource_id}

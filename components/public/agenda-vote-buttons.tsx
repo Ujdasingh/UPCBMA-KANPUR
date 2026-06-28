@@ -150,7 +150,7 @@ export function AgendaVoteButtons({
       </div>
       {hasWeighting && (
         <span
-          className="text-[10px] text-muted"
+          className="text-[11px] text-muted"
           title="Vote weights: 1 = member, 2 = committee, 3 = officer (president/secretary/treasurer)"
         >
           weighted score · {upWeighted} for / {downWeighted} against

@@ -150,7 +150,7 @@ export default async function AgendasListPage({
                       <h2 className="!text-xl !tracking-tight capitalize">
                         {status.replace("_", " ")}
                       </h2>
-                      <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
                         {list.length} {list.length === 1 ? "agenda" : "agendas"}
                       </div>
                     </div>
@@ -167,7 +167,7 @@ export default async function AgendasListPage({
                               className="group flex gap-4 rounded-sm border border-border bg-bg p-4 no-underline hover:border-heading sm:gap-5 sm:p-5"
                             >
                               <div className="min-w-0 flex-1">
-                                <div className="mb-2 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em]">
+                                <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em]">
                                   {/* Chapter / state badge first — most important
                                       on the aggregated default view. */}
                                   <span

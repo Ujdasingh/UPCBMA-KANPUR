@@ -82,7 +82,7 @@ export default async function AgendaDetailPage({
           All agendas
         </Link>
 
-        <div className="mt-6 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em]">
+        <div className="mt-6 flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em]">
           <span className="text-muted">{categoryLabel(agenda.category)}</span>
           <span className={"inline-flex items-center rounded-sm border px-1.5 py-0.5 " + statusTone(agenda.status)}>
             {agenda.status.replace("_", " ")}

@@ -61,7 +61,8 @@ export function LoginButton({
           <Logo size={40} src={logoSrc} />
         </div>
         <form action={signIn} className="space-y-4">
-          <input type="hidden" name="next" value="/admin" />
+          {/* Empty next → signIn picks /admin or /me based on role */}
+          <input type="hidden" name="next" value="" />
           <Field label="Login email" htmlFor="login_email" required>
             <Input
               id="login_email"

@@ -108,7 +108,7 @@ export function AvatarMenu({
             {tierLabel && (
               <div
                 className={
-                  "mt-2.5 inline-flex max-w-full items-center rounded-sm border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] " +
+                  "mt-2.5 inline-flex max-w-full items-center rounded-sm border px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] " +
                   tierTone(tierLabel)
                 }
                 title={tierLabel}

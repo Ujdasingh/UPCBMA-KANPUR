@@ -30,6 +30,8 @@ type Item = {
   Icon: typeof LayoutDashboard;
   /** If true, only super_admins see it. */
   superOnly?: boolean;
+  /** If true, only state admins (Tier 1–2) see it. */
+  stateAdminOnly?: boolean;
 };
 
 // Sidebar groups related sub-pages under one entry — the page itself shows
@@ -48,15 +50,24 @@ const items: Item[] = [
   { href: "/admin/messages",           label: "Messages",      Icon: Mail },
   { href: "/admin/membership-requests",label: "Join requests", Icon: UserPlus },
   { href: "/admin/office-info",        label: "Office info",   Icon: Building2 },
-  { href: "/admin/permissions",        label: "Permissions",   Icon: KeyRound },
+  { href: "/admin/permissions",        label: "Permissions",   Icon: KeyRound, stateAdminOnly: true },
   { href: "/admin/audit",              label: "Audit log",     Icon: ScrollText },
   { href: "/admin/chapters",           label: "Chapters",      Icon: Network, superOnly: true },
   { href: "/admin/super",              label: "Super tools",   Icon: Shield, superOnly: true },
 ];
 
-export function Sidebar({ isSuper }: { isSuper: boolean }) {
+export function Sidebar({
+  isSuper,
+  isStateAdmin,
+}: {
+  isSuper: boolean;
+  isStateAdmin: boolean;
+}) {
   const pathname = usePathname();
-  const visible = items.filter((i) => !i.superOnly || isSuper);
+  const visible = items.filter(
+    (i) =>
+      (!i.superOnly || isSuper) && (!i.stateAdminOnly || isStateAdmin),
+  );
 
   return (
     <nav className="flex flex-col gap-0.5">

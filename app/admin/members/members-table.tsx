@@ -188,7 +188,7 @@ export function MembersTable({
                     <div className="flex items-center gap-2 font-medium text-heading">
                       {m.name}
                       {isSelf && (
-                        <span className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted">
+                        <span className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-[11px] font-medium uppercase tracking-wider text-muted">
                           you
                         </span>
                       )}
@@ -722,7 +722,7 @@ function MemberForm({
         <div className="flex items-start gap-3 rounded-sm border border-border bg-surface p-3">
           <KeyRound className="mt-0.5 h-4 w-4 text-muted" strokeWidth={1.75} />
           <div className="min-w-0">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-muted">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted">
               Login email (fixed identifier)
             </div>
             <div className="mt-0.5 break-all font-mono text-sm text-heading">

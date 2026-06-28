@@ -166,7 +166,7 @@ export default async function StateNews({
                     className="group flex gap-4 rounded-sm border border-border bg-bg p-4 no-underline hover:border-heading sm:gap-5 sm:p-5"
                   >
                     <div className="min-w-0 flex-1">
-                      <div className="mb-2 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em]">
+                      <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em]">
                         {/* Chapter / state badge first, colour-coded so the
                             scope is the first thing the eye lands on. */}
                         <span

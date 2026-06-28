@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { ChapterNav } from "./chapter-nav";
 import { ChapterFooter } from "./chapter-footer";
 import { MobileTabBar } from "./mobile-tab-bar";
@@ -51,15 +52,21 @@ export async function ChapterShell({
 
   return (
     <div style={style} data-chapter={chapter.slug}>
-      <ChapterNav
-        chapter={chapter}
-        logoSrc={logoSrc}
-        member={navMember}
-        chapters={navChapters}
-      />
+      <Suspense
+        fallback={
+          <div className="sticky top-0 z-40 h-14 border-b border-border bg-bg/95 backdrop-blur-sm sm:h-16" />
+        }
+      >
+        <ChapterNav
+          chapter={chapter}
+          logoSrc={logoSrc}
+          member={navMember}
+          chapters={navChapters}
+        />
+      </Suspense>
       <div className="min-h-[calc(100vh-4rem)] pb-16 md:pb-0">{children}</div>
       {/* @ts-expect-error Server Component */}
-      <ChapterFooter chapter={chapter} logoSrc={logoSrc} />
+      <ChapterFooter chapter={chapter} logoSrc={logoSrc} className="pb-16 md:pb-0" />
       <MobileTabBar signedIn={signedIn} />
     </div>
   );

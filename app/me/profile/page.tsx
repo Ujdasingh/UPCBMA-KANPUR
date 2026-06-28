@@ -92,7 +92,7 @@ export default async function EditMyProfilePage({
 
         {appointments && appointments.length > 0 && (
           <div className="mt-6 rounded-sm border border-border bg-surface p-4 text-sm">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
               You currently hold
             </div>
             <ul className="mt-2 space-y-1.5">
@@ -125,7 +125,7 @@ export default async function EditMyProfilePage({
         <div className="mt-8 grid gap-6 md:grid-cols-[1fr_2fr]">
           {/* Live preview */}
           <div>
-            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
               Live preview
             </div>
             <div className="mt-3 rounded-sm border border-border bg-bg p-5">
@@ -136,7 +136,7 @@ export default async function EditMyProfilePage({
                   size="md"
                 />
                 <div className="min-w-0 flex-1">
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
                     Committee member
                   </div>
                   <div className="mt-0.5 truncate text-base font-semibold text-heading">

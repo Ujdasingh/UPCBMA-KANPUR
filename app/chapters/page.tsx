@@ -44,7 +44,7 @@ export default async function ChaptersDirectory() {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
                       {c.state}
                     </div>
                     <div className="mt-1 text-lg font-semibold text-heading group-hover:text-hover">

@@ -70,7 +70,7 @@ export function StateNav({
         <Link href="/" className="group inline-flex items-center gap-2 no-underline sm:gap-3">
           <Logo size={56} src={logoSrc} />
           <div>
-            <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted group-hover:text-heading">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted group-hover:text-heading">
               Uttar Pradesh
             </div>
             <div className="-mt-0.5 text-base font-semibold text-heading">
@@ -158,7 +158,7 @@ export function StateNav({
                 the chapter picker without juggling a hover dropdown. */}
             {chapters.length > 0 && (
               <div className="mt-2 rounded-sm border border-border bg-surface p-2">
-                <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                <div className="px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
                   Lab — book at
                 </div>
                 {chapters.map((c) => (

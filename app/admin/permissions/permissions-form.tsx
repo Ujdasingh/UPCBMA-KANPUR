@@ -162,14 +162,14 @@ export function PermissionsForm({
 function RoleBadge({ role }: { role: string }) {
   if (role === "super_admin") {
     return (
-      <span className="rounded-sm border border-purple-200 bg-purple-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-purple-700">
+      <span className="rounded-sm border border-purple-200 bg-purple-50 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-purple-700">
         Super
       </span>
     );
   }
   if (role === "admin") {
     return (
-      <span className="rounded-sm border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-blue-700">
+      <span className="rounded-sm border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-blue-700">
         Admin
       </span>
     );
@@ -278,7 +278,7 @@ function Editor({
       </header>
 
       <div className="mt-5 flex flex-wrap gap-2">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
           Quick presets:
         </span>
         {PRESETS.map((p) => (
@@ -325,7 +325,7 @@ function Editor({
                           <span className="font-medium text-heading">
                             {p.label}
                           </span>
-                          <span className="ml-1 font-mono text-[10px] text-muted">
+                          <span className="ml-1 font-mono text-[11px] text-muted">
                             {p.key}
                           </span>
                           {p.description && (

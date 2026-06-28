@@ -238,7 +238,7 @@ export default async function ChapterHome({
           <dl className="mt-10 grid grid-cols-2 gap-x-6 gap-y-5 border-t border-border pt-6 sm:mt-16 sm:gap-x-8 sm:gap-y-6 sm:pt-8 md:grid-cols-4">
             {stats.map((s) => (
               <div key={s.label}>
-                <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+                <dt className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
                   {s.label}
                 </dt>
                 <dd className="mt-1 text-3xl font-bold tracking-tight text-heading tabular-nums">
@@ -270,7 +270,7 @@ export default async function ChapterHome({
       {/* ============== ABOUT / DATA STRIP ============== */}
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-20 lg:px-8">
         <div>
-          <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
             What we do
           </div>
           <h2 className="mt-2 !text-3xl !tracking-tight md:!text-4xl">
@@ -323,7 +323,7 @@ export default async function ChapterHome({
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-20 lg:px-8">
           <div className="flex items-baseline justify-between border-b border-border pb-4">
             <div>
-              <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
                 Leadership
               </div>
               <h2 className="mt-1.5 !text-2xl !tracking-tight md:!text-3xl">
@@ -332,7 +332,7 @@ export default async function ChapterHome({
             </div>
             <div className="flex items-baseline gap-4">
               {filteredAppointments.length > 0 && (
-                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
                   {filteredAppointments.length}{" "}
                   {filteredAppointments.length === 1 ? "member" : "members"}
                 </div>
@@ -382,7 +382,7 @@ export default async function ChapterHome({
                                 size="md"
                               />
                               <div className="min-w-0 flex-1">
-                                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+                                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
                                   {role?.name ?? "Committee member"}
                                 </div>
                                 <div className="mt-0.5 truncate text-base font-semibold text-heading">
@@ -422,7 +422,7 @@ export default async function ChapterHome({
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-20 lg:px-8">
           <div className="flex items-baseline justify-between border-b border-border pb-4">
             <div>
-              <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
                 Active agendas
               </div>
               <h2 className="mt-1.5 !text-2xl !tracking-tight md:!text-3xl">
@@ -459,7 +459,7 @@ export default async function ChapterHome({
                       href={`/agendas/${a.slug}`}
                       className="block no-underline"
                     >
-                      <div className="flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em]">
+                      <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em]">
                         <span
                           className={
                             "rounded-sm border px-1.5 py-0.5 " +
@@ -480,7 +480,7 @@ export default async function ChapterHome({
                           {categoryLabel(a.category)}
                         </span>
                         {a.chapter_id === null && (
-                          <span className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-[9px] text-muted">
+                          <span className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-[11px] text-muted">
                             state
                           </span>
                         )}
@@ -520,7 +520,7 @@ export default async function ChapterHome({
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-20 lg:px-8">
           <div className="flex items-baseline justify-between border-b border-border pb-4">
             <div>
-              <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
                 Latest
               </div>
               <h2 className="mt-1.5 !text-2xl !tracking-tight md:!text-3xl">
@@ -556,12 +556,12 @@ export default async function ChapterHome({
                       </div>
                     )}
                     <div className="p-5">
-                      <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+                      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
                         <span>{n.tag}</span>
                         <span>&middot;</span>
                         <time>{fmtDate(n.published_date)}</time>
                         {n.chapter_id === null && (
-                          <span className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-[9px]">
+                          <span className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-[11px]">
                             state
                           </span>
                         )}
@@ -590,7 +590,7 @@ export default async function ChapterHome({
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-20 lg:px-8">
           <div className="flex items-baseline justify-between border-b border-border pb-4">
             <div>
-              <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
                 Upcoming
               </div>
               <h2 className="mt-1.5 !text-2xl !tracking-tight md:!text-3xl">
@@ -614,12 +614,12 @@ export default async function ChapterHome({
                     <div className="flex flex-wrap items-baseline gap-2">
                       <h3 className="text-base font-semibold text-heading">{e.title}</h3>
                       {e.chapter_id === null && (
-                        <span className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-[10px] uppercase text-muted">
+                        <span className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-[11px] uppercase text-muted">
                           state
                         </span>
                       )}
                       {e.recurring && (
-                        <span className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-[10px] text-muted">
+                        <span className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-[11px] text-muted">
                           recurring
                         </span>
                       )}
@@ -656,7 +656,7 @@ export default async function ChapterHome({
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:gap-14 sm:px-6 sm:py-20 md:grid-cols-2 lg:px-8">
           {/* Contact details */}
           <div>
-            <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
               Chapter office
             </div>
             <h2 className="mt-1.5 !text-2xl !tracking-tight">
@@ -709,7 +709,7 @@ export default async function ChapterHome({
 
           {/* Raise a problem form */}
           <div id="raise-problem" className="scroll-mt-24">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
               For members &amp; locals
             </div>
             <h2 className="mt-1.5 !text-2xl !tracking-tight">
@@ -760,7 +760,7 @@ export default async function ChapterHome({
       <section className="border-t border-border">
         <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-6 px-6 py-16 md:flex-row md:items-center lg:px-8">
           <div className="max-w-2xl">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
               Lab services
             </div>
             <h2 className="mt-2 !text-2xl !tracking-tight">
@@ -829,7 +829,7 @@ function ContactItem({
     <li className="flex gap-3">
       <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted" strokeWidth={1.75} />
       <div>
-        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
           {label}
         </div>
         <div className="mt-0.5 text-text">{content}</div>
@@ -844,7 +844,7 @@ function DateTile({ date }: { date: string }) {
   const day = String(d.getDate()).padStart(2, "0");
   return (
     <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-sm border border-border bg-bg leading-none">
-      <div className="text-[10px] font-semibold tracking-[0.15em] text-muted">{month}</div>
+      <div className="text-[11px] font-semibold tracking-[0.15em] text-muted">{month}</div>
       <div className="mt-0.5 text-xl font-bold text-heading tabular-nums">{day}</div>
     </div>
   );

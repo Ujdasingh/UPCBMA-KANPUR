@@ -301,7 +301,7 @@ export default async function StateBookPage({
                                 <span className="font-medium text-text">
                                   {t.name}
                                 </span>
-                                <span className="ml-1 font-mono text-[10px] text-muted">
+                                <span className="ml-1 font-mono text-[11px] text-muted">
                                   {t.code}
                                 </span>
                                 <span className="mt-0.5 block text-xs text-muted tabular-nums">

@@ -398,7 +398,7 @@ function CommentItem({
             {m?.name ?? (isPending ? "Posting…" : "Former member")}
           </span>
           {role && (
-            <span className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted">
+            <span className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-[11px] font-medium uppercase tracking-wider text-muted">
               {role}
             </span>
           )}

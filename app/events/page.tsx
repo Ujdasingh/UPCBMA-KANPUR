@@ -159,10 +159,10 @@ function Section({
     <section>
       <div className="flex items-baseline justify-between border-b border-border pb-3">
         <div>
-          <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">{kicker}</div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">{kicker}</div>
           <h2 className="mt-1 !text-xl !tracking-tight">{title}</h2>
         </div>
-        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
           {events.length} {events.length === 1 ? "event" : "events"}
         </div>
       </div>
@@ -183,12 +183,12 @@ function Section({
                 <div className="flex flex-wrap items-baseline gap-2">
                   <h3 className="text-base font-semibold text-heading">{e.title}</h3>
                   {e.chapter_id === null && (
-                    <span className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-[10px] font-medium uppercase text-muted">
+                    <span className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-[11px] font-medium uppercase text-muted">
                       state
                     </span>
                   )}
                   {e.recurring && (
-                    <span className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-[10px] font-medium text-muted">recurring</span>
+                    <span className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-[11px] font-medium text-muted">recurring</span>
                   )}
                 </div>
                 {e.location && (
@@ -214,9 +214,9 @@ function DateTile({ date }: { date: string }) {
   const year = d.getFullYear();
   return (
     <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-sm border border-border bg-bg leading-none">
-      <div className="text-[10px] font-semibold tracking-[0.15em] text-muted">{month}</div>
+      <div className="text-[11px] font-semibold tracking-[0.15em] text-muted">{month}</div>
       <div className="mt-0.5 text-xl font-bold text-heading tabular-nums">{day}</div>
-      <div className="mt-0.5 text-[9px] font-medium tracking-[0.1em] text-muted">{year}</div>
+      <div className="mt-0.5 text-[11px] font-medium tracking-[0.1em] text-muted">{year}</div>
     </div>
   );
 }

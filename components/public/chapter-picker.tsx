@@ -30,7 +30,7 @@ export function ChapterPicker({
 
   return (
     <label className="block w-full md:w-72">
-      <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+      <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
         {label}
       </span>
       <span className="relative mt-1 block">

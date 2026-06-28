@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getAuthedMember } from "@/lib/auth";
+import { resolveTier } from "@/lib/tier";
 import { StateShell } from "@/components/public/state-shell";
 import { Avatar } from "@/components/public/avatar";
 import {
@@ -68,7 +69,8 @@ export default async function MePage() {
   ]);
 
   const needsPasswordChange = meRow?.must_change_password === true;
-  const isAdmin = me.role === "admin" || me.role === "super_admin";
+  const tier = await resolveTier(me.id);
+  const isAdmin = tier.hasAdminAccess;
 
   // Resolve a primary chapter for the "My chapter" tile.
   const primary = (memberships ?? [])
@@ -82,7 +84,7 @@ export default async function MePage() {
         <div className="flex items-center gap-3 sm:gap-4">
           <Avatar name={me.name} src={me.photo_url} size="lg" />
           <div className="min-w-0 flex-1">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
               My account
             </div>
             <h1 className="mt-0.5 truncate !text-xl !tracking-tight sm:!text-2xl">
@@ -182,7 +184,7 @@ export default async function MePage() {
             <div className="space-y-5 border-t border-border bg-bg p-4">
               {(myProposals ?? []).length > 0 && (
                 <div>
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
                     Agendas I proposed
                   </div>
                   <ul className="mt-2 divide-y divide-border">
@@ -194,7 +196,7 @@ export default async function MePage() {
                         >
                           {a.title}
                         </Link>
-                        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                        <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
                           {a.approval_status}
                         </span>
                       </li>
@@ -204,7 +206,7 @@ export default async function MePage() {
               )}
               {(myComments ?? []).length > 0 && (
                 <div>
-                  <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+                  <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
                     <MessageSquare className="h-3 w-3" strokeWidth={2} />
                     Recent comments
                   </div>
@@ -219,7 +221,7 @@ export default async function MePage() {
                           >
                             {a?.title ?? "(deleted)"}
                           </Link>
-                          <div className="mt-0.5 text-[10px] text-muted">
+                          <div className="mt-0.5 text-[11px] text-muted">
                             {new Date(c.posted_at).toLocaleString("en-IN", {
                               dateStyle: "medium",
                               timeStyle: "short",

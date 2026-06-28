@@ -67,18 +67,18 @@ export function AgendasTable({ rows }: { rows: AgendaRow[] }) {
                   {a.summary && (
                     <div className="line-clamp-2 text-xs text-muted">{a.summary}</div>
                   )}
-                  <div className="mt-1 font-mono text-[10px] text-muted">{a.slug}</div>
+                  <div className="mt-1 font-mono text-[11px] text-muted">{a.slug}</div>
                 </Td>
                 <Td>
                   <Badge tone="neutral">{categoryLabel(a.category)}</Badge>
                 </Td>
                 <Td>
-                  <span className={"inline-flex items-center rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider " + statusTone(a.status)}>
+                  <span className={"inline-flex items-center rounded-sm border px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider " + statusTone(a.status)}>
                     {a.status}
                   </span>
                 </Td>
                 <Td>
-                  <span className={"inline-flex items-center rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider " + priorityTone(a.priority)}>
+                  <span className={"inline-flex items-center rounded-sm border px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider " + priorityTone(a.priority)}>
                     {a.priority}
                   </span>
                 </Td>

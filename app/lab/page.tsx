@@ -44,7 +44,7 @@ export default async function StateLabPage({
   if (chapters.length === 0) {
     return (
       <StateShell>
-        <main className="mx-auto max-w-3xl px-4 py-15 sm:px-6 sm:py-24 text-center lg:px-8">
+        <main className="mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-24 text-center lg:px-8">
           <FlaskConical className="mx-auto h-10 w-10 text-muted" strokeWidth={1.25} />
           <p className="mt-4 text-sm text-muted">
             No active chapters configured yet.
@@ -142,7 +142,7 @@ export default async function StateLabPage({
         <section className="border-b border-border bg-bg">
           <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-6 px-4 py-6 sm:px-6 sm:py-6 lg:px-8">
             <div>
-              <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
                 Currently viewing
               </div>
               <Link
@@ -198,7 +198,7 @@ export default async function StateLabPage({
                   <div key={cat}>
                     <div className="flex items-baseline justify-between border-b border-border pb-3">
                       <h2 className="!text-xl !tracking-tight">{cat}</h2>
-                      <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
                         {list.length} {list.length === 1 ? "test" : "tests"}
                       </div>
                     </div>
@@ -268,7 +268,7 @@ function Meta({
 }) {
   return (
     <div>
-      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+      <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
         <Icon className="h-3 w-3" strokeWidth={1.75} />
         {label}
       </div>

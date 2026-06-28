@@ -79,7 +79,7 @@ export default async function MembershipRequestsPage({
             >
               {t.label}
               {t.key === "new" && newCount != null && newCount > 0 && (
-                <span className="rounded-full bg-amber-100 px-1.5 text-[10px] font-semibold text-amber-900">
+                <span className="rounded-full bg-amber-100 px-1.5 text-[11px] font-semibold text-amber-900">
                   {newCount}
                 </span>
               )}

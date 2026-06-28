@@ -83,7 +83,9 @@ export async function stateAdmins(): Promise<string[]> {
  * whether to skip silently or queue the message in the DB only).
  */
 export async function secretariat(): Promise<string[]> {
-  const explicit = await getSetting("state_contact_email");
-  if (explicit) return [explicit.toLowerCase().trim()];
+  const officeEmail = await getSetting("state_office_email");
+  if (officeEmail) return [officeEmail.toLowerCase().trim()];
+  const contactEmail = await getSetting("state_contact_email");
+  if (contactEmail) return [contactEmail.toLowerCase().trim()];
   return stateAdmins();
 }

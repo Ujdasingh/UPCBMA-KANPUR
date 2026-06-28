@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import type { Chapter } from "@/lib/chapters";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Menu, X, ArrowLeft } from "lucide-react";
 import { Logo } from "./logo";
@@ -11,6 +11,28 @@ import { LoginButton } from "./login-dialog";
 import { AvatarMenu } from "./avatar-menu";
 import type { NavMember } from "./state-nav";
 import { NavLabDropdown, type ChapterPick } from "./nav-lab-dropdown";
+
+function isChapterNavActive(
+  href: string,
+  pathname: string,
+  base: string,
+  chapterSlug: string,
+  searchParams: URLSearchParams,
+): boolean {
+  if (href === base) return pathname === base;
+  if (href.includes("#")) {
+    const pathPart = href.split("#")[0];
+    return pathname === pathPart;
+  }
+  if (href.includes("?")) {
+    const [pathPart, query] = href.split("?");
+    if (pathname !== pathPart) return false;
+    const params = new URLSearchParams(query);
+    const chapterParam = params.get("chapter");
+    return chapterParam ? searchParams.get("chapter") === chapterParam : false;
+  }
+  return pathname.startsWith(href);
+}
 
 export function ChapterNav({
   chapter,
@@ -38,6 +60,9 @@ export function ChapterNav({
   ];
 
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const navActive = (href: string) =>
+    isChapterNavActive(href, pathname, base, chapter.slug, searchParams);
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -61,7 +86,7 @@ export function ChapterNav({
     >
       {/* Top utility strip — back link + chapter directory + sign-in */}
       <div className="border-b border-border/60 bg-surface">
-        <div className="mx-auto flex h-9 max-w-7xl items-center justify-between gap-4 px-6 lg:px-8 text-xs">
+        <div className="mx-auto flex h-8 max-w-7xl items-center justify-between gap-4 px-6 lg:px-8 text-xs">
           <Link href="/" className="inline-flex items-center gap-1 text-muted hover:text-heading no-underline">
             <ArrowLeft className="h-3 w-3" strokeWidth={2} />
             UPCBMA &mdash; state site
@@ -88,7 +113,7 @@ export function ChapterNav({
       {/* Slim accent strip — anchors the chapter to the parent UPCBMA brand */}
       <div className="h-[3px] w-full bg-gradient-to-r from-[#dca135] via-[#0d6b3e] to-[#dca135]" />
 
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:h-20 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:h-16 sm:px-6 lg:px-8">
         {/* Logo always returns visitors to the website home (state /). The
             chapter wordmark next to it stays as a separate link to the chapter
             home so people who only want to stay inside this chapter still can. */}
@@ -101,7 +126,7 @@ export function ChapterNav({
             <Logo size={56} src={logoSrc} />
           </Link>
           <Link href={base} className="group no-underline">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted group-hover:text-heading">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted group-hover:text-heading">
               {chapter.state}
             </div>
             <div className="-mt-0.5 text-base font-semibold text-heading">
@@ -114,8 +139,7 @@ export function ChapterNav({
           {/* Insert "Home → Committee → Lab(▾) → News → Events → Contact" so
               Lab keeps its position even though it's a special dropdown. */}
           {links.slice(0, 2).map(({ href, label }) => {
-            const active =
-              href === base ? pathname === base : pathname.startsWith(href);
+            const active = navActive(href);
             return (
               <Link
                 key={href}
@@ -135,8 +159,7 @@ export function ChapterNav({
             isActive={pathname.startsWith("/lab")}
           />
           {links.slice(2).map(({ href, label }) => {
-            const active =
-              href === base ? pathname === base : pathname.startsWith(href);
+            const active = navActive(href);
             return (
               <Link
                 key={href}
@@ -172,8 +195,7 @@ export function ChapterNav({
         <nav className="md:hidden border-t border-border bg-bg">
           <div className="mx-auto flex max-w-7xl flex-col px-4 py-3">
             {links.map(({ href, label }) => {
-              const active =
-                href === base ? pathname === base : pathname.startsWith(href);
+              const active = navActive(href);
               return (
                 <Link
                   key={href}
@@ -189,7 +211,7 @@ export function ChapterNav({
             })}
             {chapters.length > 0 && (
               <div className="mt-2 rounded-sm border border-border bg-surface p-2">
-                <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                <div className="px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
                   Lab — book at
                 </div>
                 {chapters.map((c) => (

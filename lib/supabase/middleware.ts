@@ -49,10 +49,10 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (isLoginRoute && user) {
-    const adminUrl = url.clone();
-    adminUrl.pathname = "/admin";
-    adminUrl.search = "";
-    return NextResponse.redirect(adminUrl);
+    const homeUrl = url.clone();
+    homeUrl.pathname = "/me";
+    homeUrl.search = "";
+    return NextResponse.redirect(homeUrl);
   }
 
   // First-time invitees: handled at sign-in time (login action redirects to

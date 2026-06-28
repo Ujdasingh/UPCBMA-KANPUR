@@ -8,9 +8,11 @@ import { getAuthedMember } from "@/lib/auth";
 export async function ChapterFooter({
   chapter,
   logoSrc,
+  className,
 }: {
   chapter: Chapter;
   logoSrc?: string;
+  className?: string;
 }) {
   // Footer "Member login" no longer makes sense once they're already in.
   // Swap it for an "Account" link when authed.
@@ -26,7 +28,7 @@ export async function ChapterFooter({
   const base = `/${chapter.slug}`;
 
   return (
-    <footer className="mt-20 bg-surface">
+    <footer className={"mt-20 bg-surface" + (className ? ` ${className}` : "")}>
       <div className="h-[3px] w-full bg-gradient-to-r from-[#dca135] via-[#0d6b3e] to-[#dca135]" />
       <div className="mx-auto max-w-7xl px-6 py-14">
         <div className="grid gap-10 md:grid-cols-4">
@@ -34,7 +36,7 @@ export async function ChapterFooter({
             <div className="flex items-center gap-2.5">
               <Logo size={36} src={logoSrc} />
               <div>
-                <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
                   UPCBMA
                 </div>
                 <div className="mt-0.5 text-base font-semibold text-heading">

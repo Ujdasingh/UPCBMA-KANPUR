@@ -83,7 +83,7 @@ export default async function NewsDetail({
           {backLabel}
         </Link>
 
-        <div className="mt-6 flex flex-wrap items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.18em]">
+        <div className="mt-6 flex flex-wrap items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em]">
           <span
             className={
               "inline-flex items-center rounded-sm border px-1.5 py-0.5 " +

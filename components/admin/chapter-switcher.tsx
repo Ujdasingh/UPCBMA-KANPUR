@@ -18,7 +18,7 @@ export function ChapterSwitcher({
 
   return (
     <form action={setActiveChapter} className="mb-4">
-      <label className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted">
+      <label className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
         <Building2 className="h-3 w-3" strokeWidth={1.75} />
         Chapter
       </label>

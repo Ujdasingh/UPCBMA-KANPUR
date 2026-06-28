@@ -103,7 +103,7 @@ function Stat({
             : "bg-slate-700";
   return (
     <div className="rounded-sm border border-border bg-surface px-3 py-2">
-      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
+      <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
         <span className={`inline-block h-2 w-2 rounded-full ${dot}`} />
         {label}
       </div>

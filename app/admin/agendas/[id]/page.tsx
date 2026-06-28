@@ -131,13 +131,13 @@ export default async function AdminAgendaDetail({
       <Card className="mb-5">
         <div className="flex flex-wrap items-center gap-2">
           <Badge tone="neutral">{categoryLabel(agenda.category)}</Badge>
-          <span className={"inline-flex items-center rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider " + statusTone(agenda.status)}>
+          <span className={"inline-flex items-center rounded-sm border px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider " + statusTone(agenda.status)}>
             {agenda.status}
           </span>
-          <span className={"inline-flex items-center rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider " + priorityTone(agenda.priority)}>
+          <span className={"inline-flex items-center rounded-sm border px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider " + priorityTone(agenda.priority)}>
             {agenda.priority} priority
           </span>
-          <span className={"inline-flex items-center rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider " + approvalTone(agenda.approval_status)}>
+          <span className={"inline-flex items-center rounded-sm border px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider " + approvalTone(agenda.approval_status)}>
             {APPROVAL_STATUS.find((a) => a.value === agenda.approval_status)?.label ?? agenda.approval_status}
           </span>
           <span className="text-xs text-muted">started {agenda.started_on}</span>
@@ -202,7 +202,7 @@ export default async function AdminAgendaDetail({
           <ul className="mt-3 space-y-2 text-xs">
             {(approvals ?? []).map((a) => (
               <li key={a.id} className="flex items-baseline gap-2">
-                <span className={"inline-flex items-center rounded-sm border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider " + (a.decision === "approved" ? "bg-emerald-50 text-emerald-900 border-emerald-200" : a.decision === "rejected" ? "bg-red-50 text-red-900 border-red-200" : "bg-blue-50 text-blue-900 border-blue-200")}>
+                <span className={"inline-flex items-center rounded-sm border px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider " + (a.decision === "approved" ? "bg-emerald-50 text-emerald-900 border-emerald-200" : a.decision === "rejected" ? "bg-red-50 text-red-900 border-red-200" : "bg-blue-50 text-blue-900 border-blue-200")}>
                   {a.decision.replace("_", " ")}
                 </span>
                 <span className="text-muted">
@@ -309,7 +309,7 @@ export default async function AdminAgendaDetail({
                       <span className="text-xs font-semibold text-heading">
                         {nameById.get(c.member_id) ?? c.member_id}
                       </span>
-                      <time className="font-mono text-[10px] text-muted">
+                      <time className="font-mono text-[11px] text-muted">
                         {new Date(c.posted_at).toLocaleString("en-IN", { dateStyle: "short", timeStyle: "short" })}
                       </time>
                     </div>

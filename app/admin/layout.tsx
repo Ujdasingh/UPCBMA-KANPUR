@@ -58,7 +58,14 @@ export default async function AdminLayout({
         />
       )}
 
-      <Sidebar isSuper={ctx.isSuper} />
+      <Sidebar
+        isSuper={ctx.isSuper}
+        isStateAdmin={
+          ctx.isSuper ||
+          ctx.me.role === "admin" ||
+          ctx.scopes.some((s) => s.chapter_id === null)
+        }
+      />
 
       <div className="mt-auto space-y-2 border-t border-border pt-4">
         <Link
@@ -80,7 +87,7 @@ export default async function AdminLayout({
             strokeWidth={1.75}
           />
           <div className="min-w-0 flex-1">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-muted">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted">
               Signed in
             </div>
             <div className="truncate text-sm font-medium text-heading">

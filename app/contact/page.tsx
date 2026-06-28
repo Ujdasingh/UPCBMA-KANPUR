@@ -33,7 +33,7 @@ export default async function StateContactPage({
             <strong>chapter-specific</strong> questions (lab bookings,
             chapter membership, local committee), please{" "}
             <Link href="/chapters" className="underline">find your chapter</Link>{" "}
-            and use its contact page.
+            and use the contact section on its chapter page.
           </p>
         </div>
       </section>
@@ -41,7 +41,7 @@ export default async function StateContactPage({
       <section className="mx-auto grid max-w-7xl gap-10 px-4 py-10 sm:gap-14 sm:px-6 sm:py-14 md:grid-cols-[1fr_1.6fr]">
         <div className="space-y-8">
           <div>
-            <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">Looking for a chapter?</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Looking for a chapter?</div>
             <h2 className="mt-2 !text-xl !tracking-tight">Pick from the directory</h2>
             <p className="mt-2 text-sm text-muted">
               Chapters have their own secretariats, labs, and contact forms.

@@ -39,7 +39,7 @@ export default async function LoginPage({
 
         <Card>
           <form action={signIn} className="space-y-5">
-            <input type="hidden" name="next" value={next ?? "/admin"} />
+            <input type="hidden" name="next" value={next ?? ""} />
 
             <Field label="Login email" htmlFor="email" required>
               <Input

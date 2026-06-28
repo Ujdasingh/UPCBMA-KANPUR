@@ -64,7 +64,7 @@ export function MobileTabBar({ signedIn }: { signedIn: boolean }) {
               <Link
                 href={href}
                 className={cn(
-                  "flex h-14 flex-col items-center justify-center gap-0.5 text-[10px] font-medium no-underline transition-colors",
+                  "flex h-14 flex-col items-center justify-center gap-0.5 text-[11px] font-medium no-underline transition-colors",
                   active
                     ? "text-heading"
                     : "text-muted hover:text-heading",

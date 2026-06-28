@@ -61,7 +61,7 @@ export function AdminShell({
         <div className="flex items-center gap-2">
           <Logo size={24} />
           <div>
-            <div className="text-[9px] font-semibold uppercase tracking-[0.18em] text-muted">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
               UPCBMA
             </div>
             <div className="-mt-0.5 text-sm font-semibold text-heading">

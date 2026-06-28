@@ -127,7 +127,7 @@ export default async function StateHome() {
               {!heroIsLogo && (
                 <>
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/40 to-transparent" />
-                  <div className="absolute bottom-3 left-4 right-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/85">
+                  <div className="absolute bottom-3 left-4 right-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/85">
                     Member firms across Uttar Pradesh
                   </div>
                 </>
@@ -159,7 +159,7 @@ export default async function StateHome() {
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-20">
         <div className="grid gap-10 md:grid-cols-[1fr_1.5fr]">
           <div>
-            <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">About UPCBMA</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">About UPCBMA</div>
             <h2 className="mt-2 !text-3xl !tracking-tight">
               The state body for UP&rsquo;s corrugators.
             </h2>
@@ -194,7 +194,7 @@ export default async function StateHome() {
           <div className="mx-auto max-w-7xl px-6 py-16">
             <div className="flex items-baseline justify-between">
               <div>
-                <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">Live agendas</div>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Live agendas</div>
                 <h2 className="mt-2 !text-2xl !tracking-tight">What we&rsquo;re working on right now.</h2>
               </div>
               <Link href="/agendas" className="shrink-0 whitespace-nowrap text-sm font-medium text-heading no-underline hover:text-hover">
@@ -204,7 +204,7 @@ export default async function StateHome() {
             <div className="mt-8 grid gap-5 md:grid-cols-3">
               {activeAgendas.map((a) => (
                 <Link key={a.id} href={`/agendas/${a.slug}`} className="rounded-sm border border-border bg-bg p-5 no-underline hover:border-heading">
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">{a.category}</div>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">{a.category}</div>
                   <h3 className="mt-2 text-base font-semibold text-heading">{a.title}</h3>
                   {a.summary && <p className="mt-1.5 line-clamp-3 text-sm text-muted">{a.summary}</p>}
                 </Link>
@@ -218,7 +218,7 @@ export default async function StateHome() {
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-20">
         <div className="flex items-baseline justify-between">
           <div>
-            <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">Chapters</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Chapters</div>
             <h2 className="mt-2 !text-3xl !tracking-tight md:!text-4xl">Find your chapter.</h2>
           </div>
           <Link href="/chapters" className="shrink-0 whitespace-nowrap text-sm font-medium text-heading no-underline hover:text-hover">
@@ -235,7 +235,7 @@ export default async function StateHome() {
             <Link key={c.id} href={`/${c.slug}`} className="group rounded-sm border border-border bg-bg p-3 no-underline hover:border-heading">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <div className="text-[9px] font-semibold uppercase tracking-[0.18em] text-muted">{c.state}</div>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">{c.state}</div>
                   <div className="mt-0.5 truncate text-sm font-semibold text-heading group-hover:text-hover">{c.name}</div>
                   <div className="mt-0.5 flex items-center gap-1 text-[11px] text-muted">
                     <MapPin className="h-3 w-3 shrink-0" strokeWidth={2} />
@@ -254,7 +254,7 @@ export default async function StateHome() {
         <div className="mx-auto max-w-7xl px-6 py-16">
           <div className="flex items-baseline justify-between">
             <div>
-              <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">Events</div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Events</div>
               <h2 className="mt-2 !text-2xl !tracking-tight">Meets, training, recent gatherings.</h2>
             </div>
             <Link href="/events" className="shrink-0 whitespace-nowrap text-sm font-medium text-heading no-underline hover:text-hover">
@@ -264,7 +264,7 @@ export default async function StateHome() {
 
           {upcomingEvents.length > 0 && (
             <>
-              <div className="mt-10 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">Upcoming</div>
+              <div className="mt-10 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">Upcoming</div>
               <div className="mt-3 grid gap-4 md:grid-cols-2">
                 {upcomingEvents.map((e) => (
                   <div key={e.id} className="flex gap-4 rounded-sm border border-border bg-bg p-4">
@@ -282,7 +282,7 @@ export default async function StateHome() {
 
           {pastEvents.length > 0 && (
             <>
-              <div className="mt-10 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">Recent</div>
+              <div className="mt-10 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">Recent</div>
               <ul className="mt-3 grid gap-4 md:grid-cols-3">
                 {pastEvents.map((e) => (
                   <li key={e.id} className="rounded-sm border border-border bg-bg p-4 opacity-90">
@@ -312,7 +312,7 @@ export default async function StateHome() {
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-20">
         <div className="flex items-baseline justify-between">
           <div>
-            <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">News</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">News</div>
             <h2 className="mt-2 !text-2xl !tracking-tight">Statewide announcements.</h2>
           </div>
           <Link href="/news" className="shrink-0 whitespace-nowrap text-sm font-medium text-heading no-underline hover:text-hover">
@@ -345,7 +345,7 @@ export default async function StateHome() {
                       </div>
                     )}
                     <div className="p-5">
-                      <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.18em]">
+                      <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em]">
                         <span
                           className={
                             "inline-flex items-center rounded-sm border px-1.5 py-0.5 " +
@@ -387,7 +387,7 @@ export default async function StateHome() {
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div>
-      <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">{label}</dt>
+      <dt className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">{label}</dt>
       <dd className="mt-2 text-3xl font-bold tracking-tight text-heading tabular-nums md:text-4xl">{value}</dd>
       {hint && <div className="mt-1 text-xs text-muted">{hint}</div>}
     </div>
@@ -400,7 +400,7 @@ function DateTile({ date, dim }: { date: string; dim?: boolean }) {
   const day = String(d.getDate()).padStart(2, "0");
   return (
     <div className={"flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-sm border leading-none " + (dim ? "border-border bg-surface text-muted" : "border-border bg-bg")}>
-      <div className="text-[10px] font-semibold tracking-[0.15em] text-muted">{month}</div>
+      <div className="text-[11px] font-semibold tracking-[0.15em] text-muted">{month}</div>
       <div className="mt-0.5 text-xl font-bold text-heading tabular-nums">{day}</div>
     </div>
   );

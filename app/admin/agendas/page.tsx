@@ -118,7 +118,7 @@ export default async function AdminAgendasPage({
             >
               {t.label}
               {t.key === "pending" && pendingCount != null && pendingCount > 0 && (
-                <span className="rounded-full bg-amber-100 px-1.5 text-[10px] font-semibold text-amber-900">
+                <span className="rounded-full bg-amber-100 px-1.5 text-[11px] font-semibold text-amber-900">
                   {pendingCount}
                 </span>
               )}
